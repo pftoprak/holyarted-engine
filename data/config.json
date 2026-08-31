@@ -1,0 +1,30 @@
+{
+  "fields": {
+    "showcase": "Vitrin",
+    "abilities": "Yetenek",
+    "ideal_job": "Meslek",
+    "life_path": "Hayat Yolu"
+  },
+  "synergy_fields": {
+    "s1": "1. İlişkiyi nasıl görüyoruz?",
+    "s2": "2. Birbirimizi nasıl görüyoruz?",
+    "s3": "3. Neden bir aradayız?",
+    "s4": "4. Sinerjiyi nasıl destekleriz?",
+    "s5": "5. Birbirimize borcumuz:",
+    "s6": "6. Dengemizi nasıl buluruz?",
+    "s7": "7. Nasıl huzurlu oluruz?",
+    "s8": "8. Nasıl Tatmin oluruz?",
+    "s9": "9. İlişkinin Şifası:"
+  },
+  "piramit_fields": {
+    "p1": "1. İlk intiba?",
+    "p2": "2. Ses",
+    "p3": "3. İnançlar",
+    "p4": "4. İş yapış şekli/dersler?",
+    "p5": "5. Borçlar/ OLUMLU",
+    "p6": "6. Sezgiler / OLUMSUZ",
+    "p7": "7. Beklenmedik olaylara tepkiler / SAGLİK",
+    "p8": "8. Gerçek karakter / İLİŞKİLER",
+    "p9": "9. Evrene Açılma Kapın / Yetenekler"
+  }
+}
