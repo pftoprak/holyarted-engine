@@ -1,44 +1,12 @@
 'use client';
 
-import { FormEvent, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, LogIn, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
+import { calculateDesign } from '@/lib/profile-engine';
 
 type Locale = 'en' | 'tr';
-type Decision = 'facts' | 'voice' | 'instinct' | 'time';
-type Environment = 'quiet' | 'together' | 'variety' | 'motion';
-type Friction = 'switching' | 'ambiguity' | 'access' | 'stagnation';
-type Purpose = 'build' | 'guide' | 'create' | 'connect';
 type ExperienceProps = { user: { displayName: string; email: string } | null; signInPath: string; signOutPath: string };
-
-type CalculatedProfile = {
-  fullName: string;
-  decision: Decision;
-  environment: Environment;
-  friction: Friction;
-  purpose: Purpose;
-};
-
-const decisionKeys: Decision[] = ['facts', 'voice', 'instinct', 'time'];
-const environmentKeys: Environment[] = ['quiet', 'together', 'variety', 'motion'];
-const frictionKeys: Friction[] = ['switching', 'ambiguity', 'access', 'stagnation'];
-const purposeKeys: Purpose[] = ['build', 'guide', 'create', 'connect'];
-
-function calculateDesign(firstName: string, lastName: string, birthDate: string): CalculatedProfile {
-  const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-  const normalized = fullName.toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
-  const nameScore = [...normalized].reduce((sum, character, index) => sum + (character.codePointAt(0) ?? 0) * (index + 1), 0);
-  const [year = 0, month = 0, day = 0] = birthDate.split('-').map(Number);
-  const dateScore = [...birthDate.replace(/\D/g, '')].reduce((sum, character) => sum + Number(character), 0);
-
-  return {
-    fullName: fullName || 'Your profile',
-    decision: decisionKeys[(day + nameScore) % decisionKeys.length],
-    environment: environmentKeys[(month + nameScore + dateScore) % environmentKeys.length],
-    friction: frictionKeys[(year + day + nameScore) % frictionKeys.length],
-    purpose: purposeKeys[(dateScore + month + nameScore) % purposeKeys.length],
-  };
-}
 
 const copy = {
   en: {
@@ -47,7 +15,7 @@ const copy = {
     intro: 'A refined personal profile calculated from your name and birth date—designed to clarify how you decide, work, relate and find direction.',
     start: 'Discover my design', sample: 'See what you’ll receive', trust: ['Calculated for you', 'Private by design', 'No fixed labels'],
     panelLabel: 'PERSONAL DESIGN · PRIVATE SESSION', panelTitle: 'Begin with the details that make the profile yours.', panelCopy: 'Enter your full name and date of birth. The calculation engine will build your individual profile.',
-    progress: 'Your profile starts here', back: 'Back', next: 'Continue', finish: 'Calculate my profile',
+    progress: 'Your profile starts here', back: 'Back', next: 'Continue', finish: 'Calculate my profile', calculating: 'Building your personal design', calculatingNote: 'Connecting the patterns in your details…', focusHint: 'Select an insight to bring it into focus',
     firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details are used to calculate this profile. They are not shown publicly.',
     questions: [
       { eyebrow: 'DECISION STYLE', title: 'When a decision matters, what helps you trust it?', options: { facts: ['Clear facts', 'I want the evidence in front of me.'], voice: ['Talking it through', 'I hear what I think as I say it.'], instinct: ['An immediate inner response', 'I notice a clear yes or no early.'], time: ['Time to settle', 'Clarity arrives after the first reaction passes.'] } },
@@ -75,7 +43,7 @@ const copy = {
     intro: 'Adın ve doğum tarihinden hesaplanan; karar, çalışma, ilişki kurma ve yön bulma biçimini netleştiren rafine bir kişisel profil.',
     start: 'Tasarımımı keşfet', sample: 'Ne alacağını gör', trust: ['Senin için hesaplanır', 'Gizlilik odaklı', 'Sabit etiket yok'],
     panelLabel: 'KİŞİSEL TASARIM · ÖZEL OTURUM', panelTitle: 'Profili sana özel yapan bilgilerle başla.', panelCopy: 'Adını, soyadını ve doğum tarihini gir. Hesaplama motoru kişisel profilini oluştursun.',
-    progress: 'Profilin burada başlıyor', back: 'Geri', next: 'Devam et', finish: 'Profilimi hesapla',
+    progress: 'Profilin burada başlıyor', back: 'Geri', next: 'Devam et', finish: 'Profilimi hesapla', calculating: 'Kişisel tasarımın hazırlanıyor', calculatingNote: 'Bilgilerindeki örüntüler bir araya getiriliyor…', focusHint: 'Odağa almak için bir içgörü seç',
     firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin bu profili hesaplamak için kullanılır; herkese açık şekilde gösterilmez.',
     questions: [
       { eyebrow: 'KARAR BİÇİMİ', title: 'Önemli bir kararda neye güvenmek sana en çok yardımcı olur?', options: { facts: ['Net bilgiler', 'Gerekli veriyi önümde görmek isterim.'], voice: ['Konuşarak düşünmek', 'Ne düşündüğümü söylerken daha iyi duyarım.'], instinct: ['İlk iç tepki', 'Başta belirgin bir evet ya da hayır fark ederim.'], time: ['Zamana bırakmak', 'İlk tepki geçince netlik gelir.'] } },
@@ -102,6 +70,8 @@ const copy = {
 export function Experience({ user, signInPath, signOutPath }: ExperienceProps) {
   const [locale, setLocale] = useState<Locale>('en');
   const [complete, setComplete] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [activeCard, setActiveCard] = useState<number | null>(null);
   const [menuOpen, setMenuOpen] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
@@ -110,16 +80,22 @@ export function Experience({ user, signInPath, signOutPath }: ExperienceProps) {
   const text = copy[locale];
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const resultCards = useMemo(() => [text.decision[profile.decision], text.environments[profile.environment], text.frictions[profile.friction], text.purposes[profile.purpose]], [text, profile]);
+  const sourceCards = [profile.source.essence, profile.source.strength, null, profile.source.work];
   function begin() { document.querySelector('#assessment')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  function calculate(event: FormEvent<HTMLFormElement>) {
+  function calculate(event: { preventDefault: () => void }) {
     event.preventDefault();
     setProfile(calculateDesign(firstName, lastName, birthDate));
-    setComplete(true);
-    window.setTimeout(() => document.querySelector('#profile')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    setComplete(false);
+    setIsCalculating(true);
+    window.setTimeout(() => {
+      setIsCalculating(false);
+      setComplete(true);
+      window.setTimeout(() => document.querySelector('#profile')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    }, 1350);
   }
 
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f1ede4] text-[#151816]">
+    <main onPointerMove={(event) => { event.currentTarget.style.setProperty('--pointer-x', `${event.clientX}px`); event.currentTarget.style.setProperty('--pointer-y', `${event.clientY}px`); }} className="premium-canvas min-h-screen overflow-hidden bg-[#f1ede4] text-[#151816]">
       <nav className="relative z-50 border-b border-white/10 bg-[#111411] px-5 text-[#f3efe7] md:px-10">
         <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between">
           <a href="#top" className="flex items-center gap-3" aria-label="Holyarted home"><span className="grid size-9 place-items-center border border-[#b98b5b]/60 text-sm font-bold">H</span><span className="text-xs font-bold tracking-[0.28em]">HOLYARTED</span></a>
@@ -129,41 +105,45 @@ export function Experience({ user, signInPath, signOutPath }: ExperienceProps) {
         {menuOpen && <div className="border-t border-white/10 pb-6 pt-4 lg:hidden"><div className="mx-auto grid max-w-[1400px] gap-4 text-sm"><a href="#assessment" onClick={() => setMenuOpen(false)}>{text.nav[0]}</a><a href="#profile" onClick={() => setMenuOpen(false)}>{text.nav[1]}</a><a href="#method" onClick={() => setMenuOpen(false)}>{text.nav[2]}</a><div className="flex gap-4"><button onClick={() => setLocale('en')} className={locale === 'en' ? 'text-[#d5a66f]' : ''}>EN</button><button onClick={() => setLocale('tr')} className={locale === 'tr' ? 'text-[#d5a66f]' : ''}>TR</button></div><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'}>{user ? text.account : text.signIn}</a></div></div>}
       </nav>
 
-      <section id="top" className="relative bg-[#111411] px-5 pb-20 pt-14 text-[#f3efe7] md:px-10 md:pb-28 md:pt-24">
+      <section id="top" className="hero-stage relative bg-[#111411] px-5 pb-20 pt-14 text-[#f3efe7] md:px-10 md:pb-28 md:pt-24">
         <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-[#b98b5b]/60 to-transparent" />
+        <div className="hero-orbit hero-orbit-one" /><div className="hero-orbit hero-orbit-two" />
         <div className="mx-auto grid max-w-[1400px] gap-14 xl:grid-cols-[0.9fr_1.1fr] xl:items-end">
           <div className="max-w-3xl">
-            <p className="eyebrow text-[#d5a66f]">{text.edition}</p>
+            <p className="eyebrow reveal-up text-[#d5a66f]">{text.edition}</p>
             <h1 className="mt-7 font-heading text-[clamp(4rem,8.2vw,8.1rem)] font-medium leading-[0.84] tracking-[-0.062em]">
-              <span className="block">{text.titleA}</span><span className="block italic text-[#d5a66f]">{text.titleB}</span>
+              <span className="word-reveal block">{text.titleA}</span><span className="word-reveal word-reveal-delay block italic text-[#d5a66f]">{text.titleB}</span>
             </h1>
             <p className="mt-9 max-w-2xl text-base leading-7 text-white/62 md:text-xl md:leading-8">{text.intro}</p>
             <div className="mt-10 flex flex-col gap-3 sm:flex-row"><button onClick={begin} className="premium-button">{text.start}<ArrowRight className="size-4" /></button><a href="#preview" className="secondary-button">{text.sample}</a></div>
             <div className="mt-12 flex flex-wrap gap-x-7 gap-y-3 border-t border-white/10 pt-6">{text.trust.map((item) => <span key={item} className="inline-flex items-center gap-2 text-xs text-white/55"><Check className="size-3.5 text-[#d5a66f]" />{item}</span>)}</div>
           </div>
-          <div id="assessment" className="scroll-mt-28 border border-white/15 bg-[#1a1e1a] shadow-[0_36px_90px_rgba(0,0,0,.3)]">
+          <div id="assessment" className="interactive-panel relative scroll-mt-28 overflow-hidden border border-white/15 bg-[#1a1e1a] shadow-[0_36px_90px_rgba(0,0,0,.3)]">
             <div className="flex items-center justify-between border-b border-white/10 px-6 py-5 md:px-8"><p className="text-[10px] font-bold tracking-[0.18em] text-[#d5a66f]">{text.panelLabel}</p><ShieldCheck className="size-4 text-white/35" /></div>
-            <form onSubmit={calculate} className="p-6 md:p-9">
+            <form onSubmit={calculate} className="relative p-6 md:p-9">
               <h2 className="max-w-xl font-heading text-3xl leading-tight md:text-4xl">{text.panelTitle}</h2>
               <p className="mt-3 max-w-xl text-sm leading-6 text-white/50">{text.panelCopy}</p>
               <div className="mt-8">
                 <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-white/40"><span>{text.progress}</span><span>01 · 03</span></div>
                 <div className="h-px bg-white/10"><div className="h-px w-full bg-[#d5a66f]" /></div>
                 <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                  <label className="grid gap-2 text-xs font-bold text-white/65">{text.firstName}<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder={text.firstPlaceholder} autoComplete="given-name" className="h-14 border border-white/15 bg-white/[0.03] px-4 text-base font-normal text-[#f3efe7] outline-none transition placeholder:text-white/25 focus:border-[#d5a66f]" required /></label>
-                  <label className="grid gap-2 text-xs font-bold text-white/65">{text.lastName}<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder={text.lastPlaceholder} autoComplete="family-name" className="h-14 border border-white/15 bg-white/[0.03] px-4 text-base font-normal text-[#f3efe7] outline-none transition placeholder:text-white/25 focus:border-[#d5a66f]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-white/65">{text.firstName}<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder={text.firstPlaceholder} autoComplete="name" className="h-14 border border-white/15 bg-white/[0.03] px-4 text-base font-normal text-[#f3efe7] outline-none transition placeholder:text-white/25 focus:border-[#d5a66f]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-white/65">{text.lastName}<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder={text.lastPlaceholder} autoComplete="name" className="h-14 border border-white/15 bg-white/[0.03] px-4 text-base font-normal text-[#f3efe7] outline-none transition placeholder:text-white/25 focus:border-[#d5a66f]" required /></label>
                   <label className="grid gap-2 text-xs font-bold text-white/65 sm:col-span-2">{text.birthDate}<input type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} autoComplete="bday" max={new Date().toISOString().slice(0, 10)} className="h-14 border border-white/15 bg-white/[0.03] px-4 text-base font-normal text-[#f3efe7] [color-scheme:dark] outline-none transition focus:border-[#d5a66f]" required /></label>
                 </div>
-                <div className="mt-7 flex flex-col items-start justify-between gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center"><p className="max-w-sm text-[11px] leading-5 text-white/35">{text.inputNote}</p><button type="submit" className="premium-button h-12 shrink-0 px-5">{text.finish}<ArrowRight className="size-4" /></button></div>
+                <div className="mt-7 flex flex-col items-start justify-between gap-5 border-t border-white/10 pt-6 sm:flex-row sm:items-center"><p className="max-w-sm text-[11px] leading-5 text-white/35">{text.inputNote}</p><button type="submit" disabled={isCalculating} className="premium-button magnetic-button h-12 shrink-0 px-5 disabled:cursor-wait">{text.finish}<ArrowRight className="size-4" /></button></div>
               </div>
             </form>
+            {isCalculating && <div className="calculation-overlay absolute inset-0 z-20 grid place-items-center bg-[#151915]/96 p-8 text-center" aria-live="polite"><div className="w-full max-w-md"><div className="mx-auto grid size-20 place-items-center border border-[#d5a66f]/35"><span className="calculation-monogram font-heading text-4xl text-[#d5a66f]">H</span></div><p className="mt-8 font-heading text-4xl text-[#f3efe7]">{text.calculating}</p><p className="mt-3 text-sm text-white/42">{text.calculatingNote}</p><div className="mt-9 h-px overflow-hidden bg-white/10"><div className="calculation-scan h-px bg-[#d5a66f]" /></div></div></div>}
           </div>
         </div>
       </section>
 
-      <section id="preview" className="px-5 py-20 md:px-10 md:py-28"><div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-start"><div className="lg:sticky lg:top-28"><p className="eyebrow text-[#93683f]">{text.previewLabel}</p><h2 className="mt-5 max-w-lg font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">{text.previewTitle}</h2><p className="mt-6 max-w-md leading-7 text-[#151816]/60">{text.previewCopy}</p><Image src="/og.png" width={1200} height={630} alt="Holyarted editorial identity" className="mt-9 w-full border border-[#151816]/15" /></div><div className="grid border-t border-[#151816]/20">{text.sections.map((label, index) => <div key={label} className="grid gap-3 border-b border-[#151816]/15 py-8 sm:grid-cols-[9rem_1fr] sm:gap-8"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#93683f]">{label}</p><div><h3 className="font-heading text-3xl">{resultCards[index][0]}</h3><p className="mt-3 max-w-2xl text-sm leading-7 text-[#151816]/58">{resultCards[index][1]}</p></div></div>)}</div></div></section>
+      <div className="marquee-shell border-y border-[#151816]/15 bg-[#d8ad7e] py-4"><div className="marquee-track text-[10px] font-bold uppercase tracking-[0.28em]"><span>SELF KNOWLEDGE · DECISION STYLE · WORK RHYTHM · PURPOSE DIRECTION · </span><span aria-hidden="true">SELF KNOWLEDGE · DECISION STYLE · WORK RHYTHM · PURPOSE DIRECTION · </span></div></div>
 
-      <section id="profile" className="scroll-mt-20 bg-[#c99a67] px-5 py-20 md:px-10 md:py-28"><div className="mx-auto max-w-[1400px]">{complete ? <div><div className="grid gap-10 border-b border-[#151816]/25 pb-14 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="eyebrow">{text.profileLabel}</p><p className="mt-4 text-xs text-[#151816]/55">{text.profileFor}</p><p className="mt-2 font-heading text-2xl">{profile.fullName}</p></div><div><h2 className="font-heading text-6xl leading-[0.9] tracking-[-0.05em] md:text-8xl">{text.profileNames[profile.purpose]}</h2><p className="mt-7 max-w-3xl text-lg leading-8 text-[#151816]/70">{text.profileIntros[profile.purpose]}</p></div></div><div className="grid md:grid-cols-2">{resultCards.map(([title, body], index) => <article key={title} className={`min-h-72 border-b border-[#151816]/20 py-9 md:p-9 ${index % 2 === 0 ? 'md:border-r' : ''}`}><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#151816]/55">{text.sections[index]}</p><h3 className="mt-10 font-heading text-4xl">{title}</h3><p className="mt-4 max-w-xl text-sm leading-7 text-[#151816]/68">{body}</p></article>)}</div><div className="mt-10 flex flex-col items-start justify-between gap-6 border-t border-[#151816]/25 pt-8 sm:flex-row sm:items-center"><button onClick={() => { setComplete(false); begin(); }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em]"><ArrowLeft className="size-4" />{text.restart}</button><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="inline-flex h-12 items-center gap-2 bg-[#111411] px-6 text-xs font-bold text-[#f3efe7]">{user ? text.saveIn : text.saveOut}<ArrowRight className="size-4" /></a></div></div> : <div className="grid items-end gap-10 lg:grid-cols-2"><div><p className="eyebrow">{text.profileLabel}</p><h2 className="mt-6 font-heading text-6xl leading-[0.9] tracking-[-0.045em] md:text-8xl">{text.profileNames[profile.purpose]}</h2></div><div className="max-w-xl lg:justify-self-end"><p className="text-lg leading-8 text-[#151816]/70">{text.profileIntros[profile.purpose]}</p><button onClick={begin} className="mt-8 inline-flex h-12 items-center gap-2 bg-[#111411] px-6 text-xs font-bold text-[#f3efe7]">{text.start}<ArrowRight className="size-4" /></button></div></div>}</div></section>
+      <section id="preview" className="view-reveal px-5 py-20 md:px-10 md:py-28"><div className="mx-auto grid max-w-[1400px] gap-12 lg:grid-cols-[0.7fr_1.3fr] lg:items-start"><div className="lg:sticky lg:top-28"><p className="eyebrow text-[#93683f]">{text.previewLabel}</p><h2 className="mt-5 max-w-lg font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">{text.previewTitle}</h2><p className="mt-6 max-w-md leading-7 text-[#151816]/60">{text.previewCopy}</p><div className="image-lift mt-9 overflow-hidden border border-[#151816]/15"><Image src="/og.png" width={1200} height={630} alt="Holyarted editorial identity" className="w-full transition duration-700 hover:scale-[1.025]" /></div></div><div><p className="mb-4 text-[10px] font-bold uppercase tracking-[0.18em] text-[#151816]/38">{text.focusHint}</p><div className="grid border-t border-[#151816]/20">{text.sections.map((label, index) => <button type="button" onClick={() => setActiveCard(activeCard === index ? null : index)} key={label} className={`insight-row grid gap-3 border-b border-[#151816]/15 py-8 text-left sm:grid-cols-[9rem_1fr] sm:gap-8 ${activeCard === index ? 'is-active' : ''}`}><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#93683f]">{label}</p><div><h3 className="font-heading text-3xl">{resultCards[index][0]}</h3><p className="mt-3 max-w-2xl text-sm leading-7 text-[#151816]/58">{resultCards[index][1]}</p><span className="insight-line mt-6 block h-px w-0 bg-[#93683f]" /></div></button>)}</div></div></div></section>
+
+      <section id="profile" className="scroll-mt-20 bg-[#c99a67] px-5 py-20 md:px-10 md:py-28"><div className="mx-auto max-w-[1400px]">{complete ? <div><div className="grid gap-10 border-b border-[#151816]/25 pb-14 lg:grid-cols-[0.65fr_1.35fr]"><div><p className="eyebrow">{text.profileLabel}</p><p className="mt-4 text-xs text-[#151816]/55">{text.profileFor}</p><p className="mt-2 font-heading text-2xl">{profile.fullName}</p></div><div><h2 className="font-heading text-6xl leading-[0.9] tracking-[-0.05em] md:text-8xl">{text.profileNames[profile.purpose]}</h2><p className="mt-7 max-w-3xl text-lg leading-8 text-[#151816]/70">{text.profileIntros[profile.purpose]}</p></div></div><div className="grid md:grid-cols-2">{resultCards.map(([title, body], index) => <article key={title} className={`profile-result-card min-h-72 border-b border-[#151816]/20 py-9 md:p-9 ${index % 2 === 0 ? 'md:border-r' : ''}`} style={{ animationDelay: `${index * 110}ms` }}><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#151816]/55">{text.sections[index]}</p><h3 className="mt-10 font-heading text-4xl">{title}</h3><p className="mt-4 max-w-xl text-sm leading-7 text-[#151816]/68">{body}</p>{locale === 'tr' && sourceCards[index] && <p className="mt-5 border-t border-[#151816]/15 pt-5 text-xs leading-6 text-[#151816]/56">{sourceCards[index]}</p>}</article>)}</div><div className="mt-10 flex flex-col items-start justify-between gap-6 border-t border-[#151816]/25 pt-8 sm:flex-row sm:items-center"><button onClick={() => { setComplete(false); begin(); }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em]"><ArrowLeft className="size-4" />{text.restart}</button><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="inline-flex h-12 items-center gap-2 bg-[#111411] px-6 text-xs font-bold text-[#f3efe7]">{user ? text.saveIn : text.saveOut}<ArrowRight className="size-4" /></a></div></div> : <div className="grid items-end gap-10 lg:grid-cols-2"><div><p className="eyebrow">{text.profileLabel}</p><h2 className="mt-6 font-heading text-6xl leading-[0.9] tracking-[-0.045em] md:text-8xl">{text.profileNames[profile.purpose]}</h2></div><div className="max-w-xl lg:justify-self-end"><p className="text-lg leading-8 text-[#151816]/70">{text.profileIntros[profile.purpose]}</p><button onClick={begin} className="mt-8 inline-flex h-12 items-center gap-2 bg-[#111411] px-6 text-xs font-bold text-[#f3efe7]">{text.start}<ArrowRight className="size-4" /></button></div></div>}</div></section>
 
       <section className="bg-[#111411] px-5 py-20 text-[#f3efe7] md:px-10 md:py-28"><div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"><div><p className="eyebrow text-[#d5a66f]">{text.savePrompt}</p><h2 className="mt-5 max-w-3xl font-heading text-5xl leading-[0.95] md:text-7xl">{user ? `${text.account}: ${user.displayName}` : text.savePrompt}</h2><p className="mt-6 max-w-xl leading-7 text-white/50">{text.saveCopy}</p></div><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="premium-button lg:justify-self-end">{user ? text.saveIn : text.saveOut}<ArrowRight className="size-4" /></a></div></section>
 
