@@ -1,43 +1,12 @@
-import { ArrowLeft, LogOut, Mail, UserRound, Waves } from 'lucide-react';
-
+import { ArrowLeft, ArrowRight, LogOut, Mail, UserRound } from 'lucide-react';
+import Link from 'next/link';
 import { chatGPTSignOutPath, requireChatGPTUser } from '../chatgpt-auth';
 
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
   const user = await requireChatGPTUser('/profile');
-
   return (
-    <main className="grid min-h-screen place-items-center bg-[#dce9e4] px-5 py-16 text-[#18332e]">
-      <section className="w-full max-w-xl rounded-[2rem] bg-[#fffdf8] p-7 shadow-[0_24px_70px_rgb(45_78_68/13%)] md:p-10">
-        <div className="flex items-center justify-between">
-          <a href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
-            <ArrowLeft className="size-4" /> Back to check-in
-          </a>
-          <span className="grid size-10 place-items-center rounded-xl bg-[#18332e] text-white">
-            <Waves className="size-4" />
-          </span>
-        </div>
-
-        <div className="mt-12 grid size-20 place-items-center rounded-[1.5rem] bg-[#e9e3f0] text-[#6d5d7d]">
-          <UserRound className="size-9" />
-        </div>
-        <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Personal space</p>
-        <h1 className="mt-2 font-heading text-4xl leading-none md:text-5xl">Welcome, {user.displayName}.</h1>
-        <p className="mt-5 text-sm leading-7 text-muted-foreground">Your Holyarted account is securely connected through ChatGPT. We do not keep a separate password.</p>
-
-        <div className="mt-8 rounded-2xl border border-border bg-background/60 p-5">
-          <p className="text-xs uppercase tracking-[0.18em] text-muted-foreground">Signed-in email</p>
-          <p className="mt-2 flex items-center gap-2 break-all text-sm"><Mail className="size-4 shrink-0 text-primary" /> {user.email}</p>
-        </div>
-
-        <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          <a href="/" className="inline-flex h-12 items-center justify-center rounded-full bg-[#18332e] px-5 font-semibold text-white">Open check-in</a>
-          <a href={chatGPTSignOutPath('/')} target="_top" className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#18332e]/15 px-5 font-semibold transition-colors hover:border-[#52786c] hover:text-[#52786c]">
-            <LogOut className="size-4" /> Sign out
-          </a>
-        </div>
-      </section>
-    </main>
+    <main className="min-h-screen bg-[#111411] px-5 py-10 text-[#f3efe7] md:px-10 md:py-16"><section className="mx-auto max-w-5xl border border-white/15 bg-[#1a1e1a]"><div className="flex items-center justify-between border-b border-white/10 p-6 md:p-8"><Link href="/" className="inline-flex items-center gap-2 text-xs font-bold text-white/55 transition hover:text-[#d5a66f]"><ArrowLeft className="size-4" /> Back to assessment</Link><span className="grid size-10 place-items-center border border-[#d5a66f]/60 font-heading text-xl text-[#d5a66f]">H</span></div><div className="grid md:grid-cols-[0.75fr_1.25fr]"><div className="border-b border-white/10 p-7 md:border-b-0 md:border-r md:p-10"><div className="grid size-20 place-items-center bg-[#c99a67] text-[#111411]"><UserRound className="size-8" /></div><p className="mt-8 text-[10px] font-bold uppercase tracking-[0.2em] text-[#d5a66f]">Personal space</p><p className="mt-3 text-sm leading-6 text-white/45">Securely connected through ChatGPT. No separate Holyarted password is stored.</p></div><div className="p-7 md:p-10 lg:p-14"><h1 className="font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">Welcome,<br /><span className="italic text-[#d5a66f]">{user.displayName}.</span></h1><div className="mt-10 border-y border-white/10 py-5"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-white/35">Signed-in email</p><p className="mt-3 flex items-center gap-2 break-all text-sm text-white/70"><Mail className="size-4 shrink-0 text-[#d5a66f]" /> {user.email}</p></div><div className="mt-9 flex flex-col gap-3 sm:flex-row"><Link href="/" className="inline-flex h-12 items-center justify-center gap-2 bg-[#c99a67] px-6 text-xs font-bold text-[#111411]">Open assessment <ArrowRight className="size-4" /></Link><a href={chatGPTSignOutPath('/')} target="_top" className="inline-flex h-12 items-center justify-center gap-2 border border-white/20 px-6 text-xs font-bold text-white/65 transition hover:border-white/50 hover:text-white"><LogOut className="size-4" /> Sign out</a></div></div></div></section></main>
   );
 }

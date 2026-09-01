@@ -15,17 +15,17 @@ const body = DM_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
-  title: 'Holyarted — Make room for what matters',
-  description: 'A calm, practical check-in for everyday self-reflection.',
+  title: 'Holyarted — Know how you move through life',
+  description: 'A refined Human Design profile built from your own answers.',
   openGraph: {
-    title: 'Holyarted — Make room for what matters',
-    description: 'A calm, practical check-in for everyday self-reflection.',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Holyarted — Make room for what matters' }],
+    title: 'Holyarted — Know how you move through life',
+    description: 'A refined Human Design profile built from your own answers.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Holyarted — Know how you move through life' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Holyarted — Make room for what matters',
-    description: 'A calm, practical check-in for everyday self-reflection.',
+    title: 'Holyarted — Know how you move through life',
+    description: 'A refined Human Design profile built from your own answers.',
     images: ['/og.png'],
   },
 };

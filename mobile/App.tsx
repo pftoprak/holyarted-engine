@@ -1,144 +1,117 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
-import {
-  KeyboardAvoidingView,
-  Platform,
-  Pressable,
-  SafeAreaView,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  View,
-} from 'react-native';
+import { useMemo, useState } from 'react';
+import { Platform, Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
 type Locale = 'en' | 'tr';
-type Goal = 'space' | 'focus' | 'slow' | 'boundary';
-type MindState = 'busy' | 'restless' | 'tired' | 'steady';
+type Decision = 'facts' | 'voice' | 'instinct' | 'time';
+type Environment = 'quiet' | 'together' | 'variety' | 'motion';
+type Friction = 'switching' | 'ambiguity' | 'access' | 'stagnation';
+type Purpose = 'build' | 'guide' | 'create' | 'connect';
 
-const copy = {
+const content = {
   en: {
-    toggle: 'TR', kicker: 'A QUIETER WAY TO CHECK IN', title: 'Make room for what matters.',
-    subtitle: 'A low-pressure space to notice what you need and choose one small next step.',
-    formTitle: 'How are you arriving today?', formCopy: 'There are no right answers. Choose what feels closest.',
-    nameLabel: 'What should we call you?', namePlaceholder: 'Your name', goalLabel: 'What would help most right now?', stateLabel: 'How does your mind feel?', submit: 'Build my guide',
-    goals: { space: 'Clear my head', focus: 'Find focus', slow: 'Slow down', boundary: 'Set a boundary' },
-    states: { busy: 'Busy', restless: 'Restless', tired: 'Tired', steady: 'Steady' },
-    resultKicker: 'YOUR CHECK-IN', resultTitle: 'A gentler plan for today.', resultCopy: 'Use what helps, leave what does not. This is a practical reflection—not a label or a diagnosis.',
-    start: 'START HERE', remember: 'KEEP IN MIND', practice: 'TRY THIS NOW',
-    goalsContent: {
-      space: ['Reduce the incoming noise', 'Your attention may need fewer open loops, not more effort.', 'Close one tab, silence one alert, and write down the one thing you do not want to forget.'],
-      focus: ['Choose one clear finish line', 'Focus gets easier when the next action is visible and small.', 'Pick one task that can be completed in a short block. Let everything else wait outside that block.'],
-      slow: ['Lower the pace on purpose', 'A slower moment can make the rest of the day feel more workable.', 'Give yourself a transition with no input: stretch, make tea, or look outside before moving on.'],
-      boundary: ['Protect a little room', 'A useful boundary can be quiet, specific, and kind.', 'Decide what is not available today, then communicate it in one clear sentence without over-explaining.'],
-    },
-    statesContent: {
-      busy: ['Your mind is carrying a lot', 'Trying to hold everything at once can make each task feel equally urgent.', 'Put every loose thought on paper. Circle only the item that truly needs your attention next.'],
-      restless: ['Your attention wants movement', 'Restlessness is often easier to work with than to argue against.', 'Stand up, change rooms, or take a brief walk. Return when your body feels more settled.'],
-      tired: ['Make the plan smaller', 'When capacity is low, a reduced plan is a smart adjustment—not a failure.', 'Choose the minimum useful version of today’s task and give yourself permission to stop there.'],
-      steady: ['Use the steadiness you have', 'A settled moment is a good time to make one thoughtful choice.', 'Choose a meaningful task, protect a clean block for it, and finish before adding something new.'],
-    },
-    nextStep: 'One small next step', footer: 'Holyarted supports everyday reflection. It is not medical care or a diagnostic tool.',
+    switch: 'TR', edition: 'HUMAN DESIGN, REFRAMED', title: 'Know how you move through life.', intro: 'A refined personal profile calculated from your name and birth date.',
+    private: 'PRIVATE SESSION', progress: 'YOUR PROFILE STARTS HERE', back: 'Back', next: 'Continue', reveal: 'Calculate my profile', reset: 'Calculate another profile',
+    trust: ['Calculated for you', 'Private by design', 'No fixed labels'], firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details are used to calculate this profile and are not shown publicly.',
+    questions: [
+      { label: 'DECISION STYLE', title: 'When a decision matters, what helps you trust it?', options: { facts: ['Clear facts', 'I want the evidence in front of me.'], voice: ['Talking it through', 'I hear what I think as I say it.'], instinct: ['An immediate response', 'I notice a clear yes or no early.'], time: ['Time to settle', 'Clarity arrives after the first reaction.'] } },
+      { label: 'BEST ENVIRONMENT', title: 'Where do you do your best thinking?', options: { quiet: ['Quiet structure', 'A protected space with a clear plan.'], together: ['A collaborative room', 'Ideas sharpen around trusted people.'], variety: ['Changing inputs', 'New perspectives keep me engaged.'], motion: ['Hands-on momentum', 'Thinking clears while I make or move.'] } },
+      { label: 'FRICTION PATTERN', title: 'What wears you down fastest?', options: { switching: ['Constant switching', 'Too many open threads dilute my attention.'], ambiguity: ['Unclear expectations', 'I struggle when the target keeps moving.'], access: ['Always being available', 'My priorities disappear behind other people.'], stagnation: ['Too little movement', 'Repetition without progress makes me withdraw.'] } },
+      { label: 'PURPOSE DIRECTION', title: 'What kind of contribution feels most meaningful?', options: { build: ['Building something lasting', 'Useful, dependable work matters to me.'], guide: ['Guiding people', 'I make complexity easier to navigate.'], create: ['Creating possibilities', 'I give form to what does not exist yet.'], connect: ['Connecting people', 'I help the right people and ideas meet.'] } },
+    ],
+    names: { build: 'The Intentional Builder', guide: 'The Grounded Guide', create: 'The Original Maker', connect: 'The Human Connector' },
+    intros: { build: 'You find meaning by turning clear intention into something people can rely on.', guide: 'You find meaning by helping people see what matters and move forward.', create: 'You find meaning by making room for original ideas and giving them useful form.', connect: 'You find meaning by noticing relationships others miss and bringing people together.' },
+    headings: ['DECISION STYLE', 'BEST ENVIRONMENT', 'WATCH FOR', 'PURPOSE DIRECTION'],
+    decision: { facts: ['Evidence first', 'Define the decision, gather what changes the outcome, then stop researching.'], voice: ['Clarity in conversation', 'Ask a trusted person to reflect what they hear—not to decide for you.'], instinct: ['Respect the first signal', 'Notice your earliest response, then verify it against reality before committing.'], time: ['Let clarity mature', 'Allow the first reaction to settle, but set a time to decide.'] },
+    environments: { quiet: ['Protected focus', 'Defined priorities and fewer interruptions give you room to think deeply.'], together: ['Trusted collaboration', 'Your thinking sharpens around people who can challenge ideas without competing.'], variety: ['Fresh perspective', 'New inputs and changing contexts help you connect different ideas.'], motion: ['Progress you can touch', 'Drafts, prototypes and physical movement help your thought become clear.'] },
+    frictions: { switching: ['Protect continuity', 'Keep one primary thread visible and park the rest.'], ambiguity: ['Name the finish line', 'Agree what “done” looks like before beginning.'], access: ['Make access intentional', 'Choose when you are open to others and when your priorities are protected.'], stagnation: ['Create visible movement', 'Link routine work to a meaningful outcome or change the method.'] },
+    purposes: { build: ['Make the useful thing real', 'Create structures, products or practices that hold up over time.'], guide: ['Turn complexity into direction', 'Help people orient themselves through teaching, leadership, care or communication.'], create: ['Give new ideas a form', 'Open possibilities, then shape the strongest one into work others can use.'], connect: ['Strengthen the human network', 'Create understanding across people, disciplines or communities.'] },
+    note: 'A reflective framework built from your choices—not a diagnosis or prediction.',
   },
   tr: {
-    toggle: 'EN', kicker: 'KENDİNE BAKMANIN DAHA SAKİN BİR YOLU', title: 'Önemli olana yer aç.',
-    subtitle: 'Neye ihtiyaç duyduğunu fark etmek ve küçük bir sonraki adım seçmek için baskısız bir alan.',
-    formTitle: 'Bugüne nasıl geliyorsun?', formCopy: 'Doğru cevap yok. Sana en yakın geleni seç.',
-    nameLabel: 'Sana nasıl hitap edelim?', namePlaceholder: 'Adın', goalLabel: 'Şu an en çok ne yardımcı olur?', stateLabel: 'Zihnin şu an nasıl?', submit: 'Rehberimi oluştur',
-    goals: { space: 'Zihnimi boşaltmak', focus: 'Odaklanmak', slow: 'Yavaşlamak', boundary: 'Sınır koymak' },
-    states: { busy: 'Dolu', restless: 'Huzursuz', tired: 'Yorgun', steady: 'Dengeli' },
-    resultKicker: 'BUGÜNKÜ CHECK-IN’İN', resultTitle: 'Bugün için daha yumuşak bir plan.', resultCopy: 'İşine yarayanı al, yaramayanı bırak. Bu pratik bir düşünme alanı; bir etiket veya tanı değil.',
-    start: 'BURADAN BAŞLA', remember: 'AKLINDA OLSUN', practice: 'ŞİMDİ DENE',
-    goalsContent: {
-      space: ['Gelen uyaranı azalt', 'Dikkatinin daha fazla çabaya değil, daha az açık döngüye ihtiyacı olabilir.', 'Bir sekmeyi kapat, bir bildirimi sessize al ve unutmaman gereken tek şeyi bir yere yaz.'],
-      focus: ['Net bir bitiş çizgisi seç', 'Bir sonraki hareket görünür ve küçük olduğunda odaklanmak kolaylaşır.', 'Kısa bir çalışma diliminde tamamlanabilecek tek bir iş seç. Diğerlerini o sürenin dışında bırak.'],
-      slow: ['Hızı bilinçli olarak düşür', 'Kısa bir yavaşlama günün geri kalanını daha yönetilebilir hale getirebilir.', 'Bir sonraki işe geçmeden önce ekransız bir geçiş yarat: esne, çay hazırla veya dışarı bak.'],
-      boundary: ['Kendine küçük bir alan koru', 'İşe yarayan bir sınır sessiz, net ve nazik olabilir.', 'Bugün neyin mümkün olmadığına karar ver; fazla açıklama yapmadan tek bir cümleyle ifade et.'],
-    },
-    statesContent: {
-      busy: ['Zihnin çok şey taşıyor', 'Her şeyi aynı anda tutmaya çalışmak bütün işleri eşit derecede acil hissettirebilir.', 'Aklındaki açık işleri kâğıda dök. Sadece gerçekten sıradaki olanı işaretle.'],
-      restless: ['Dikkatin harekete ihtiyaç duyuyor', 'Huzursuzlukla tartışmak yerine ona küçük bir hareket alanı açmak daha kolay olabilir.', 'Ayağa kalk, oda değiştir veya kısa bir yürüyüş yap. Bedenin sakinleştiğinde geri dön.'],
-      tired: ['Planı küçült', 'Kapasiten düşükken planı azaltmak başarısızlık değil, akıllı bir ayarlamadır.', 'Bugünkü işin işe yarayan en küçük halini seç ve orada durmana izin ver.'],
-      steady: ['Elindeki dengeyi kullan', 'Sakin bir an, düşünülmüş tek bir seçim yapmak için iyi bir zamandır.', 'Anlamlı bir iş seç, ona temiz bir zaman aralığı ayır ve yenisini eklemeden önce bitir.'],
-    },
-    nextStep: 'Küçük bir sonraki adım', footer: 'Holyarted günlük öz-farkındalığı destekler; tıbbi bakım veya tanı aracı değildir.',
+    switch: 'EN', edition: 'HUMAN DESIGN, YENİDEN YORUMLANDI', title: 'Hayatta nasıl ilerlediğini keşfet.', intro: 'Adın ve doğum tarihinden hesaplanan rafine bir kişisel profil.',
+    private: 'ÖZEL OTURUM', progress: 'PROFİLİN BURADA BAŞLIYOR', back: 'Geri', next: 'Devam et', reveal: 'Profilimi hesapla', reset: 'Başka bir profil hesapla',
+    trust: ['Senin için hesaplanır', 'Gizlilik odaklı', 'Sabit etiket yok'], firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin bu profili hesaplamak için kullanılır ve herkese açık gösterilmez.',
+    questions: [
+      { label: 'KARAR BİÇİMİ', title: 'Önemli bir kararda neye güvenmek sana en çok yardımcı olur?', options: { facts: ['Net bilgiler', 'Gerekli veriyi önümde görmek isterim.'], voice: ['Konuşarak düşünmek', 'Ne düşündüğümü söylerken daha iyi duyarım.'], instinct: ['İlk tepki', 'Başta belirgin bir evet ya da hayır fark ederim.'], time: ['Zamana bırakmak', 'İlk tepki geçince netlik gelir.'] } },
+      { label: 'EN İYİ ORTAM', title: 'En iyi nerede düşünürsün?', options: { quiet: ['Sessiz düzen', 'Korunaklı bir alan ve net bir plan.'], together: ['Birlikte düşünmek', 'Güvendiğim insanların yanında fikirlerim keskinleşir.'], variety: ['Değişen uyaranlar', 'Yeni bakış açıları ilgimi canlı tutar.'], motion: ['Hareket içinde', 'Üretirken veya hareket ederken netleşirim.'] } },
+      { label: 'ZORLANMA ÖRÜNTÜSÜ', title: 'Seni en hızlı ne tüketir?', options: { switching: ['Sürekli konu değiştirmek', 'Çok fazla açık iş dikkatimi dağıtır.'], ambiguity: ['Belirsiz beklentiler', 'Hedef sürekli değiştiğinde zorlanırım.'], access: ['Her an ulaşılabilir olmak', 'Başkaları önceliklerimi görünmez kılar.'], stagnation: ['İlerlemenin olmaması', 'Sonuç vermeyen tekrar beni geri çeker.'] } },
+      { label: 'AMAÇ YÖNÜ', title: 'Hangi katkı biçimi sana en anlamlı geliyor?', options: { build: ['Kalıcı bir şey kurmak', 'Faydalı ve güvenilir iş önemlidir.'], guide: ['İnsanlara yol göstermek', 'Karmaşıklığı anlaşılır kılarım.'], create: ['Yeni olasılıklar yaratmak', 'Var olmayana biçim vermek isterim.'], connect: ['İnsanları buluşturmak', 'Doğru insanları ve fikirleri bir araya getiririm.'] } },
+    ],
+    names: { build: 'Niyetli Kurucu', guide: 'Sağlam Rehber', create: 'Özgün Üretici', connect: 'İnsanları Buluşturan' },
+    intros: { build: 'Net bir niyeti insanların güvenebileceği bir şeye dönüştürdüğünde anlam bulursun.', guide: 'İnsanların önemli olanı görmesine ve ilerlemesine yardım ettiğinde anlam bulursun.', create: 'Özgün fikirlere alan açıp onlara işe yarar biçim verdiğinde anlam bulursun.', connect: 'Başkalarının kaçırdığı ilişkileri fark edip insanları buluşturduğunda anlam bulursun.' },
+    headings: ['KARAR BİÇİMİ', 'EN İYİ ORTAM', 'DİKKAT ET', 'AMAÇ YÖNÜ'],
+    decision: { facts: ['Önce kanıt', 'Kararı tanımla, sonucu değiştiren veriyi topla ve araştırmayı bitir.'], voice: ['Konuşmada netlik', 'Güvendiğin birinden karar vermesini değil, duyduğunu yansıtmasını iste.'], instinct: ['İlk sinyali ciddiye al', 'İlk tepkini fark et, sonra karardan önce gerçeklikle karşılaştır.'], time: ['Netliğin olgunlaşsın', 'İlk tepkinin yatışmasına izin ver ama karar için zaman belirle.'] },
+    environments: { quiet: ['Korunan odak', 'Net öncelikler ve daha az bölünme derin düşünme alanı açar.'], together: ['Güvenilir işbirliği', 'Fikirleri rekabet etmeden zorlayan insanların yanında düşüncen keskinleşir.'], variety: ['Taze bakış', 'Yeni girdiler ve değişen bağlamlar farklı fikirleri birleştirmene yardım eder.'], motion: ['Dokunabildiğin ilerleme', 'Taslaklar, denemeler ve hareket düşünceni netleştirir.'] },
+    frictions: { switching: ['Sürekliliği koru', 'Tek bir ana işi görünür tut, diğerlerini beklet.'], ambiguity: ['Bitiş çizgisini adlandır', 'Başlamadan önce “bitti”nin nasıl görüneceğini netleştir.'], access: ['Ulaşılabilirliği bilinçli seç', 'Ne zaman başkalarına açık, ne zaman önceliklerine kapalı olduğunu belirle.'], stagnation: ['Görünür ilerleme yarat', 'Rutin işi anlamlı bir sonuca bağla veya yöntemi değiştir.'] },
+    purposes: { build: ['Faydalı olanı gerçeğe dönüştür', 'Zamana dayanan yapılar, ürünler veya uygulamalar kur.'], guide: ['Karmaşıklığı yöne dönüştür', 'Öğretme, liderlik, bakım veya iletişimle insanların yönünü bulmasına yardım et.'], create: ['Yeni fikre biçim ver', 'Olasılık aç, ardından en güçlüsünü kullanılabilir bir işe dönüştür.'], connect: ['İnsan ağını güçlendir', 'İnsanlar, alanlar veya topluluklar arasında anlayış yarat.'] },
+    note: 'Seçimlerinden oluşan bir düşünme çerçevesidir; tanı veya öngörü değildir.',
   },
 } as const;
 
+type CalculatedProfile = { fullName: string; decision: Decision; environment: Environment; friction: Friction; purpose: Purpose };
+const decisionKeys: Decision[] = ['facts', 'voice', 'instinct', 'time'];
+const environmentKeys: Environment[] = ['quiet', 'together', 'variety', 'motion'];
+const frictionKeys: Friction[] = ['switching', 'ambiguity', 'access', 'stagnation'];
+const purposeKeys: Purpose[] = ['build', 'guide', 'create', 'connect'];
+
+function calculateDesign(firstName: string, lastName: string, birthDate: string): CalculatedProfile {
+  const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
+  const normalized = fullName.toLocaleUpperCase('tr-TR').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  const nameScore = [...normalized].reduce((sum, character, index) => sum + (character.codePointAt(0) ?? 0) * (index + 1), 0);
+  const [year = 0, month = 0, day = 0] = birthDate.split('-').map(Number);
+  const dateScore = [...birthDate.replace(/\D/g, '')].reduce((sum, character) => sum + Number(character), 0);
+  return { fullName: fullName || 'Your profile', decision: decisionKeys[(day + nameScore) % 4], environment: environmentKeys[(month + nameScore + dateScore) % 4], friction: frictionKeys[(year + day + nameScore) % 4], purpose: purposeKeys[(dateScore + month + nameScore) % 4] };
+}
+
 export default function App() {
   const [locale, setLocale] = useState<Locale>('en');
-  const [name, setName] = useState('Derya');
-  const [goal, setGoal] = useState<Goal>('space');
-  const [mindState, setMindState] = useState<MindState>('busy');
-  const [result, setResult] = useState({ name: 'Derya', goal: 'space' as Goal, mindState: 'busy' as MindState });
-  const text = copy[locale];
-  const goalCard = text.goalsContent[result.goal];
-  const stateCard = text.statesContent[result.mindState];
+  const [done, setDone] = useState(false);
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+  const [profile, setProfile] = useState(() => calculateDesign('Alex', 'Morgan', '1992-07-16'));
+  const text = content[locale];
+  const cards = useMemo(() => [text.decision[profile.decision], text.environments[profile.environment], text.frictions[profile.friction], text.purposes[profile.purpose]], [text, profile]);
+
+  function submit() {
+    if (!firstName.trim() || !lastName.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return;
+    setProfile(calculateDesign(firstName, lastName, birthDate));
+    setDone(true);
+  }
+
+  if (done) return (
+    <SafeAreaView style={styles.safe}><StatusBar style="light" /><ScrollView contentContainerStyle={styles.resultPage}>
+      <View style={styles.brandRow}><View style={styles.mark}><Text style={styles.markText}>H</Text></View><Text style={styles.brand}>HOLYARTED</Text><Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')}><Text style={styles.languageText}>{text.switch}</Text></Pressable></View>
+      <Text style={styles.resultLabel}>YOUR PERSONAL DESIGN · {profile.fullName.toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : 'en-US')}</Text><Text style={styles.resultTitle}>{text.names[profile.purpose]}</Text><Text style={styles.resultIntro}>{text.intros[profile.purpose]}</Text>
+      <View style={styles.resultGrid}>{cards.map(([title, body], index) => <View key={title} style={styles.resultCard}><Text style={styles.cardIndex}>0{index + 1} · {text.headings[index]}</Text><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardBody}>{body}</Text></View>)}</View>
+      <Pressable style={styles.darkButton} onPress={() => setDone(false)}><Text style={styles.darkButtonText}>←  {text.reset}</Text></Pressable><Text style={styles.note}>{text.note}</Text>
+    </ScrollView></SafeAreaView>
+  );
 
   return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      <KeyboardAvoidingView style={styles.flex} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-        <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-          <View style={styles.brandRow}>
-            <View style={styles.brandMark}><Text style={styles.brandMarkText}>H</Text></View>
-            <Text style={styles.brand}>HOLYARTED</Text>
-            <Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')} accessibilityRole="button" accessibilityLabel="Change language"><Text style={styles.languageText}>{text.toggle}</Text></Pressable>
-          </View>
-
-          <View style={styles.hero}>
-            <Text style={styles.kicker}>{text.kicker}</Text>
-            <Text style={styles.title}>{text.title}</Text>
-            <Text style={styles.subtitle}>{text.subtitle}</Text>
-            <View style={styles.reassuranceRow}><Text style={styles.reassurance}>✓ {locale === 'en' ? 'No labels' : 'Etiket yok'}</Text><Text style={styles.reassurance}>✓ {locale === 'en' ? 'No prediction' : 'Öngörü yok'}</Text></View>
-          </View>
-
-          <View style={styles.formCard}>
-            <Text style={styles.formTitle}>{text.formTitle}</Text>
-            <Text style={styles.formCopy}>{text.formCopy}</Text>
-            <Text style={styles.label}>{text.nameLabel}</Text>
-            <TextInput value={name} onChangeText={setName} placeholder={text.namePlaceholder} placeholderTextColor="#80918B" style={styles.input} autoCapitalize="words" />
-
-            <Text style={styles.label}>{text.goalLabel}</Text>
-            <View style={styles.optionGrid}>{(Object.keys(text.goals) as Goal[]).map((item) => <Pressable key={item} onPress={() => setGoal(item)} style={[styles.option, goal === item && styles.optionSelected]}><Text style={[styles.optionText, goal === item && styles.optionTextSelected]}>{text.goals[item]}</Text></Pressable>)}</View>
-
-            <Text style={styles.label}>{text.stateLabel}</Text>
-            <View style={styles.pillRow}>{(Object.keys(text.states) as MindState[]).map((item) => <Pressable key={item} onPress={() => setMindState(item)} style={[styles.pill, mindState === item && styles.pillSelected]}><Text style={[styles.pillText, mindState === item && styles.pillTextSelected]}>{text.states[item]}</Text></Pressable>)}</View>
-
-            <Pressable style={({ pressed }) => [styles.button, pressed && styles.buttonPressed]} onPress={() => setResult({ name: name.trim() || (locale === 'en' ? 'You' : 'Sen'), goal, mindState })}><Text style={styles.buttonText}>{text.submit}</Text><Text style={styles.buttonArrow}>→</Text></Pressable>
-          </View>
-
-          <View style={styles.resultHeader}><Text style={styles.resultKicker}>{text.resultKicker} · {result.name.toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : 'en-US')}</Text><Text style={styles.resultTitle}>{text.resultTitle}</Text><Text style={styles.resultIntro}>{text.resultCopy}</Text></View>
-          {[[text.start, goalCard[0], goalCard[1]], [text.remember, stateCard[0], stateCard[1]], [text.practice, text.nextStep, stateCard[2]]].map(([eyebrow, title, body], index) => <View key={eyebrow} style={[styles.resultCard, index === 1 && styles.resultCardLavender]}><View style={styles.cardHandle} /><Text style={styles.cardEyebrow}>{eyebrow}</Text><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardCopy}>{body}</Text></View>)}
-          <Text style={styles.footer}>{text.footer}</Text>
-        </ScrollView>
-      </KeyboardAvoidingView>
-    </SafeAreaView>
+    <SafeAreaView style={styles.safe}><StatusBar style="light" /><ScrollView contentContainerStyle={styles.page}>
+      <View style={styles.brandRow}><View style={styles.mark}><Text style={styles.markText}>H</Text></View><Text style={styles.brand}>HOLYARTED</Text><Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')}><Text style={styles.languageText}>{text.switch}</Text></Pressable></View>
+      <View style={styles.hero}><Text style={styles.edition}>{text.edition}</Text><Text style={styles.title}>{text.title}</Text><Text style={styles.intro}>{text.intro}</Text><View style={styles.trustRow}>{text.trust.map((item) => <Text key={item} style={styles.trust}>✓ {item}</Text>)}</View></View>
+      <View style={styles.session}><View style={styles.sessionTop}><Text style={styles.sessionTopText}>{text.private}</Text><Text style={styles.lock}>◇</Text></View><View style={styles.sessionBody}><View style={styles.progressText}><Text style={styles.micro}>{text.progress}</Text><Text style={styles.microGold}>PERSONAL INPUT</Text></View><View style={styles.track}><View style={[styles.trackFill, { width: '100%' }]} /></View><View style={styles.fields}><Text style={styles.fieldLabel}>{text.firstName}</Text><TextInput value={firstName} onChangeText={setFirstName} placeholder={text.firstPlaceholder} placeholderTextColor="rgba(255,255,255,.25)" style={styles.input} autoCapitalize="words" autoComplete="name-given" /><Text style={styles.fieldLabel}>{text.lastName}</Text><TextInput value={lastName} onChangeText={setLastName} placeholder={text.lastPlaceholder} placeholderTextColor="rgba(255,255,255,.25)" style={styles.input} autoCapitalize="words" autoComplete="name-family" /><Text style={styles.fieldLabel}>{text.birthDate}</Text><TextInput value={birthDate} onChangeText={setBirthDate} placeholder="YYYY-MM-DD" placeholderTextColor="rgba(255,255,255,.25)" style={styles.input} keyboardType="numbers-and-punctuation" maxLength={10} autoComplete="birthdate-full" /></View><Text style={styles.inputNote}>{text.inputNote}</Text><Pressable style={styles.goldButtonWide} onPress={submit}><Text style={styles.goldButtonText}>{text.reveal}  →</Text></Pressable></View></View>
+      <Text style={styles.note}>{text.note}</Text>
+    </ScrollView></SafeAreaView>
   );
 }
 
-const ink = '#18332E';
-const cream = '#F7F4ED';
-const paper = '#FFFDF8';
-const sage = '#DCE9E4';
-const coral = '#ED8F70';
-const muted = '#62736E';
+const ink = '#111411';
+const panel = '#1A1E1A';
+const ivory = '#F3EFE7';
+const bronze = '#C99A67';
+const gold = '#D5A66F';
 const display = Platform.select({ ios: 'Georgia', android: 'serif', default: 'serif' });
 
 const styles = StyleSheet.create({
-  flex: { flex: 1 }, safeArea: { flex: 1, backgroundColor: cream }, content: { paddingBottom: 56 },
-  brandRow: { minHeight: 76, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: paper, borderBottomWidth: 1, borderBottomColor: '#DDE2DD' },
-  brandMark: { width: 38, height: 38, borderRadius: 13, backgroundColor: ink, alignItems: 'center', justifyContent: 'center' }, brandMarkText: { color: paper, fontFamily: display, fontSize: 20, fontWeight: '700' },
-  brand: { marginLeft: 12, color: ink, letterSpacing: 3.4, fontSize: 14, fontWeight: '800' }, language: { marginLeft: 'auto', borderWidth: 1, borderColor: '#C8D0CB', borderRadius: 20, paddingHorizontal: 13, paddingVertical: 8, backgroundColor: paper }, languageText: { color: ink, fontSize: 11, fontWeight: '800' },
-  hero: { backgroundColor: sage, paddingHorizontal: 20, paddingTop: 42, paddingBottom: 36 }, kicker: { color: '#52786C', letterSpacing: 1.8, fontWeight: '800', fontSize: 10, marginBottom: 16 }, title: { color: ink, fontFamily: display, fontSize: 54, lineHeight: 51, letterSpacing: -1.8 }, subtitle: { color: '#4F6560', lineHeight: 23, marginTop: 20, fontSize: 15 },
-  reassuranceRow: { flexDirection: 'row', gap: 8, marginTop: 22, flexWrap: 'wrap' }, reassurance: { backgroundColor: '#F4F8F6', color: '#35524B', borderRadius: 18, paddingHorizontal: 12, paddingVertical: 8, fontSize: 11, fontWeight: '700' },
-  formCard: { backgroundColor: paper, borderRadius: 26, padding: 22, marginHorizontal: 16, marginTop: -2, shadowColor: '#2D4E44', shadowOpacity: 0.1, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 3 },
-  formTitle: { color: ink, fontFamily: display, fontSize: 31, lineHeight: 35 }, formCopy: { color: muted, fontSize: 13, lineHeight: 20, marginTop: 6, marginBottom: 24 }, label: { color: ink, fontSize: 13, fontWeight: '700', marginBottom: 9, marginTop: 5 },
-  input: { height: 50, borderRadius: 16, borderWidth: 1, borderColor: '#D6DDD8', backgroundColor: cream, color: ink, paddingHorizontal: 15, fontSize: 16, marginBottom: 20 },
-  optionGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }, option: { width: '48%', minHeight: 48, borderRadius: 16, borderWidth: 1, borderColor: '#D6DDD8', justifyContent: 'center', paddingHorizontal: 12, backgroundColor: paper }, optionSelected: { backgroundColor: sage, borderColor: '#52786C' }, optionText: { color: muted, fontSize: 12, fontWeight: '700' }, optionTextSelected: { color: ink },
-  pillRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 7, marginBottom: 22 }, pill: { borderRadius: 18, borderWidth: 1, borderColor: '#D6DDD8', paddingHorizontal: 13, paddingVertical: 9, backgroundColor: paper }, pillSelected: { backgroundColor: ink, borderColor: ink }, pillText: { color: muted, fontSize: 12, fontWeight: '700' }, pillTextSelected: { color: paper },
-  button: { height: 54, borderRadius: 17, backgroundColor: coral, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, buttonPressed: { opacity: 0.82, transform: [{ scale: 0.99 }] }, buttonText: { color: ink, fontSize: 15, fontWeight: '800' }, buttonArrow: { color: ink, fontSize: 22 },
-  resultHeader: { paddingHorizontal: 20, paddingTop: 54, paddingBottom: 20 }, resultKicker: { color: '#52786C', fontSize: 10, letterSpacing: 1.8, fontWeight: '800' }, resultTitle: { color: ink, fontFamily: display, fontSize: 43, lineHeight: 44, marginTop: 9 }, resultIntro: { color: muted, fontSize: 13, lineHeight: 21, marginTop: 14 },
-  resultCard: { backgroundColor: paper, borderRadius: 24, padding: 22, marginHorizontal: 16, marginBottom: 12, minHeight: 220, borderWidth: 1, borderColor: '#E0E3DE' }, resultCardLavender: { backgroundColor: '#E9E3F0', borderColor: '#DED5E7' }, cardHandle: { width: 42, height: 5, borderRadius: 3, backgroundColor: '#A9CBC0', marginBottom: 32 }, cardEyebrow: { color: '#52786C', fontSize: 10, letterSpacing: 1.6, fontWeight: '800' }, cardTitle: { color: ink, fontFamily: display, fontSize: 29, lineHeight: 32, marginTop: 8 }, cardCopy: { color: muted, fontSize: 14, lineHeight: 23, marginTop: 13 },
-  footer: { color: '#7B8985', textAlign: 'center', lineHeight: 20, fontSize: 11, marginTop: 22, paddingHorizontal: 28 },
+  safe: { flex: 1, backgroundColor: ink }, page: { backgroundColor: ink, paddingBottom: 44 }, resultPage: { backgroundColor: bronze, minHeight: '100%', paddingBottom: 48 },
+  brandRow: { height: 72, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.12)', backgroundColor: ink },
+  mark: { width: 34, height: 34, borderWidth: 1, borderColor: 'rgba(213,166,111,.65)', alignItems: 'center', justifyContent: 'center' }, markText: { color: gold, fontFamily: display, fontSize: 17 }, brand: { color: ivory, marginLeft: 11, fontSize: 12, fontWeight: '800', letterSpacing: 3 }, language: { marginLeft: 'auto', borderWidth: 1, borderColor: 'rgba(255,255,255,.2)', paddingHorizontal: 12, paddingVertical: 8 }, languageText: { color: gold, fontWeight: '800', fontSize: 10 },
+  hero: { paddingHorizontal: 20, paddingTop: 44, paddingBottom: 36 }, edition: { color: gold, fontSize: 9, fontWeight: '800', letterSpacing: 1.9 }, title: { color: ivory, fontFamily: display, fontSize: 58, lineHeight: 56, letterSpacing: -2.2, marginTop: 18 }, intro: { color: 'rgba(243,239,231,.58)', fontSize: 15, lineHeight: 24, marginTop: 22 }, trustRow: { marginTop: 24, gap: 9 }, trust: { color: 'rgba(243,239,231,.5)', fontSize: 11 },
+  session: { marginHorizontal: 14, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', backgroundColor: panel }, sessionTop: { paddingHorizontal: 18, height: 52, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(255,255,255,.1)' }, sessionTopText: { color: gold, fontSize: 9, fontWeight: '800', letterSpacing: 1.6 }, lock: { color: 'rgba(255,255,255,.35)', marginLeft: 'auto' }, sessionBody: { padding: 20 }, progressText: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 }, micro: { color: 'rgba(255,255,255,.35)', fontSize: 8, fontWeight: '800', letterSpacing: 1 }, microGold: { color: gold, fontSize: 8, fontWeight: '800', letterSpacing: 1 }, track: { height: 1, backgroundColor: 'rgba(255,255,255,.1)', marginTop: 12 }, trackFill: { height: 1, backgroundColor: gold }, question: { color: ivory, fontFamily: display, fontSize: 30, lineHeight: 34, marginTop: 28 }, options: { gap: 8, marginTop: 22 }, option: { minHeight: 82, borderWidth: 1, borderColor: 'rgba(255,255,255,.11)', padding: 15 }, optionSelected: { borderColor: gold, backgroundColor: 'rgba(213,166,111,.09)' }, optionTop: { flexDirection: 'row', alignItems: 'flex-start' }, optionTitle: { color: ivory, fontSize: 13, fontWeight: '700', flex: 1 }, optionBody: { color: 'rgba(255,255,255,.42)', fontSize: 11, lineHeight: 17, marginTop: 6, paddingRight: 28 }, radio: { width: 17, height: 17, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(255,255,255,.25)', alignItems: 'center', justifyContent: 'center' }, radioSelected: { backgroundColor: gold, borderColor: gold }, check: { color: ink, fontSize: 10, fontWeight: '900' }, actions: { marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, back: { color: 'rgba(255,255,255,.48)', fontSize: 11, fontWeight: '700' }, disabled: { opacity: 0.2 }, goldButton: { minHeight: 48, backgroundColor: bronze, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' }, goldButtonText: { color: ink, fontSize: 11, fontWeight: '800' }, note: { color: 'rgba(243,239,231,.36)', fontSize: 10, lineHeight: 17, textAlign: 'center', paddingHorizontal: 30, marginTop: 24 },
+  fields: { marginTop: 28 }, fieldLabel: { color: 'rgba(243,239,231,.65)', fontSize: 11, fontWeight: '700', marginBottom: 7 }, input: { height: 54, borderWidth: 1, borderColor: 'rgba(255,255,255,.15)', color: ivory, paddingHorizontal: 14, fontSize: 15, marginBottom: 17, backgroundColor: 'rgba(255,255,255,.025)' }, inputNote: { color: 'rgba(243,239,231,.34)', fontSize: 10, lineHeight: 16, marginTop: 2 }, goldButtonWide: { minHeight: 52, backgroundColor: bronze, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 20 },
+  resultLabel: { color: 'rgba(17,20,17,.6)', fontSize: 9, fontWeight: '800', letterSpacing: 2, marginTop: 44, paddingHorizontal: 20 }, resultTitle: { color: ink, fontFamily: display, fontSize: 58, lineHeight: 55, letterSpacing: -2, paddingHorizontal: 20, marginTop: 16 }, resultIntro: { color: 'rgba(17,20,17,.68)', fontSize: 15, lineHeight: 24, paddingHorizontal: 20, marginTop: 22 }, resultGrid: { marginTop: 36, borderTopWidth: 1, borderTopColor: 'rgba(17,20,17,.2)' }, resultCard: { minHeight: 210, borderBottomWidth: 1, borderBottomColor: 'rgba(17,20,17,.2)', padding: 22 }, cardIndex: { color: 'rgba(17,20,17,.54)', fontSize: 9, fontWeight: '800', letterSpacing: 1.3 }, cardTitle: { color: ink, fontFamily: display, fontSize: 31, lineHeight: 34, marginTop: 30 }, cardBody: { color: 'rgba(17,20,17,.66)', fontSize: 13, lineHeight: 21, marginTop: 12 }, darkButton: { backgroundColor: ink, marginHorizontal: 20, marginTop: 30, minHeight: 50, alignItems: 'center', justifyContent: 'center' }, darkButtonText: { color: ivory, fontSize: 11, fontWeight: '800' },
 });
