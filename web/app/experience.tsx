@@ -1,133 +1,191 @@
 'use client';
 
 import { FormEvent, useEffect, useState } from 'react';
-import { ArrowRight, Compass, Gem, LogIn, LogOut, MoonStar, Sparkles, UserRound } from 'lucide-react';
+import {
+  ArrowRight,
+  Check,
+  Cloud,
+  Focus,
+  LogIn,
+  LogOut,
+  Pause,
+  ShieldCheck,
+  UserRound,
+  Waves,
+} from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Field, FieldGroup, FieldLabel } from '@/components/ui/field';
 import { Input } from '@/components/ui/input';
-import { calculateProfile } from '@/lib/numerology';
 
 type Locale = 'en' | 'tr';
+type Goal = 'space' | 'focus' | 'slow' | 'boundary';
+type MindState = 'busy' | 'restless' | 'tired' | 'steady';
+
 type ExperienceProps = {
   user: { displayName: string; email: string } | null;
   signInPath: string;
   signOutPath: string;
 };
 
-const energyNames: Record<Locale, Record<number, string>> = {
-  en: { 1: 'The Pioneer', 2: 'The Harmonizer', 3: 'The Creator', 4: 'The Builder', 5: 'The Free Spirit', 6: 'The Nurturer', 7: 'The Seeker', 8: 'The Alchemist', 9: 'The Humanitarian', 11: 'The Visionary', 22: 'The Master Builder', 33: 'The Guide' },
-  tr: { 1: 'Öncü', 2: 'Dengeleyici', 3: 'Yaratıcı', 4: 'İnşa eden', 5: 'Özgür ruh', 6: 'Şefkatli', 7: 'Bilge', 8: 'Dönüştürücü', 9: 'Şifacı', 11: 'İlham veren', 22: 'Usta kurucu', 33: 'Evrensel rehber' },
-};
-
-const numberEssence: Record<number, string> = {
-  1: 'independence, courage, and the instinct to begin',
-  2: 'empathy, diplomacy, and the art of creating harmony',
-  3: 'expression, playfulness, and magnetic creativity',
-  4: 'discipline, loyalty, and the power of solid foundations',
-  5: 'freedom, curiosity, and an appetite for change',
-  6: 'care, responsibility, and a deep sense of beauty',
-  7: 'insight, analysis, and a search for hidden truth',
-  8: 'ambition, influence, and the ability to shape outcomes',
-  9: 'compassion, imagination, and service to something larger',
-  11: 'intuition, inspiration, and an electric inner vision',
-  22: 'vision paired with the patience to build at scale',
-  33: 'compassionate leadership and a gift for elevating others',
-};
-
 const ui = {
   en: {
-    navMap: 'Your map', navReading: 'Reading', navMethod: 'How it works', signIn: 'Sign in', account: 'My account', signOut: 'Sign out', eyebrow: 'Remember your own rhythm',
-    heroA: 'Read the map', heroB: 'within you.', heroCopy: 'Your name and birth date hold a quiet signature—one that reveals the patterns, gifts, and directions shaping your story.',
-    stat1: 'Core energy', stat2: 'Main themes', stat3: 'Possibility', formKicker: 'Personal map', formTitle: 'Where does your journey begin?',
-    name: 'Your name', namePlaceholder: 'Enter your name', birth: 'Date of birth', open: 'Reveal my map', vibration: 'core vibration', mirror: 'A mirror, not a verdict',
-    resultsKicker: 'personal reading', resultsTitle: 'The story your numbers tell.', resultsCopy: 'This map is not a fixed prediction. It is a mirror for noticing your patterns, understanding your choices, and asking better questions.',
-    readMore: 'Read the full interpretation', readLess: 'Show less', sectionEyebrows: ['Core energy', 'Natural gift', 'Direction of growth'], sectionTitles: ['How do you meet the world?', 'The strength that moves through you', 'Where can your potential expand?'],
-    accountKickerIn: 'Your space is open', accountKickerOut: 'Your personal space', accountTitleIn: 'Welcome back', accountTitleOut: 'Continue your journey with an account.',
-    accountCopyIn: 'View your account details or sign out securely whenever you wish.', accountCopyOut: 'Sign in securely with your ChatGPT account. There is no separate password to create.',
-    openAccount: 'Open my account', chatgpt: 'Sign in with ChatGPT', howKicker: 'Three lenses, one story', howTitle: 'A simple ritual for deeper self-knowledge.',
-    features: [['Life direction', 'See the central motivation behind the choices you make.'], ['Natural ability', 'Notice the strength that comes so easily you may overlook it.'], ['Inner rhythm', 'Understand what restores your energy and where you seek balance.']],
+    navCheckIn: 'Check in', navGuide: 'Your guide', navApproach: 'Our approach',
+    signIn: 'Sign in', account: 'My account', signOut: 'Sign out',
+    kicker: 'A quieter way to check in', title: 'Make room for what matters.',
+    subtitle: 'A private, low-pressure space to notice what you need and choose one small next step.',
+    formTitle: 'How are you arriving today?', formCopy: 'There are no right answers. Choose what feels closest.',
+    nameLabel: 'What should we call you?', namePlaceholder: 'Your name',
+    goalLabel: 'What would help most right now?', stateLabel: 'How does your mind feel?', submit: 'Build my guide',
+    goals: { space: 'Clear my head', focus: 'Find focus', slow: 'Slow down', boundary: 'Set a boundary' },
+    states: { busy: 'Busy', restless: 'Restless', tired: 'Tired', steady: 'Steady' },
+    resultKicker: 'Your check-in', resultTitle: 'A gentler plan for today.', resultCopy: 'Use what helps, leave what does not. This is a practical reflection—not a label or a diagnosis.',
+    start: 'Start here', remember: 'Keep in mind', practice: 'Try this now',
+    goalsContent: {
+      space: ['Reduce the incoming noise', 'Your attention may need fewer open loops, not more effort.', 'Close one tab, silence one alert, and write down the one thing you do not want to forget.'],
+      focus: ['Choose one clear finish line', 'Focus gets easier when the next action is visible and small.', 'Pick one task that can be completed in a short block. Let everything else wait outside that block.'],
+      slow: ['Lower the pace on purpose', 'A slower moment can make the rest of the day feel more workable.', 'Give yourself a transition with no input: stretch, make tea, or look outside before moving on.'],
+      boundary: ['Protect a little room', 'A useful boundary can be quiet, specific, and kind.', 'Decide what is not available today, then communicate it in one clear sentence without over-explaining.'],
+    },
+    statesContent: {
+      busy: ['Your mind is carrying a lot', 'Trying to hold everything at once can make each task feel equally urgent.', 'Put every loose thought on paper. Circle only the item that truly needs your attention next.'],
+      restless: ['Your attention wants movement', 'Restlessness is often easier to work with than to argue against.', 'Stand up, change rooms, or take a brief walk. Return when your body feels more settled.'],
+      tired: ['Make the plan smaller', 'When capacity is low, a reduced plan is a smart adjustment—not a failure.', 'Choose the minimum useful version of today’s task and give yourself permission to stop there.'],
+      steady: ['Use the steadiness you have', 'A settled moment is a good time to make one thoughtful choice.', 'Choose a meaningful task, protect a clean block for it, and finish before adding something new.'],
+    },
+    approachKicker: 'Built for real life', approachTitle: 'Reflection without labels, pressure, or prediction.',
+    principles: [
+      ['Led by your answers', 'Your guide responds to what you share today. It does not claim to define who you are.'],
+      ['Small enough to use', 'Every suggestion is designed to fit into an ordinary day, even when time is limited.'],
+      ['Clear about its role', 'Holyarted supports everyday reflection. It is not medical care or a diagnostic tool.'],
+    ],
+    accountKickerIn: 'Your account is ready', accountKickerOut: 'Optional account',
+    accountTitleIn: 'Welcome back', accountTitleOut: 'Keep your account access simple.',
+    accountCopyIn: 'View your account details or sign out securely whenever you wish.',
+    accountCopyOut: 'Sign in with ChatGPT when you want an account area. You can use the check-in without signing in.',
+    openAccount: 'Open my account', chatgpt: 'Sign in with ChatGPT',
+    footer: 'A calm place for everyday reflection.',
   },
   tr: {
-    navMap: 'Haritan', navReading: 'Yorumun', navMethod: 'Nasıl çalışır?', signIn: 'Giriş yap', account: 'Hesabım', signOut: 'Çıkış yap', eyebrow: 'Kendi ritmini hatırla',
-    heroA: 'İçindeki haritayı', heroB: 'oku.', heroCopy: 'İsmin ve doğum tarihin; karakterinin, yeteneklerinin ve hayat yönünün sessiz bir imzasını taşır.',
-    stat1: 'Öz enerji', stat2: 'Ana tema', stat3: 'Olasılık', formKicker: 'Kişisel harita', formTitle: 'Yolculuğun nerede başlıyor?',
-    name: 'Adın', namePlaceholder: 'Adını yaz', birth: 'Doğum tarihin', open: 'Haritamı aç', vibration: 'için ana titreşim', mirror: 'Bir hüküm değil, bir ayna',
-    resultsKicker: 'kişisel yorum', resultsTitle: 'Sayıların sende anlattığı hikâye.', resultsCopy: 'Bu harita kesin bir kader anlatısı değil; kendini görmek, seçimlerini anlamak ve yeni sorular sormak için bir aynadır.',
-    readMore: 'Yorumun tamamını oku', readLess: 'Kısalt', sectionEyebrows: ['Öz enerji', 'Doğal yetenek', 'Üretim yönü'], sectionTitles: ['Dünyaya nasıl görünüyorsun?', 'Sende zahmetsizce akan güç', 'Potansiyelini nerede büyütürsün?'],
-    accountKickerIn: 'Kişisel alanın açık', accountKickerOut: 'Kişisel alan', accountTitleIn: 'Yeniden hoş geldin', accountTitleOut: 'Yolculuğuna bir hesapla devam et.',
-    accountCopyIn: 'Hesap bilgilerini görüntüleyebilir veya dilediğin zaman güvenle çıkış yapabilirsin.', accountCopyOut: 'ChatGPT hesabınla güvenli biçimde giriş yap; ayrı bir parola oluşturman gerekmez.',
-    openAccount: 'Hesabımı aç', chatgpt: 'ChatGPT ile giriş yap', howKicker: 'Üç bakış, tek hikâye', howTitle: 'Kendini daha derinden tanımak için sade bir ritüel.',
-    features: [['Hayat yönün', 'Kararlarının arkasındaki ana motivasyonu görünür kıl.'], ['Doğal yeteneğin', 'Sana kolay gelen ama bazen fark etmediğin gücü keşfet.'], ['İçsel ritmin', 'Enerjini neyin yükselttiğini ve nerede denge aradığını anla.']],
+    navCheckIn: 'Check-in', navGuide: 'Rehberin', navApproach: 'Yaklaşımımız',
+    signIn: 'Giriş yap', account: 'Hesabım', signOut: 'Çıkış yap',
+    kicker: 'Kendine bakmanın daha sakin bir yolu', title: 'Önemli olana yer aç.',
+    subtitle: 'Neye ihtiyaç duyduğunu fark etmek ve küçük bir sonraki adım seçmek için sakin, baskısız bir alan.',
+    formTitle: 'Bugüne nasıl geliyorsun?', formCopy: 'Doğru cevap yok. Sana en yakın geleni seç.',
+    nameLabel: 'Sana nasıl hitap edelim?', namePlaceholder: 'Adın',
+    goalLabel: 'Şu an en çok ne yardımcı olur?', stateLabel: 'Zihnin şu an nasıl?', submit: 'Rehberimi oluştur',
+    goals: { space: 'Zihnimi boşaltmak', focus: 'Odaklanmak', slow: 'Yavaşlamak', boundary: 'Sınır koymak' },
+    states: { busy: 'Dolu', restless: 'Huzursuz', tired: 'Yorgun', steady: 'Dengeli' },
+    resultKicker: 'Bugünkü check-in’in', resultTitle: 'Bugün için daha yumuşak bir plan.', resultCopy: 'İşine yarayanı al, yaramayanı bırak. Bu pratik bir düşünme alanı; bir etiket veya tanı değil.',
+    start: 'Buradan başla', remember: 'Aklında olsun', practice: 'Şimdi dene',
+    goalsContent: {
+      space: ['Gelen uyaranı azalt', 'Dikkatinin daha fazla çabaya değil, daha az açık döngüye ihtiyacı olabilir.', 'Bir sekmeyi kapat, bir bildirimi sessize al ve unutmaman gereken tek şeyi bir yere yaz.'],
+      focus: ['Net bir bitiş çizgisi seç', 'Bir sonraki hareket görünür ve küçük olduğunda odaklanmak kolaylaşır.', 'Kısa bir çalışma diliminde tamamlanabilecek tek bir iş seç. Diğerlerini o sürenin dışında bırak.'],
+      slow: ['Hızı bilinçli olarak düşür', 'Kısa bir yavaşlama günün geri kalanını daha yönetilebilir hale getirebilir.', 'Bir sonraki işe geçmeden önce ekransız bir geçiş yarat: esne, çay hazırla veya dışarı bak.'],
+      boundary: ['Kendine küçük bir alan koru', 'İşe yarayan bir sınır sessiz, net ve nazik olabilir.', 'Bugün neyin mümkün olmadığına karar ver; fazla açıklama yapmadan tek bir cümleyle ifade et.'],
+    },
+    statesContent: {
+      busy: ['Zihnin çok şey taşıyor', 'Her şeyi aynı anda tutmaya çalışmak bütün işleri eşit derecede acil hissettirebilir.', 'Aklındaki açık işleri kâğıda dök. Sadece gerçekten sıradaki olanı işaretle.'],
+      restless: ['Dikkatin harekete ihtiyaç duyuyor', 'Huzursuzlukla tartışmak yerine ona küçük bir hareket alanı açmak daha kolay olabilir.', 'Ayağa kalk, oda değiştir veya kısa bir yürüyüş yap. Bedenin sakinleştiğinde geri dön.'],
+      tired: ['Planı küçült', 'Kapasiten düşükken planı azaltmak başarısızlık değil, akıllı bir ayarlamadır.', 'Bugünkü işin işe yarayan en küçük halini seç ve orada durmana izin ver.'],
+      steady: ['Elindeki dengeyi kullan', 'Sakin bir an, düşünülmüş tek bir seçim yapmak için iyi bir zamandır.', 'Anlamlı bir iş seç, ona temiz bir zaman aralığı ayır ve yenisini eklemeden önce bitir.'],
+    },
+    approachKicker: 'Gerçek hayat için', approachTitle: 'Etiket, baskı ve öngörü olmadan öz-farkındalık.',
+    principles: [
+      ['Cevaplarınla şekillenir', 'Rehberin bugün paylaştıklarına karşılık verir; kim olduğunu tanımladığını iddia etmez.'],
+      ['Uygulanabilecek kadar küçük', 'Her öneri, zamanın sınırlı olduğu günlerde bile sıradan hayatın içine sığacak şekilde tasarlanır.'],
+      ['Rolü konusunda net', 'Holyarted günlük öz-farkındalığı destekler; tıbbi bakım veya tanı aracı değildir.'],
+    ],
+    accountKickerIn: 'Hesabın hazır', accountKickerOut: 'İsteğe bağlı hesap',
+    accountTitleIn: 'Yeniden hoş geldin', accountTitleOut: 'Hesap erişimini sade tut.',
+    accountCopyIn: 'Hesap bilgilerini görüntüleyebilir veya dilediğin zaman güvenle çıkış yapabilirsin.',
+    accountCopyOut: 'Hesap alanı istediğinde ChatGPT ile giriş yap. Check-in’i giriş yapmadan da kullanabilirsin.',
+    openAccount: 'Hesabımı aç', chatgpt: 'ChatGPT ile giriş yap',
+    footer: 'Günlük öz-farkındalık için sakin bir alan.',
   },
 } as const;
-
-function englishInsight(number: number, section: number) {
-  const essence = numberEssence[number] ?? numberEssence[9];
-  const openings = [
-    `Your core number points to ${essence}. You tend to meet life through this frequency, especially when choices ask you to trust yourself.`,
-    `This part of your map reveals a natural gift for ${essence}. It becomes most powerful when you use it consciously rather than trying to prove it.`,
-    `Your growth direction is shaped by ${essence}. The invitation is to turn this potential into daily practice, honest work, and grounded decisions.`,
-  ];
-  const closings = [
-    'At its best, this energy feels clear and self-led. Under pressure, it may become overextended or guarded. Notice which version appears, then choose the more spacious expression.',
-    'Because this ability may feel ordinary to you, you can underestimate it. Give it structure, let others receive it, and allow repetition to turn instinct into mastery.',
-    'Progress comes from balancing vision with patience. Small, consistent choices will carry this number farther than intensity alone ever could.',
-  ];
-  return `${openings[section]}\n\n${closings[section]}`;
-}
 
 export function Experience({ user, signInPath, signOutPath }: ExperienceProps) {
   const [locale, setLocale] = useState<Locale>('en');
   const [name, setName] = useState('Derya');
-  const [birthDate, setBirthDate] = useState('1992-07-14');
-  const [profile, setProfile] = useState(() => calculateProfile('Derya', '1992-07-14'));
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [goal, setGoal] = useState<Goal>('space');
+  const [mindState, setMindState] = useState<MindState>('busy');
+  const [submittedName, setSubmittedName] = useState('Derya');
   const copy = ui[locale];
 
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
 
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setProfile(calculateProfile(name, birthDate));
-    setExpanded(null);
-    window.setTimeout(() => document.querySelector('#reading')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+    setSubmittedName(name.trim() || (locale === 'en' ? 'You' : 'Sen'));
+    window.setTimeout(() => document.querySelector('#guide')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
   }
 
+  const goalCard = copy.goalsContent[goal];
+  const stateCard = copy.statesContent[mindState];
+
   return (
-    <main className="min-h-screen overflow-hidden bg-[#f3efe5] text-[#17312b]">
-      <nav className="relative z-30 flex min-h-24 items-center bg-[#fbfaf6] px-5 md:px-10">
-        <div className="mx-auto flex w-full max-w-7xl items-center justify-between">
-          <a href="#top" className="flex items-center gap-3" aria-label="Holyarted home"><span className="grid size-10 place-items-center rounded-full bg-[#17312b] text-[#d6aa5c]"><Sparkles className="size-4" /></span><span className="text-sm font-extrabold tracking-[0.2em]">HOLYARTED</span></a>
+    <main className="min-h-screen bg-[#f7f4ed] text-[#18332e]">
+      <nav className="sticky top-0 z-30 border-b border-[#18332e]/10 bg-[#fffdf8]/95 px-5 backdrop-blur md:px-10">
+        <div className="mx-auto flex min-h-20 max-w-7xl items-center justify-between">
+          <a href="#top" className="flex items-center gap-3" aria-label="Holyarted home">
+            <span className="grid size-10 place-items-center rounded-[0.9rem] bg-[#18332e] text-[#fffdf8]"><Waves className="size-5" /></span>
+            <span className="text-sm font-extrabold tracking-[0.18em]">HOLYARTED</span>
+          </a>
           <div className="hidden items-center gap-7 text-sm font-semibold md:flex">
-            <a href="#map" className="transition-colors hover:text-[#a8782d]">{copy.navMap}</a><a href="#reading" className="transition-colors hover:text-[#a8782d]">{copy.navReading}</a><a href="#method" className="transition-colors hover:text-[#a8782d]">{copy.navMethod}</a>
-            <div className="flex rounded-full border border-[#17312b]/15 bg-white p-1" aria-label="Language">{(['en', 'tr'] as Locale[]).map((item) => <button key={item} type="button" onClick={() => setLocale(item)} className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase transition-colors ${locale === item ? 'bg-[#17312b] text-white' : 'text-[#66716d] hover:text-[#17312b]'}`} aria-pressed={locale === item}>{item}</button>)}</div>
-            {user ? <a href="/profile" className="inline-flex items-center gap-2 border-2 border-[#17312b] px-5 py-3 text-xs font-extrabold uppercase tracking-wider"><UserRound className="size-4" /> {copy.account}</a> : <a href={signInPath} target="_top" className="inline-flex items-center gap-2 bg-[#17312b] px-5 py-3 text-xs font-extrabold uppercase tracking-wider text-white"><LogIn className="size-4" /> {copy.signIn}</a>}
+            <a href="#check-in" className="hover:text-[#52786c]">{copy.navCheckIn}</a>
+            <a href="#guide" className="hover:text-[#52786c]">{copy.navGuide}</a>
+            <a href="#approach" className="hover:text-[#52786c]">{copy.navApproach}</a>
+            <div className="flex rounded-full border border-[#18332e]/15 bg-white p-1" aria-label="Language">
+              {(['en', 'tr'] as Locale[]).map((item) => <button key={item} type="button" onClick={() => setLocale(item)} className={`rounded-full px-3 py-1.5 text-xs font-bold uppercase ${locale === item ? 'bg-[#18332e] text-white' : 'text-[#62736e]'}`} aria-pressed={locale === item}>{item}</button>)}
+            </div>
+            {user ? <a href="/profile" className="inline-flex items-center gap-2 rounded-full border border-[#18332e]/25 px-5 py-2.5"><UserRound className="size-4" /> {copy.account}</a> : <a href={signInPath} target="_top" className="inline-flex items-center gap-2 rounded-full bg-[#18332e] px-5 py-2.5 text-white"><LogIn className="size-4" /> {copy.signIn}</a>}
           </div>
-          <div className="flex items-center gap-2 md:hidden"><button type="button" onClick={() => setLocale(locale === 'en' ? 'tr' : 'en')} className="grid size-11 place-items-center rounded-full border border-[#17312b]/20 bg-white text-xs font-extrabold uppercase">{locale === 'en' ? 'TR' : 'EN'}</button><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="grid size-11 place-items-center rounded-full bg-[#17312b] text-[#d6aa5c]" aria-label={user ? copy.account : copy.signIn}>{user ? <UserRound className="size-5" /> : <LogIn className="size-5" />}</a></div>
+          <div className="flex items-center gap-2 md:hidden">
+            <button type="button" onClick={() => setLocale(locale === 'en' ? 'tr' : 'en')} className="grid size-10 place-items-center rounded-full border border-[#18332e]/15 bg-white text-xs font-extrabold">{locale === 'en' ? 'TR' : 'EN'}</button>
+            <a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="grid size-10 place-items-center rounded-full bg-[#18332e] text-white" aria-label={user ? copy.account : copy.signIn}>{user ? <UserRound className="size-4" /> : <LogIn className="size-4" />}</a>
+          </div>
         </div>
       </nav>
 
-      <section id="top" className="hero-field relative isolate min-h-[650px] overflow-hidden bg-[#102922] text-[#fbfaf6]">
-        <div className="hero-stars absolute inset-0 opacity-70" aria-hidden="true" />
-        <div className="absolute -right-36 top-8 size-[560px] rounded-full border border-[#d6aa5c]/30 md:right-10 md:size-[720px]" aria-hidden="true"><div className="absolute inset-[12%] rounded-full border border-[#d6aa5c]/20" /><div className="absolute inset-[31%] grid place-items-center rounded-full border border-[#d6aa5c]/35"><Sparkles className="size-14 text-[#d6aa5c]/75" /></div></div>
-        <div className="relative mx-auto flex min-h-[650px] w-full max-w-7xl items-end px-5 pb-16 pt-28 md:px-10 md:pb-20"><div className="max-w-4xl"><p className="mb-6 flex items-center gap-3 text-xs font-bold uppercase tracking-[0.24em] text-[#d6aa5c]"><MoonStar className="size-4" /> {copy.eyebrow}</p><h1 className="max-w-4xl text-[clamp(4rem,9vw,8.7rem)] font-extrabold leading-[0.82] tracking-[-0.065em]">{copy.heroA}<br /><span className="font-heading font-medium italic text-[#d6aa5c]">{copy.heroB}</span></h1><p className="mt-8 max-w-2xl text-base leading-7 text-white/70 md:text-lg">{copy.heroCopy}</p><a href="#map" className="mt-9 inline-flex items-center gap-5 bg-[#d6aa5c] px-6 py-4 text-sm font-extrabold uppercase tracking-wider text-[#17312b]">{copy.open} <ArrowRight className="size-4" /></a></div></div>
+      <section id="top" className="bg-[#dce9e4] px-5 py-14 md:px-10 md:py-20">
+        <div className="mx-auto grid max-w-7xl gap-10 lg:grid-cols-[0.95fr_1.05fr] lg:items-center">
+          <div className="max-w-2xl">
+            <p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#52786c]">{copy.kicker}</p>
+            <h1 className="mt-5 font-heading text-[clamp(3.8rem,8vw,7.4rem)] font-semibold leading-[0.86] tracking-[-0.055em]">{copy.title}</h1>
+            <p className="mt-7 max-w-xl text-base leading-7 text-[#4f6560] md:text-lg">{copy.subtitle}</p>
+            <div className="mt-9 flex flex-wrap gap-3 text-sm text-[#35524b]">
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2"><Check className="size-4" /> {locale === 'en' ? 'No labels' : 'Etiket yok'}</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2"><Check className="size-4" /> {locale === 'en' ? 'No prediction' : 'Öngörü yok'}</span>
+              <span className="inline-flex items-center gap-2 rounded-full bg-white/70 px-4 py-2"><Check className="size-4" /> {locale === 'en' ? 'No pressure' : 'Baskı yok'}</span>
+            </div>
+          </div>
+
+          <form id="check-in" onSubmit={submit} className="scroll-mt-28 rounded-[2rem] bg-[#fffdf8] p-6 shadow-[0_24px_70px_rgb(45_78_68/13%)] md:p-9">
+            <p className="font-heading text-3xl font-semibold md:text-4xl">{copy.formTitle}</p>
+            <p className="mt-2 text-sm leading-6 text-[#62736e]">{copy.formCopy}</p>
+            <label htmlFor="name" className="mt-8 block text-sm font-bold">{copy.nameLabel}</label>
+            <Input id="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={copy.namePlaceholder} className="mt-2 h-13 rounded-2xl border-[#18332e]/15 bg-[#f7f4ed] px-4" required />
+
+            <fieldset className="mt-7"><legend className="text-sm font-bold">{copy.goalLabel}</legend><div className="mt-3 grid grid-cols-2 gap-2">{(Object.keys(copy.goals) as Goal[]).map((item) => <button key={item} type="button" onClick={() => setGoal(item)} className={`min-h-12 rounded-2xl border px-3 text-left text-sm font-semibold transition-colors ${goal === item ? 'border-[#52786c] bg-[#dce9e4] text-[#18332e]' : 'border-[#18332e]/12 bg-white text-[#62736e] hover:border-[#52786c]/45'}`} aria-pressed={goal === item}>{copy.goals[item]}</button>)}</div></fieldset>
+            <fieldset className="mt-7"><legend className="text-sm font-bold">{copy.stateLabel}</legend><div className="mt-3 flex flex-wrap gap-2">{(Object.keys(copy.states) as MindState[]).map((item) => <button key={item} type="button" onClick={() => setMindState(item)} className={`rounded-full border px-4 py-2.5 text-sm font-semibold transition-colors ${mindState === item ? 'border-[#18332e] bg-[#18332e] text-white' : 'border-[#18332e]/12 bg-white text-[#62736e]'}`} aria-pressed={mindState === item}>{copy.states[item]}</button>)}</div></fieldset>
+            <Button type="submit" className="mt-8 h-13 w-full justify-between rounded-2xl bg-[#ed8f70] px-5 text-base font-bold text-[#18332e] hover:bg-[#e88362]">{copy.submit}<ArrowRight className="size-4" /></Button>
+          </form>
+        </div>
       </section>
 
-      <section id="map" className="scroll-mt-6 bg-[#fbfaf6]"><div className="mx-auto grid w-full max-w-7xl gap-10 px-5 py-16 md:px-10 md:py-24 lg:grid-cols-[0.9fr_1.1fr] lg:items-center">
-        <div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#a8782d]">{copy.mirror}</p><h2 className="mt-5 max-w-xl font-heading text-5xl font-semibold leading-[0.92] md:text-7xl">{copy.formTitle}</h2><p className="mt-7 max-w-lg text-sm leading-7 text-[#66716d]">{copy.resultsCopy}</p><div className="mt-10 grid grid-cols-3 gap-3 border-t border-[#17312b]/15 pt-6 text-sm"><div><span className="block font-heading text-3xl text-[#a8782d]">01</span><span className="text-[#66716d]">{copy.stat1}</span></div><div><span className="block font-heading text-3xl text-[#a8782d]">03</span><span className="text-[#66716d]">{copy.stat2}</span></div><div><span className="block font-heading text-3xl text-[#a8782d]">∞</span><span className="text-[#66716d]">{copy.stat3}</span></div></div></div>
-        <Card className="border-0 bg-[#17312b] py-0 text-white shadow-[0_24px_70px_rgb(23_49_43/20%)]"><CardHeader className="border-b border-white/10 px-6 py-7 md:px-9"><p className="text-xs font-bold uppercase tracking-[0.22em] text-[#d6aa5c]">{copy.formKicker}</p><CardTitle className="font-heading text-3xl text-white">{copy.formTitle}</CardTitle></CardHeader><CardContent className="px-6 py-8 md:px-9"><form onSubmit={submit} className="space-y-6"><FieldGroup><Field><FieldLabel htmlFor="name" className="text-white/75">{copy.name}</FieldLabel><Input id="name" value={name} onChange={(event) => setName(event.target.value)} placeholder={copy.namePlaceholder} className="h-13 border-white/15 bg-white/8 px-4 text-white placeholder:text-white/35" required /></Field><Field><FieldLabel htmlFor="birthDate" className="text-white/75">{copy.birth}</FieldLabel><Input id="birthDate" type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} className="h-13 border-white/15 bg-white/8 px-4 text-white scheme-dark" required /></Field></FieldGroup><Button type="submit" size="lg" className="h-13 w-full justify-between rounded-none bg-[#d6aa5c] px-5 text-base text-[#17312b] hover:bg-[#e1bc78]">{copy.open} <ArrowRight className="size-4" /></Button></form><div className="mt-7 flex items-center justify-between gap-4 border border-[#d6aa5c]/25 bg-[#d6aa5c]/8 p-5" aria-live="polite"><div><p className="text-xs uppercase tracking-[0.18em] text-white/55">{profile.name} {copy.vibration}</p><p className="mt-1 font-heading text-3xl text-white">{energyNames[locale][profile.lifeNumber] ?? energyNames[locale][9]}</p></div><div className="grid size-16 shrink-0 place-items-center rounded-full border border-[#d6aa5c]/40 font-heading text-3xl text-[#d6aa5c]">{profile.lifeNumber}</div></div></CardContent></Card>
-      </div></section>
+      <section id="guide" className="scroll-mt-20 px-5 py-16 md:px-10 md:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="grid gap-5 md:grid-cols-[1fr_0.55fr] md:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#52786c]">{copy.resultKicker} · {submittedName}</p><h2 className="mt-4 max-w-3xl font-heading text-5xl font-semibold leading-[0.95] md:text-7xl">{copy.resultTitle}</h2></div><p className="text-sm leading-7 text-[#62736e]">{copy.resultCopy}</p></div>
+          <div className="mt-12 grid gap-4 lg:grid-cols-3">
+            {[[Cloud, copy.start, goalCard[0], goalCard[1]], [Focus, copy.remember, stateCard[0], stateCard[1]], [Pause, copy.practice, locale === 'en' ? 'One small next step' : 'Küçük bir sonraki adım', stateCard[2]]].map(([Icon, eyebrow, title, body]) => { const ItemIcon = Icon as typeof Cloud; return <article key={String(eyebrow)} className="flex min-h-[330px] flex-col rounded-[1.75rem] border border-[#18332e]/10 bg-white p-7"><span className="grid size-12 place-items-center rounded-2xl bg-[#dce9e4] text-[#35524b]"><ItemIcon className="size-5" /></span><p className="mt-9 text-xs font-extrabold uppercase tracking-[0.18em] text-[#52786c]">{String(eyebrow)}</p><h3 className="mt-3 font-heading text-3xl font-semibold leading-tight">{String(title)}</h3><p className="mt-4 text-sm leading-7 text-[#62736e]">{String(body)}</p></article>; })}
+          </div>
+          <div className="mt-4 rounded-[1.75rem] bg-[#18332e] p-7 text-white md:flex md:items-center md:justify-between md:gap-8 md:p-10"><div><p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a9cbc0]">{user ? copy.accountKickerIn : copy.accountKickerOut}</p><h3 className="mt-3 font-heading text-3xl font-semibold">{user ? `${copy.accountTitleIn}, ${user.displayName}.` : copy.accountTitleOut}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-white/65">{user ? copy.accountCopyIn : copy.accountCopyOut}</p></div><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="mt-6 inline-flex shrink-0 items-center gap-2 rounded-full bg-[#ed8f70] px-6 py-3.5 font-bold text-[#18332e] md:mt-0">{user ? <UserRound className="size-4" /> : <LogIn className="size-4" />}{user ? copy.openAccount : copy.chatgpt}</a></div>
+        </div>
+      </section>
 
-      <section id="reading" className="scroll-mt-4 bg-[#ece4d3]"><div className="mx-auto w-full max-w-7xl px-5 py-16 md:px-10 md:py-24"><div className="mb-12 grid gap-6 md:grid-cols-[1fr_0.45fr] md:items-end"><div><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#a8782d]">{profile.name} · {copy.resultsKicker}</p><h2 className="mt-4 max-w-3xl text-5xl font-extrabold leading-[0.9] tracking-[-0.045em] md:text-7xl">{copy.resultsTitle}</h2></div><p className="text-sm leading-7 text-[#66716d]">{copy.resultsCopy}</p></div>
-        <div className="grid gap-4 lg:grid-cols-3">{profile.sections.map((section, index) => { const isExpanded = expanded === section.key; const content = locale === 'tr' ? section.content : englishInsight(section.number, index); return <article key={section.key} className="flex min-h-[390px] flex-col bg-[#fbfaf6] p-7 md:p-8"><div className="flex items-start justify-between"><p className="text-xs font-extrabold uppercase tracking-[0.18em] text-[#a8782d]">{copy.sectionEyebrows[index]}</p><span className="grid size-12 place-items-center rounded-full border border-[#a8782d]/35 font-heading text-2xl text-[#a8782d]">{section.number}</span></div><h3 className="mt-9 font-heading text-3xl font-semibold leading-none">{copy.sectionTitles[index]}</h3><p className={`mt-5 whitespace-pre-line text-sm leading-7 text-[#66716d] ${isExpanded ? '' : 'line-clamp-[7]'}`}>{content}</p><button type="button" onClick={() => setExpanded(isExpanded ? null : section.key)} className="mt-auto pt-7 text-left text-sm font-bold underline decoration-[#a8782d] underline-offset-4">{isExpanded ? copy.readLess : copy.readMore}</button></article>; })}</div>
-        <div className="mt-4 flex flex-col items-start justify-between gap-6 bg-[#17312b] p-7 text-white md:flex-row md:items-center md:p-10"><div><p className="text-xs font-bold uppercase tracking-[0.22em] text-[#d6aa5c]">{user ? copy.accountKickerIn : copy.accountKickerOut}</p><h3 className="mt-3 font-heading text-3xl md:text-4xl">{user ? `${copy.accountTitleIn}, ${user.displayName}.` : copy.accountTitleOut}</h3><p className="mt-2 max-w-2xl text-sm leading-6 text-white/60">{user ? copy.accountCopyIn : copy.accountCopyOut}</p></div><a href={user ? '/profile' : signInPath} target={user ? undefined : '_top'} className="inline-flex shrink-0 items-center gap-2 bg-[#d6aa5c] px-6 py-4 text-sm font-extrabold uppercase tracking-wider text-[#17312b]">{user ? <UserRound className="size-4" /> : <LogIn className="size-4" />}{user ? copy.openAccount : copy.chatgpt}</a></div>
-      </div></section>
+      <section id="approach" className="bg-[#e9e3f0] px-5 py-16 md:px-10 md:py-24"><div className="mx-auto max-w-7xl"><p className="text-xs font-extrabold uppercase tracking-[0.2em] text-[#6d5d7d]">{copy.approachKicker}</p><h2 className="mt-4 max-w-4xl font-heading text-5xl font-semibold leading-[0.95] md:text-7xl">{copy.approachTitle}</h2><img src="/og.png" alt="Holyarted — Make room for what matters" className="mt-12 w-full rounded-[1.75rem] border border-[#6d5d7d]/10 object-cover" /><div className="mt-4 grid gap-4 md:grid-cols-3">{copy.principles.map(([title, body], index) => { const icons = [Waves, Check, ShieldCheck]; const ItemIcon = icons[index]; return <article key={title} className="rounded-[1.75rem] bg-[#fffdf8]/85 p-7"><ItemIcon className="size-6 text-[#6d5d7d]" /><h3 className="mt-12 font-heading text-3xl font-semibold">{title}</h3><p className="mt-3 text-sm leading-7 text-[#665f6e]">{body}</p></article>; })}</div></div></section>
 
-      <section id="method" className="bg-[#fbfaf6]"><div className="mx-auto w-full max-w-7xl px-5 py-16 md:px-10 md:py-24"><p className="text-xs font-extrabold uppercase tracking-[0.22em] text-[#a8782d]">{copy.howKicker}</p><h2 className="mt-4 max-w-3xl font-heading text-5xl font-semibold leading-[0.95] md:text-7xl">{copy.howTitle}</h2><div className="mt-12 grid border-y border-[#17312b]/15 md:grid-cols-3">{[[Compass, ...copy.features[0]], [Gem, ...copy.features[1]], [MoonStar, ...copy.features[2]]].map(([Icon, title, description], index) => { const ItemIcon = Icon as typeof Compass; return <div key={String(title)} className={`py-8 md:px-8 ${index > 0 ? 'border-t border-[#17312b]/15 md:border-l md:border-t-0' : ''}`}><ItemIcon className="mb-14 size-6 text-[#a8782d]" /><p className="text-xs font-bold text-[#a8782d]">0{index + 1}</p><h3 className="mt-3 font-heading text-3xl font-semibold">{String(title)}</h3><p className="mt-3 text-sm leading-7 text-[#66716d]">{String(description)}</p></div>; })}</div></div></section>
-
-      <footer className="bg-[#102922] px-5 py-8 text-white/55 md:px-10"><div className="mx-auto flex max-w-7xl flex-col gap-4 text-xs uppercase tracking-[0.18em] sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Holyarted</span><span>{copy.mirror}</span>{user && <a href={signOutPath} target="_top" className="inline-flex items-center gap-2 hover:text-[#d6aa5c]"><LogOut className="size-3.5" /> {copy.signOut}</a>}</div></footer>
+      <footer className="bg-[#fffdf8] px-5 py-8 md:px-10"><div className="mx-auto flex max-w-7xl flex-col gap-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#62736e] sm:flex-row sm:items-center sm:justify-between"><span>© {new Date().getFullYear()} Holyarted</span><span>{copy.footer}</span>{user && <a href={signOutPath} target="_top" className="inline-flex items-center gap-2 hover:text-[#18332e]"><LogOut className="size-3.5" /> {copy.signOut}</a>}</div></footer>
     </main>
   );
 }

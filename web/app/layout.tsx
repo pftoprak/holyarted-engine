@@ -1,32 +1,31 @@
 import type { Metadata } from 'next';
-import { Cormorant_Garamond, Manrope } from 'next/font/google';
+import { DM_Sans, Newsreader } from 'next/font/google';
 import './globals.css';
 
-const display = Cormorant_Garamond({
+const display = Newsreader({
   variable: '--font-display',
   subsets: ['latin', 'latin-ext'],
   weight: ['500', '600'],
-  style: ['normal', 'italic'],
 });
 
-const body = Manrope({
+const body = DM_Sans({
   variable: '--font-body',
   subsets: ['latin', 'latin-ext'],
 });
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
-  title: 'Holyarted — Read the map within you',
-  description: 'Discover your personal energy map through your name and birth date.',
+  title: 'Holyarted — Make room for what matters',
+  description: 'A calm, practical check-in for everyday self-reflection.',
   openGraph: {
-    title: 'Holyarted — Read the map within you',
-    description: 'Discover your personal energy map through your name and birth date.',
-    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Holyarted — İçindeki haritayı oku' }],
+    title: 'Holyarted — Make room for what matters',
+    description: 'A calm, practical check-in for everyday self-reflection.',
+    images: [{ url: '/og.png', width: 1200, height: 630, alt: 'Holyarted — Make room for what matters' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Holyarted — Read the map within you',
-    description: 'Discover your personal energy map through your name and birth date.',
+    title: 'Holyarted — Make room for what matters',
+    description: 'A calm, practical check-in for everyday self-reflection.',
     images: ['/og.png'],
   },
 };

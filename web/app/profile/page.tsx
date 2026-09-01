@@ -1,4 +1,4 @@
-import { ArrowLeft, LogOut, Mail, Sparkles, UserRound } from 'lucide-react';
+import { ArrowLeft, LogOut, Mail, UserRound, Waves } from 'lucide-react';
 
 import { chatGPTSignOutPath, requireChatGPTUser } from '../chatgpt-auth';
 
@@ -8,19 +8,18 @@ export default async function ProfilePage() {
   const user = await requireChatGPTUser('/profile');
 
   return (
-    <main className="relative grid min-h-screen place-items-center overflow-hidden bg-background px-5 py-16 text-foreground">
-      <div className="cosmic-orbit" aria-hidden="true" />
-      <section className="relative z-10 w-full max-w-xl rounded-[2rem] border border-primary/25 bg-card/95 p-7 shadow-[0_28px_90px_rgb(0_0_0/32%)] backdrop-blur md:p-10">
+    <main className="grid min-h-screen place-items-center bg-[#dce9e4] px-5 py-16 text-[#18332e]">
+      <section className="w-full max-w-xl rounded-[2rem] bg-[#fffdf8] p-7 shadow-[0_24px_70px_rgb(45_78_68/13%)] md:p-10">
         <div className="flex items-center justify-between">
           <a href="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-foreground">
-            <ArrowLeft className="size-4" /> Back to your map
+            <ArrowLeft className="size-4" /> Back to check-in
           </a>
-          <span className="grid size-10 place-items-center rounded-full border border-primary/40 bg-primary/10 text-primary">
-            <Sparkles className="size-4" />
+          <span className="grid size-10 place-items-center rounded-xl bg-[#18332e] text-white">
+            <Waves className="size-4" />
           </span>
         </div>
 
-        <div className="mt-12 grid size-20 place-items-center rounded-full border border-primary/35 bg-primary/10 text-primary">
+        <div className="mt-12 grid size-20 place-items-center rounded-[1.5rem] bg-[#e9e3f0] text-[#6d5d7d]">
           <UserRound className="size-9" />
         </div>
         <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-primary">Personal space</p>
@@ -33,8 +32,8 @@ export default async function ProfilePage() {
         </div>
 
         <div className="mt-8 grid gap-3 sm:grid-cols-2">
-          <a href="/" className="inline-flex h-12 items-center justify-center rounded-xl bg-primary px-5 font-semibold text-primary-foreground">Open my map</a>
-          <a href={chatGPTSignOutPath('/')} target="_top" className="inline-flex h-12 items-center justify-center gap-2 rounded-xl border border-border px-5 font-semibold transition-colors hover:border-primary/40 hover:text-primary">
+          <a href="/" className="inline-flex h-12 items-center justify-center rounded-full bg-[#18332e] px-5 font-semibold text-white">Open check-in</a>
+          <a href={chatGPTSignOutPath('/')} target="_top" className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-[#18332e]/15 px-5 font-semibold transition-colors hover:border-[#52786c] hover:text-[#52786c]">
             <LogOut className="size-4" /> Sign out
           </a>
         </div>

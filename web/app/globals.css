@@ -50,24 +50,24 @@
 body { font-family: var(--font-body), Arial, Helvetica, sans-serif; }
 
 :root {
-  --background: oklch(0.17 0.025 170);
-  --foreground: oklch(0.94 0.025 85);
-  --card: oklch(0.205 0.028 165);
-  --card-foreground: oklch(0.94 0.025 85);
+  --background: #f7f4ed;
+  --foreground: #18332e;
+  --card: #fffdf8;
+  --card-foreground: #18332e;
   --popover: oklch(1 0 0);
   --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.75 0.11 80);
-  --primary-foreground: oklch(0.16 0.025 170);
-  --secondary: oklch(0.24 0.026 165);
-  --secondary-foreground: oklch(0.94 0.025 85);
-  --muted: oklch(0.24 0.02 165);
-  --muted-foreground: oklch(0.72 0.025 100);
-  --accent: oklch(0.29 0.04 165);
-  --accent-foreground: oklch(0.96 0.02 85);
+  --primary: #52786c;
+  --primary-foreground: #ffffff;
+  --secondary: #dce9e4;
+  --secondary-foreground: #18332e;
+  --muted: #ece8df;
+  --muted-foreground: #62736e;
+  --accent: #ed8f70;
+  --accent-foreground: #18332e;
   --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.36 0.026 160 / 72%);
-  --input: oklch(0.36 0.026 160 / 72%);
-  --ring: oklch(0.75 0.11 80);
+  --border: rgb(24 51 46 / 14%);
+  --input: rgb(24 51 46 / 14%);
+  --ring: #52786c;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -82,38 +82,6 @@ body { font-family: var(--font-body), Arial, Helvetica, sans-serif; }
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
-}
-
-.cosmic-orbit {
-  position: absolute;
-  width: 720px;
-  height: 720px;
-  left: -300px;
-  top: -160px;
-  border: 1px solid color-mix(in oklch, var(--primary) 22%, transparent);
-  border-radius: 50%;
-  box-shadow: 0 0 0 110px color-mix(in oklch, var(--primary) 4%, transparent), 0 0 0 260px color-mix(in oklch, var(--primary) 2%, transparent);
-  pointer-events: none;
-}
-
-.hero-field {
-  background-image:
-    radial-gradient(circle at 80% 42%, rgb(214 170 92 / 14%), transparent 34%),
-    linear-gradient(115deg, #102922 0%, #102922 58%, #183a31 100%);
-}
-
-.hero-stars {
-  background-image:
-    radial-gradient(circle at 12% 20%, #d6aa5c 0 1px, transparent 1.5px),
-    radial-gradient(circle at 24% 72%, #f8eed8 0 1px, transparent 1.5px),
-    radial-gradient(circle at 48% 18%, #d6aa5c 0 1.5px, transparent 2px),
-    radial-gradient(circle at 69% 78%, #f8eed8 0 1px, transparent 1.5px),
-    radial-gradient(circle at 91% 24%, #d6aa5c 0 1px, transparent 1.5px);
-  background-size: 210px 210px, 280px 280px, 340px 340px, 260px 260px, 320px 320px;
-}
-
-@media (max-width: 760px) {
-  .cosmic-orbit { width: 520px; height: 520px; left: -300px; top: -90px; }
 }
 
 .dark {
