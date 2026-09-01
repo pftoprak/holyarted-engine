@@ -1,13 +1,13 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <defs>
     <linearGradient id="champagne" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E2C39A"/>
-      <stop offset="1" stop-color="#B89468"/>
+      <stop offset="0" stop-color="#7D695D"/>
+      <stop offset="1" stop-color="#514B46"/>
     </linearGradient>
   </defs>
-  <rect width="1024" height="1024" rx="216" fill="#0D0D12"/>
-  <path d="M0 812H1024V1024H0Z" fill="#2A1824"/>
-  <rect x="94" y="94" width="836" height="836" rx="160" fill="none" stroke="#C8A77A" stroke-width="6" opacity=".72"/>
+  <rect width="1024" height="1024" rx="216" fill="#F7F3EC"/>
+  <path d="M0 812H1024V1024H0Z" fill="#BFC8BA"/>
+  <rect x="94" y="94" width="836" height="836" rx="160" fill="none" stroke="#A7826C" stroke-width="6" opacity=".62"/>
   <g fill="none" stroke="url(#champagne)" stroke-width="26" stroke-linecap="square">
     <path d="M350 300V724M674 300V724M350 512H674"/>
     <path d="M316 300H384M640 300H708M316 724H384M640 724H708" stroke-width="16"/>
