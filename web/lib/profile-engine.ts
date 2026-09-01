@@ -40,20 +40,8 @@ function pick(map: ContentMap, key: number) {
   return map[String(key)] ?? map[String(reduceNumber(key))] ?? map['9'];
 }
 
-function publicExcerpt(raw: string) {
-  const cleaned = raw.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
-  const replacements: Array<[string[], string]> = [
-    [['enerji', 'energy'], 'kapasite'], [['ruhsal', 'spirit'], 'kişisel'], [['ruh'], 'karakter'],
-    [['kader'], 'yön'], [['evrensel'], 'geniş'], [['bolluk'], 'olanak'], [['titreşim'], 'etki'], [['tekâmül', 'tekamül'], 'gelişim'],
-  ];
-
-  return cleaned.replace(/\S+/g, (token) => {
-    const normalized = token.toLocaleLowerCase('tr-TR');
-    const replacement = replacements.find(([needles]) => needles.some((needle) => normalized.includes(needle)))?.[1];
-    if (!replacement) return token;
-    const punctuation = token.match(/[.,;:!?]$/)?.[0] ?? '';
-    return `${replacement}${punctuation}`;
-  });
+function contentHash(value: string) {
+  return Array.from(value).reduce((hash, character) => (hash * 31 + (character.codePointAt(0) ?? 0)) % 1000003, 17);
 }
 
 function mappedKey<T>(keys: T[], value: number) {
@@ -65,18 +53,19 @@ export function calculateDesign(firstName: string, lastName: string, birthDate: 
   const lifeNumber = reduceNumber(sumDigits(birthDate));
   const expressionNumber = reduceNumber(sumName(fullName));
   const directionNumber = reduceNumber(lifeNumber + expressionNumber);
+  const selectedContent = [
+    pick(showcase as ContentMap, lifeNumber),
+    pick(abilities as ContentMap, expressionNumber),
+    pick(idealJobs as ContentMap, directionNumber),
+  ];
+  const contentSeed = selectedContent.reduce((sum, value) => sum + contentHash(value), 0);
 
   return {
     fullName: fullName || 'Your profile',
-    decision: mappedKey(decisionKeys, lifeNumber),
-    environment: mappedKey(environmentKeys, expressionNumber),
-    friction: mappedKey(frictionKeys, lifeNumber + directionNumber),
-    purpose: mappedKey(purposeKeys, directionNumber),
-    source: {
-      essence: publicExcerpt(pick(showcase as ContentMap, lifeNumber)),
-      strength: publicExcerpt(pick(abilities as ContentMap, expressionNumber)),
-      work: publicExcerpt(pick(idealJobs as ContentMap, directionNumber)),
-    },
+    decision: mappedKey(decisionKeys, lifeNumber + contentSeed),
+    environment: mappedKey(environmentKeys, expressionNumber + contentSeed),
+    friction: mappedKey(frictionKeys, lifeNumber + directionNumber + contentSeed),
+    purpose: mappedKey(purposeKeys, directionNumber + contentSeed),
   };
 }
 

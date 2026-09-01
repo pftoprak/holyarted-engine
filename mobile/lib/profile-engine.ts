@@ -18,11 +18,7 @@ function reduceNumber(total: number) { let value = total; while (value > 9 && ![
 function sumDigits(value: string) { return value.replace(/\D/g, '').split('').reduce((sum, digit) => sum + Number(digit), 0); }
 function sumName(name: string) { return Array.from(name.toLocaleUpperCase('tr-TR')).reduce((sum, letter) => sum + (letterValues[letter] ?? 0), 0); }
 function pick(map: ContentMap, key: number) { return map[String(key)] ?? map[String(reduceNumber(key))] ?? map['9']; }
-function publicExcerpt(raw: string) {
-  const cleaned = raw.replace(/\s+/g, ' ').trim().split(/(?<=[.!?])\s+/).slice(0, 2).join(' ');
-  const replacements: Array<[string[], string]> = [[['enerji', 'energy'], 'kapasite'], [['ruhsal', 'spirit'], 'kişisel'], [['ruh'], 'karakter'], [['kader'], 'yön'], [['evrensel'], 'geniş'], [['bolluk'], 'olanak'], [['titreşim'], 'etki'], [['tekâmül', 'tekamül'], 'gelişim']];
-  return cleaned.replace(/\S+/g, (token) => { const normalized = token.toLocaleLowerCase('tr-TR'); const replacement = replacements.find(([needles]) => needles.some((needle) => normalized.includes(needle)))?.[1]; if (!replacement) return token; return `${replacement}${token.match(/[.,;:!?]$/)?.[0] ?? ''}`; });
-}
+function contentHash(value: string) { return Array.from(value).reduce((hash, character) => (hash * 31 + (character.codePointAt(0) ?? 0)) % 1000003, 17); }
 function mappedKey<T>(keys: T[], value: number) { return keys[(reduceNumber(value) - 1 + keys.length) % keys.length]; }
 
 export function calculateDesign(firstName: string, lastName: string, birthDate: string) {
@@ -30,7 +26,9 @@ export function calculateDesign(firstName: string, lastName: string, birthDate: 
   const lifeNumber = reduceNumber(sumDigits(birthDate));
   const expressionNumber = reduceNumber(sumName(fullName));
   const directionNumber = reduceNumber(lifeNumber + expressionNumber);
-  return { fullName: fullName || 'Your profile', decision: mappedKey(decisionKeys, lifeNumber), environment: mappedKey(environmentKeys, expressionNumber), friction: mappedKey(frictionKeys, lifeNumber + directionNumber), purpose: mappedKey(purposeKeys, directionNumber), source: { essence: publicExcerpt(pick(showcase as ContentMap, lifeNumber)), strength: publicExcerpt(pick(abilities as ContentMap, expressionNumber)), work: publicExcerpt(pick(idealJobs as ContentMap, directionNumber)) } };
+  const selectedContent = [pick(showcase as ContentMap, lifeNumber), pick(abilities as ContentMap, expressionNumber), pick(idealJobs as ContentMap, directionNumber)];
+  const contentSeed = selectedContent.reduce((sum, value) => sum + contentHash(value), 0);
+  return { fullName: fullName || 'Your profile', decision: mappedKey(decisionKeys, lifeNumber + contentSeed), environment: mappedKey(environmentKeys, expressionNumber + contentSeed), friction: mappedKey(frictionKeys, lifeNumber + directionNumber + contentSeed), purpose: mappedKey(purposeKeys, directionNumber + contentSeed) };
 }
 
 export type CalculatedProfile = ReturnType<typeof calculateDesign>;
