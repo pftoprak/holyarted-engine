@@ -8,9 +8,15 @@ type Locale = 'en' | 'tr';
 
 const content = {
   en: {
-    switch: 'TR', edition: 'HUMAN DESIGN, MADE PERSONAL', title: 'A quieter way to understand yourself.', intro: 'Pause for a moment. Your private portrait reflects how you move through decisions, relationships and meaningful work.',
+    switch: 'TR', edition: 'HUMAN DESIGN, MADE PERSONAL', title: 'What if your life could feel more like you?', intro: 'Your private portrait offers a new way to notice how you decide, connect, work and grow—without putting you in a box.',
     private: 'YOUR PRIVATE PORTRAIT', progress: 'BEGIN WITH WHAT IS UNIQUELY YOURS', inputLabel: 'YOUR DETAILS', resultLabel: 'YOUR PERSONAL PORTRAIT', back: 'Back', next: 'Continue', reveal: 'Reveal my portrait', reset: 'Create another portrait',
     trust: ['Made for reflection', 'Private by design', 'Yours to revisit'], firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details are used only to prepare your portrait and are never shown publicly.', formError: 'Please complete your name and birth date.',
+    teaserTitle: 'YOUR PORTRAIT MAY HELP YOU NOTICE', teaserFoot: 'A few quiet details can open a surprisingly personal reflection.',
+    teasers: [
+      ['CLARITY', 'Why some decisions feel right before you can explain them.'],
+      ['ENVIRONMENT', 'The conditions that make your mind feel open and capable.'],
+      ['DIRECTION', 'The kind of contribution that gives your life more meaning.'],
+    ],
     questions: [
       { label: 'DECISION STYLE', title: 'When a decision matters, what helps you trust it?', options: { facts: ['Clear facts', 'I want the evidence in front of me.'], voice: ['Talking it through', 'I hear what I think as I say it.'], instinct: ['An immediate response', 'I notice a clear yes or no early.'], time: ['Time to settle', 'Clarity arrives after the first reaction.'] } },
       { label: 'BEST ENVIRONMENT', title: 'Where do you do your best thinking?', options: { quiet: ['Quiet structure', 'A protected space with a clear plan.'], together: ['A collaborative room', 'Ideas sharpen around trusted people.'], variety: ['Changing inputs', 'New perspectives keep me engaged.'], motion: ['Hands-on momentum', 'Thinking clears while I make or move.'] } },
@@ -27,9 +33,15 @@ const content = {
     note: 'Reflective guidance—not a medical or psychological diagnosis.',
   },
   tr: {
-    switch: 'EN', edition: 'SANA ÖZEL HUMAN DESIGN', title: 'Kendini anlamanın daha sakin bir yolu.', intro: 'Bir an dur. Kişisel portren kararların, ilişkilerin ve anlamlı işlerin içinde nasıl ilerlediğini yansıtsın.',
+    switch: 'EN', edition: 'SANA ÖZEL HUMAN DESIGN', title: 'Yaşamın sana daha çok benzese nasıl olurdu?', intro: 'Kişisel portren; seni bir kalıba koymadan nasıl karar verdiğini, bağ kurduğunu, çalıştığını ve geliştiğini fark etmenin yeni bir yolunu sunar.',
     private: 'KİŞİSEL PORTREN', progress: 'SANA ÖZGÜ OLANLA BAŞLA', inputLabel: 'BİLGİLERİN', resultLabel: 'KİŞİSEL PORTREN', back: 'Geri', next: 'Devam et', reveal: 'Portremi göster', reset: 'Başka bir portre oluştur',
     trust: ['Düşünmek için tasarlandı', 'Gizlilik odaklı', 'Dilediğinde geri dön'], firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin yalnızca portreni hazırlamak için kullanılır ve herkese açık gösterilmez.', formError: 'Lütfen adını, soyadını ve doğum tarihini tamamla.',
+    teaserTitle: 'PORTREN ŞUNLARI FARK ETMENE YARDIMCI OLABİLİR', teaserFoot: 'Birkaç kişisel ayrıntı, şaşırtıcı derecede sana özgü bir düşünme alanı açabilir.',
+    teasers: [
+      ['NETLİK', 'Bazı kararların neden açıklayamadan önce doğru hissettirdiği.'],
+      ['ORTAM', 'Zihnini açık, rahat ve yetkin hissettiren koşullar.'],
+      ['YÖN', 'Yaşamına daha fazla anlam katan katkı biçimi.'],
+    ],
     questions: [
       { label: 'KARAR BİÇİMİ', title: 'Önemli bir kararda neye güvenmek sana en çok yardımcı olur?', options: { facts: ['Net bilgiler', 'Gerekli veriyi önümde görmek isterim.'], voice: ['Konuşarak düşünmek', 'Ne düşündüğümü söylerken daha iyi duyarım.'], instinct: ['İlk tepki', 'Başta belirgin bir evet ya da hayır fark ederim.'], time: ['Zamana bırakmak', 'İlk tepki geçince netlik gelir.'] } },
       { label: 'EN İYİ ORTAM', title: 'En iyi nerede düşünürsün?', options: { quiet: ['Sessiz düzen', 'Korunaklı bir alan ve net bir plan.'], together: ['Birlikte düşünmek', 'Güvendiğim insanların yanında fikirlerim keskinleşir.'], variety: ['Değişen uyaranlar', 'Yeni bakış açıları ilgimi canlı tutar.'], motion: ['Hareket içinde', 'Üretirken veya hareket ederken netleşirim.'] } },
@@ -114,6 +126,7 @@ export default function App() {
     <SafeAreaView style={styles.safe}><StatusBar style="dark" /><ScrollView key="entry" contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}><Animated.View style={[styles.decorSage, { transform: [{ translateY: ambient.interpolate({ inputRange: [0, 1], outputRange: [-18, 22] }) }, { rotate: '-12deg' }] }]} /><Animated.View style={[styles.decorClay, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.58, 0.9] }), transform: [{ translateY: ambient.interpolate({ inputRange: [0, 1], outputRange: [16, -14] }) }] }]} />
       <View style={styles.brandRow}><View style={styles.mark}><Text style={styles.markText}>H</Text></View><Text style={styles.brand}>HOLYARTED</Text><Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')}><Text style={styles.languageText}>{text.switch}</Text></Pressable></View>
       <Animated.View style={{ opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [38, 0] }) }] }}><View style={styles.hero}><View style={styles.editionPill}><View style={styles.editionDot} /><Text style={styles.edition}>{text.edition}</Text></View><Text style={styles.title}>{text.title}</Text><Text style={styles.intro}>{text.intro}</Text><View style={styles.trustRow}>{text.trust.map((item) => <View key={item} style={styles.trustPill}><View style={styles.trustDot} /><Text style={styles.trust}>{item}</Text></View>)}</View></View>
+      <View style={styles.teaserWrap}><View style={styles.teaserBack} /><View style={styles.teaserPanel}><View style={styles.teaserHeader}><Text style={styles.teaserEyebrow}>{text.teaserTitle}</Text><Animated.View style={[styles.teaserPulse, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.45, 1] }), transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.82, 1.16] }) }] }]} /></View>{text.teasers.map(([label, copy]) => <View key={label} style={styles.teaserRow}><View style={styles.teaserMarker}><View style={styles.teaserMarkerInner} /></View><View style={styles.teaserCopy}><Text style={styles.teaserLabel}>{label}</Text><Text style={styles.teaserText}>{copy}</Text></View><Text style={styles.teaserArrow}>↗</Text></View>)}<Text style={styles.teaserFoot}>{text.teaserFoot}</Text></View></View>
       <View style={styles.session}><View style={styles.sessionTop}><View><Text style={styles.sessionTopText}>{text.private}</Text><Text style={styles.sessionHint}>{text.progress}</Text></View><View style={styles.privatePill}><View style={styles.privateDot} /><Text style={styles.lock}>{locale === 'en' ? 'PRIVATE' : 'GİZLİ'}</Text></View></View><View style={styles.sessionBody}><Text style={styles.inputHeading}>{text.inputLabel}</Text><View style={styles.fields}><Text style={styles.fieldLabel}>{text.firstName}</Text><TextInput value={firstName} onChangeText={(value) => { setFirstName(value); setFormError(false); }} placeholder={text.firstPlaceholder} placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} autoCapitalize="words" autoComplete="name-given" /><Text style={styles.fieldLabel}>{text.lastName}</Text><TextInput value={lastName} onChangeText={(value) => { setLastName(value); setFormError(false); }} placeholder={text.lastPlaceholder} placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} autoCapitalize="words" autoComplete="name-family" /><Text style={styles.fieldLabel}>{text.birthDate}</Text><TextInput value={birthDate} onChangeText={(value) => { setBirthDate(value); setFormError(false); }} placeholder="YYYY-MM-DD" placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} keyboardType="numbers-and-punctuation" maxLength={10} autoComplete="birthdate-full" /></View>{formError && <Text style={styles.errorText}>{text.formError}</Text>}<Text style={styles.inputNote}>{text.inputNote}</Text><Pressable style={({ pressed }) => [styles.goldButtonWide, pressed && styles.buttonPressed]} onPress={submit}><Text style={styles.goldButtonText}>{text.reveal}</Text><Text style={styles.buttonArrow}>→</Text></Pressable></View></View></Animated.View>
       <Text style={styles.note}>{text.note}</Text>
     </ScrollView></SafeAreaView>
@@ -152,6 +165,20 @@ const styles = StyleSheet.create({
   trustPill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(77,88,77,.11)', backgroundColor: 'rgba(252,249,244,.57)', paddingHorizontal: 10, paddingVertical: 8 },
   trustDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: accent },
   trust: { color: 'rgba(67,72,64,.68)', fontSize: 10 },
+  teaserWrap: { marginHorizontal: 14, marginBottom: 22, position: 'relative' },
+  teaserBack: { position: 'absolute', top: 9, left: 8, right: 8, bottom: -8, borderRadius: 28, backgroundColor: '#D5C3B5', transform: [{ rotate: '-1.4deg' }] },
+  teaserPanel: { borderRadius: 28, overflow: 'hidden', backgroundColor: olive, paddingHorizontal: 21, paddingTop: 22, paddingBottom: 19, shadowColor: olive, shadowOpacity: 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 13 }, elevation: 4 },
+  teaserHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: 'rgba(252,249,244,.11)' },
+  teaserEyebrow: { color: '#E3C9BB', fontSize: 8, fontWeight: '800', letterSpacing: 1.35, maxWidth: '85%' },
+  teaserPulse: { width: 8, height: 8, borderRadius: 4, backgroundColor: clay },
+  teaserRow: { minHeight: 89, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(252,249,244,.1)' },
+  teaserMarker: { width: 27, height: 27, borderRadius: 14, borderWidth: 1, borderColor: 'rgba(252,249,244,.2)', alignItems: 'center', justifyContent: 'center', marginRight: 13 },
+  teaserMarkerInner: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#E3C9BB' },
+  teaserCopy: { flex: 1, paddingVertical: 14 },
+  teaserLabel: { color: '#E3C9BB', fontSize: 8, fontWeight: '800', letterSpacing: 1.15 },
+  teaserText: { color: 'rgba(252,249,244,.78)', fontFamily: display, fontSize: 17, lineHeight: 21, marginTop: 5 },
+  teaserArrow: { color: 'rgba(252,249,244,.35)', fontSize: 15, marginLeft: 9 },
+  teaserFoot: { color: 'rgba(252,249,244,.48)', fontSize: 10, lineHeight: 16, marginTop: 16, paddingRight: 20 },
   session: { marginHorizontal: 14, borderRadius: 30, overflow: 'hidden', backgroundColor: paper, borderWidth: 1, borderColor: 'rgba(77,88,77,.1)', shadowColor: ink, shadowOpacity: 0.13, shadowRadius: 30, shadowOffset: { width: 0, height: 16 }, elevation: 5 },
   sessionTop: { minHeight: 84, paddingHorizontal: 22, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', backgroundColor: '#E6DDCF', borderBottomWidth: 1, borderBottomColor: 'rgba(77,88,77,.08)' },
   sessionTopText: { color: ink, fontFamily: 'Newsreader_600SemiBold', fontSize: 19 },
