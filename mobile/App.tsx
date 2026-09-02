@@ -8,9 +8,9 @@ type Locale = 'en' | 'tr';
 
 const content = {
   en: {
-    switch: 'TR', edition: 'A PRIVATE HUMAN DESIGN EXPERIENCE', title: 'Meet the person you are becoming.', intro: 'A refined portrait of how you think, decide, connect and grow.',
-    private: 'PRIVATE PORTRAIT', progress: 'YOUR PORTRAIT STARTS HERE', inputLabel: 'PRIVATE INPUT', resultLabel: 'YOUR PERSONAL PORTRAIT', back: 'Back', next: 'Continue', reveal: 'Reveal my portrait', reset: 'Create another portrait',
-    trust: ['Personal to you', 'Private by design', 'No fixed labels'], firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details stay private and are never shown publicly.',
+    switch: 'TR', edition: 'HUMAN DESIGN, MADE PERSONAL', title: 'A quieter way to understand yourself.', intro: 'Pause for a moment. Your private portrait reflects how you move through decisions, relationships and meaningful work.',
+    private: 'YOUR PRIVATE PORTRAIT', progress: 'BEGIN WITH WHAT IS UNIQUELY YOURS', inputLabel: 'YOUR DETAILS', resultLabel: 'YOUR PERSONAL PORTRAIT', back: 'Back', next: 'Continue', reveal: 'Reveal my portrait', reset: 'Create another portrait',
+    trust: ['Made for reflection', 'Private by design', 'Yours to revisit'], firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details are used only to prepare your portrait and are never shown publicly.', formError: 'Please complete your name and birth date.',
     questions: [
       { label: 'DECISION STYLE', title: 'When a decision matters, what helps you trust it?', options: { facts: ['Clear facts', 'I want the evidence in front of me.'], voice: ['Talking it through', 'I hear what I think as I say it.'], instinct: ['An immediate response', 'I notice a clear yes or no early.'], time: ['Time to settle', 'Clarity arrives after the first reaction.'] } },
       { label: 'BEST ENVIRONMENT', title: 'Where do you do your best thinking?', options: { quiet: ['Quiet structure', 'A protected space with a clear plan.'], together: ['A collaborative room', 'Ideas sharpen around trusted people.'], variety: ['Changing inputs', 'New perspectives keep me engaged.'], motion: ['Hands-on momentum', 'Thinking clears while I make or move.'] } },
@@ -27,9 +27,9 @@ const content = {
     note: 'Reflective guidance—not a medical or psychological diagnosis.',
   },
   tr: {
-    switch: 'EN', edition: 'ÖZEL BİR HUMAN DESIGN DENEYİMİ', title: 'Dönüştüğün kişiyi daha yakından tanı.', intro: 'Nasıl düşündüğünü, karar verdiğini, bağ kurduğunu ve geliştiğini gösteren rafine bir portre.',
-    private: 'KİŞİSEL PORTRE', progress: 'PORTREN BURADA BAŞLIYOR', inputLabel: 'KİŞİSEL GİRDİ', resultLabel: 'KİŞİSEL PORTREN', back: 'Geri', next: 'Devam et', reveal: 'Portremi göster', reset: 'Başka bir portre oluştur',
-    trust: ['Sana özel', 'Gizlilik odaklı', 'Sabit etiket yok'], firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin gizli kalır ve hiçbir zaman herkese açık gösterilmez.',
+    switch: 'EN', edition: 'SANA ÖZEL HUMAN DESIGN', title: 'Kendini anlamanın daha sakin bir yolu.', intro: 'Bir an dur. Kişisel portren kararların, ilişkilerin ve anlamlı işlerin içinde nasıl ilerlediğini yansıtsın.',
+    private: 'KİŞİSEL PORTREN', progress: 'SANA ÖZGÜ OLANLA BAŞLA', inputLabel: 'BİLGİLERİN', resultLabel: 'KİŞİSEL PORTREN', back: 'Geri', next: 'Devam et', reveal: 'Portremi göster', reset: 'Başka bir portre oluştur',
+    trust: ['Düşünmek için tasarlandı', 'Gizlilik odaklı', 'Dilediğinde geri dön'], firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin yalnızca portreni hazırlamak için kullanılır ve herkese açık gösterilmez.', formError: 'Lütfen adını, soyadını ve doğum tarihini tamamla.',
     questions: [
       { label: 'KARAR BİÇİMİ', title: 'Önemli bir kararda neye güvenmek sana en çok yardımcı olur?', options: { facts: ['Net bilgiler', 'Gerekli veriyi önümde görmek isterim.'], voice: ['Konuşarak düşünmek', 'Ne düşündüğümü söylerken daha iyi duyarım.'], instinct: ['İlk tepki', 'Başta belirgin bir evet ya da hayır fark ederim.'], time: ['Zamana bırakmak', 'İlk tepki geçince netlik gelir.'] } },
       { label: 'EN İYİ ORTAM', title: 'En iyi nerede düşünürsün?', options: { quiet: ['Sessiz düzen', 'Korunaklı bir alan ve net bir plan.'], together: ['Birlikte düşünmek', 'Güvendiğim insanların yanında fikirlerim keskinleşir.'], variety: ['Değişen uyaranlar', 'Yeni bakış açıları ilgimi canlı tutar.'], motion: ['Hareket içinde', 'Üretirken veya hareket ederken netleşirim.'] } },
@@ -52,6 +52,7 @@ export default function App() {
   const [locale, setLocale] = useState<Locale>('en');
   const [done, setDone] = useState(false);
   const [calculating, setCalculating] = useState(false);
+  const [formError, setFormError] = useState(false);
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
@@ -80,7 +81,11 @@ export default function App() {
   }, [done, resultEntrance]);
 
   function submit() {
-    if (!firstName.trim() || !lastName.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) return;
+    if (!firstName.trim() || !lastName.trim() || !/^\d{4}-\d{2}-\d{2}$/.test(birthDate)) {
+      setFormError(true);
+      return;
+    }
+    setFormError(false);
     setProfile(calculateDesign(firstName, lastName, birthDate));
     setCalculating(true);
     scan.setValue(0);
@@ -93,43 +98,104 @@ export default function App() {
   if (!fontsLoaded) return <SafeAreaView style={styles.safe}><StatusBar style="dark" /></SafeAreaView>;
 
   if (calculating) return (
-    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><View style={styles.calculationPage}><Animated.View style={[styles.ambientOrb, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.08, 0.2] }), transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.85, 1.15] }) }] }]} /><View style={styles.calcMonogram}><Animated.Text style={[styles.calcMonogramText, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [1, 0.42] }) }]}>H</Animated.Text></View><Text style={styles.calcTitle}>{locale === 'en' ? 'Creating your personal portrait' : 'Kişisel portren hazırlanıyor'}</Text><Text style={styles.calcCopy}>{locale === 'en' ? 'Your individual reading is taking shape…' : 'Sana özel okuma şekilleniyor…'}</Text><View style={styles.calcTrack}><Animated.View style={[styles.calcFill, { transform: [{ scaleX: scan }] }]} /></View></View></SafeAreaView>
+    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><View style={styles.calculationPage}><Animated.View style={[styles.calcHaloOuter, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.35, 0.7] }), transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.92, 1.08] }) }] }]} /><Animated.View style={[styles.calcHaloInner, { transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [1.06, 0.94] }) }] }]} /><View style={styles.calcMonogram}><Animated.Text style={[styles.calcMonogramText, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [1, 0.56] }) }]}>H</Animated.Text></View><Text style={styles.calcEyebrow}>{locale === 'en' ? 'A MOMENT FOR YOU' : 'SANA AYRILMIŞ BİR AN'}</Text><Text style={styles.calcTitle}>{locale === 'en' ? 'Creating your personal portrait' : 'Kişisel portren hazırlanıyor'}</Text><Text style={styles.calcCopy}>{locale === 'en' ? 'Let the rest of the day wait here.' : 'Günün geri kalanı burada biraz beklesin.'}</Text><View style={styles.calcTrack}><Animated.View style={[styles.calcFill, { transform: [{ scaleX: scan }] }]} /></View></View></SafeAreaView>
   );
 
   if (done) return (
-    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><ScrollView contentContainerStyle={styles.resultPage}><Animated.View style={[styles.ambientOrbResult, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.06, 0.16] }), transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] }) }] }]} />
+    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><ScrollView key="result" contentContainerStyle={styles.resultPage} showsVerticalScrollIndicator={false}>
       <View style={styles.brandRow}><View style={styles.mark}><Text style={styles.markText}>H</Text></View><Text style={styles.brand}>HOLYARTED</Text><Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')}><Text style={styles.languageText}>{text.switch}</Text></Pressable></View>
-      <Animated.View style={{ opacity: resultEntrance, transform: [{ translateY: resultEntrance.interpolate({ inputRange: [0, 1], outputRange: [34, 0] }) }] }}><Text style={styles.resultLabel}>{text.resultLabel} · {profile.fullName.toLocaleUpperCase(locale === 'tr' ? 'tr-TR' : 'en-US')}</Text><Text style={styles.resultTitle}>{text.names[profile.purpose]}</Text><Text style={styles.resultIntro}>{text.intros[profile.purpose]}</Text></Animated.View>
-      <View style={styles.resultGrid}>{cards.map(([title, body], index) => <Animated.View key={title} style={[styles.resultCard, { opacity: resultEntrance, transform: [{ translateY: resultEntrance.interpolate({ inputRange: [0, 1], outputRange: [28 + index * 8, 0] }) }] }]}><Text style={styles.cardIndex}>{text.headings[index]}</Text><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardBody}>{body}</Text><View style={styles.cardAccent} /></Animated.View>)}</View>
-      <Pressable style={styles.darkButton} onPress={() => setDone(false)}><Text style={styles.darkButtonText}>←  {text.reset}</Text></Pressable><Text style={styles.note}>{text.note}</Text>
+      <Animated.View style={[styles.resultHero, { opacity: resultEntrance, transform: [{ translateY: resultEntrance.interpolate({ inputRange: [0, 1], outputRange: [34, 0] }) }] }]}><Animated.View style={[styles.resultHalo, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.08, 0.2] }), transform: [{ scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.9, 1.1] }) }] }]} /><Text style={styles.resultLabel}>{text.resultLabel}</Text><Text style={styles.resultName}>{profile.fullName}</Text><View style={styles.resultRule} /><Text style={styles.resultTitle}>{text.names[profile.purpose]}</Text><Text style={styles.resultIntro}>{text.intros[profile.purpose]}</Text></Animated.View>
+      <View style={styles.resultGrid}>{cards.map(([title, body], index) => <Animated.View key={title} style={[styles.resultCard, index % 2 === 1 && styles.resultCardTint, { opacity: resultEntrance, transform: [{ translateY: resultEntrance.interpolate({ inputRange: [0, 1], outputRange: [28 + index * 8, 0] }) }] }]}><View style={styles.cardTop}><Text style={styles.cardIndex}>{text.headings[index]}</Text><View style={styles.cardDot} /></View><Text style={styles.cardTitle}>{title}</Text><Text style={styles.cardBody}>{body}</Text></Animated.View>)}</View>
+      <Pressable style={({ pressed }) => [styles.darkButton, pressed && styles.buttonPressed]} onPress={() => setDone(false)}><Text style={styles.darkButtonText}>←  {text.reset}</Text></Pressable><Text style={styles.note}>{text.note}</Text>
     </ScrollView></SafeAreaView>
   );
 
   return (
-    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><ScrollView contentContainerStyle={styles.page}><Animated.View style={[styles.ambientOrb, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.05, 0.15] }), transform: [{ translateY: ambient.interpolate({ inputRange: [0, 1], outputRange: [-20, 30] }) }, { scale: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.86, 1.1] }) }] }]} />
+    <SafeAreaView style={styles.safe}><StatusBar style="dark" /><ScrollView key="entry" contentContainerStyle={styles.page} showsVerticalScrollIndicator={false}><Animated.View style={[styles.decorSage, { transform: [{ translateY: ambient.interpolate({ inputRange: [0, 1], outputRange: [-18, 22] }) }, { rotate: '-12deg' }] }]} /><Animated.View style={[styles.decorClay, { opacity: ambient.interpolate({ inputRange: [0, 1], outputRange: [0.58, 0.9] }), transform: [{ translateY: ambient.interpolate({ inputRange: [0, 1], outputRange: [16, -14] }) }] }]} />
       <View style={styles.brandRow}><View style={styles.mark}><Text style={styles.markText}>H</Text></View><Text style={styles.brand}>HOLYARTED</Text><Pressable style={styles.language} onPress={() => setLocale(locale === 'en' ? 'tr' : 'en')}><Text style={styles.languageText}>{text.switch}</Text></Pressable></View>
-      <Animated.View style={{ opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [38, 0] }) }] }}><View style={styles.hero}><Text style={styles.edition}>{text.edition}</Text><Text style={styles.title}>{text.title}</Text><Text style={styles.intro}>{text.intro}</Text><View style={styles.trustRow}>{text.trust.map((item) => <Text key={item} style={styles.trust}>✓ {item}</Text>)}</View></View>
-      <View style={styles.session}><View style={styles.sessionTop}><Text style={styles.sessionTopText}>{text.private}</Text><Text style={styles.lock}>◇</Text></View><View style={styles.sessionBody}><View style={styles.progressText}><Text style={styles.micro}>{text.progress}</Text><Text style={styles.microGold}>{text.inputLabel}</Text></View><View style={styles.track}><View style={[styles.trackFill, { width: '100%' }]} /></View><View style={styles.fields}><Text style={styles.fieldLabel}>{text.firstName}</Text><TextInput value={firstName} onChangeText={setFirstName} placeholder={text.firstPlaceholder} placeholderTextColor="rgba(81,75,70,.3)" style={styles.input} autoCapitalize="words" autoComplete="name-given" /><Text style={styles.fieldLabel}>{text.lastName}</Text><TextInput value={lastName} onChangeText={setLastName} placeholder={text.lastPlaceholder} placeholderTextColor="rgba(81,75,70,.3)" style={styles.input} autoCapitalize="words" autoComplete="name-family" /><Text style={styles.fieldLabel}>{text.birthDate}</Text><TextInput value={birthDate} onChangeText={setBirthDate} placeholder="YYYY-MM-DD" placeholderTextColor="rgba(81,75,70,.3)" style={styles.input} keyboardType="numbers-and-punctuation" maxLength={10} autoComplete="birthdate-full" /></View><Text style={styles.inputNote}>{text.inputNote}</Text><Pressable style={({ pressed }) => [styles.goldButtonWide, pressed && styles.buttonPressed]} onPress={submit}><Text style={styles.goldButtonText}>{text.reveal}  →</Text></Pressable></View></View></Animated.View>
+      <Animated.View style={{ opacity: entrance, transform: [{ translateY: entrance.interpolate({ inputRange: [0, 1], outputRange: [38, 0] }) }] }}><View style={styles.hero}><View style={styles.editionPill}><View style={styles.editionDot} /><Text style={styles.edition}>{text.edition}</Text></View><Text style={styles.title}>{text.title}</Text><Text style={styles.intro}>{text.intro}</Text><View style={styles.trustRow}>{text.trust.map((item) => <View key={item} style={styles.trustPill}><View style={styles.trustDot} /><Text style={styles.trust}>{item}</Text></View>)}</View></View>
+      <View style={styles.session}><View style={styles.sessionTop}><View><Text style={styles.sessionTopText}>{text.private}</Text><Text style={styles.sessionHint}>{text.progress}</Text></View><View style={styles.privatePill}><View style={styles.privateDot} /><Text style={styles.lock}>{locale === 'en' ? 'PRIVATE' : 'GİZLİ'}</Text></View></View><View style={styles.sessionBody}><Text style={styles.inputHeading}>{text.inputLabel}</Text><View style={styles.fields}><Text style={styles.fieldLabel}>{text.firstName}</Text><TextInput value={firstName} onChangeText={(value) => { setFirstName(value); setFormError(false); }} placeholder={text.firstPlaceholder} placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} autoCapitalize="words" autoComplete="name-given" /><Text style={styles.fieldLabel}>{text.lastName}</Text><TextInput value={lastName} onChangeText={(value) => { setLastName(value); setFormError(false); }} placeholder={text.lastPlaceholder} placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} autoCapitalize="words" autoComplete="name-family" /><Text style={styles.fieldLabel}>{text.birthDate}</Text><TextInput value={birthDate} onChangeText={(value) => { setBirthDate(value); setFormError(false); }} placeholder="YYYY-MM-DD" placeholderTextColor="rgba(67,72,64,.28)" style={styles.input} keyboardType="numbers-and-punctuation" maxLength={10} autoComplete="birthdate-full" /></View>{formError && <Text style={styles.errorText}>{text.formError}</Text>}<Text style={styles.inputNote}>{text.inputNote}</Text><Pressable style={({ pressed }) => [styles.goldButtonWide, pressed && styles.buttonPressed]} onPress={submit}><Text style={styles.goldButtonText}>{text.reveal}</Text><Text style={styles.buttonArrow}>→</Text></Pressable></View></View></Animated.View>
       <Text style={styles.note}>{text.note}</Text>
     </ScrollView></SafeAreaView>
   );
 }
 
-const cloud = '#F7F3EC';
-const ink = '#514B46';
-const panel = '#FBF8F2';
-const ivory = '#514B46';
-const gold = '#8F705E';
+const canvas = '#F3EFE8';
+const paper = '#FCF9F4';
+const ink = '#434840';
+const olive = '#4D584D';
+const sage = '#AEB9A6';
+const clay = '#D9B8A7';
+const oat = '#E8DDCE';
+const accent = '#9A715E';
 const display = 'Newsreader_500Medium';
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: cloud }, page: { backgroundColor: '#DFE5DB', paddingBottom: 44, overflow: 'hidden' }, resultPage: { backgroundColor: '#DCC4B8', minHeight: '100%', paddingBottom: 48, overflow: 'hidden' },
-  ambientOrb: { position: 'absolute', width: 360, height: 360, borderRadius: 180, borderWidth: 1, borderColor: '#A7826C', backgroundColor: 'rgba(220,196,184,.2)', top: 90, right: -210 }, ambientOrbResult: { position: 'absolute', width: 420, height: 420, borderRadius: 210, borderWidth: 1, borderColor: 'rgba(81,75,70,.3)', top: 80, right: -250 },
-  brandRow: { height: 72, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(98,91,85,.12)', backgroundColor: cloud },
-  mark: { width: 34, height: 34, borderWidth: 1, borderColor: 'rgba(167,130,108,.58)', alignItems: 'center', justifyContent: 'center' }, markText: { color: gold, fontFamily: display, fontSize: 17 }, brand: { color: ivory, marginLeft: 11, fontFamily: 'Newsreader_600SemiBold', fontSize: 14, letterSpacing: 2.7 }, language: { marginLeft: 'auto', borderWidth: 1, borderColor: 'rgba(98,91,85,.2)', paddingHorizontal: 12, paddingVertical: 8 }, languageText: { color: gold, fontWeight: '800', fontSize: 10 },
-  hero: { paddingHorizontal: 20, paddingTop: 44, paddingBottom: 36 }, edition: { color: gold, fontSize: 9, fontWeight: '800', letterSpacing: 1.9 }, title: { color: ivory, fontFamily: display, fontSize: 58, lineHeight: 56, letterSpacing: -2.2, marginTop: 18 }, intro: { color: 'rgba(81,75,70,.62)', fontSize: 15, lineHeight: 24, marginTop: 22 }, trustRow: { marginTop: 24, gap: 9 }, trust: { color: 'rgba(81,75,70,.56)', fontSize: 11 },
-  session: { marginHorizontal: 14, borderWidth: 1, borderColor: 'rgba(98,91,85,.14)', backgroundColor: panel }, sessionTop: { paddingHorizontal: 18, height: 52, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: 'rgba(98,91,85,.1)' }, sessionTopText: { color: gold, fontSize: 9, fontWeight: '800', letterSpacing: 1.6 }, lock: { color: 'rgba(81,75,70,.35)', marginLeft: 'auto' }, sessionBody: { padding: 20 }, progressText: { flexDirection: 'row', justifyContent: 'space-between', gap: 10 }, micro: { color: 'rgba(81,75,70,.4)', fontSize: 8, fontWeight: '800', letterSpacing: 1 }, microGold: { color: gold, fontSize: 8, fontWeight: '800', letterSpacing: 1 }, track: { height: 1, backgroundColor: 'rgba(98,91,85,.1)', marginTop: 12 }, trackFill: { height: 1, backgroundColor: '#A7826C' }, question: { color: ivory, fontFamily: display, fontSize: 30, lineHeight: 34, marginTop: 28 }, options: { gap: 8, marginTop: 22 }, option: { minHeight: 82, borderWidth: 1, borderColor: 'rgba(98,91,85,.12)', padding: 15 }, optionSelected: { borderColor: gold, backgroundColor: 'rgba(220,196,184,.18)' }, optionTop: { flexDirection: 'row', alignItems: 'flex-start' }, optionTitle: { color: ivory, fontSize: 13, fontWeight: '700', flex: 1 }, optionBody: { color: 'rgba(81,75,70,.48)', fontSize: 11, lineHeight: 17, marginTop: 6, paddingRight: 28 }, radio: { width: 17, height: 17, borderRadius: 10, borderWidth: 1, borderColor: 'rgba(98,91,85,.25)', alignItems: 'center', justifyContent: 'center' }, radioSelected: { backgroundColor: gold, borderColor: gold }, check: { color: cloud, fontSize: 10, fontWeight: '900' }, actions: { marginTop: 24, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }, back: { color: 'rgba(81,75,70,.5)', fontSize: 11, fontWeight: '700' }, disabled: { opacity: 0.2 }, goldButton: { minHeight: 48, backgroundColor: ink, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center' }, goldButtonText: { color: cloud, fontSize: 11, fontWeight: '800' }, note: { color: 'rgba(81,75,70,.42)', fontSize: 10, lineHeight: 17, textAlign: 'center', paddingHorizontal: 30, marginTop: 24 },
-  fields: { marginTop: 28 }, fieldLabel: { color: 'rgba(81,75,70,.7)', fontSize: 11, fontWeight: '700', marginBottom: 7 }, input: { height: 54, borderWidth: 1, borderColor: 'rgba(98,91,85,.16)', color: ivory, paddingHorizontal: 14, fontSize: 15, marginBottom: 17, backgroundColor: 'rgba(255,255,255,.5)' }, inputNote: { color: 'rgba(81,75,70,.42)', fontSize: 10, lineHeight: 16, marginTop: 2 }, goldButtonWide: { minHeight: 52, backgroundColor: ink, paddingHorizontal: 18, alignItems: 'center', justifyContent: 'center', marginTop: 20 }, buttonPressed: { opacity: 0.8, transform: [{ scale: 0.985 }] },
-  calculationPage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, overflow: 'hidden' }, calcMonogram: { width: 82, height: 82, borderWidth: 1, borderColor: 'rgba(167,130,108,.4)', alignItems: 'center', justifyContent: 'center' }, calcMonogramText: { color: gold, fontFamily: display, fontSize: 38 }, calcTitle: { color: ivory, fontFamily: display, fontSize: 40, lineHeight: 44, textAlign: 'center', marginTop: 30 }, calcCopy: { color: 'rgba(81,75,70,.48)', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 12 }, calcTrack: { height: 1, width: '100%', backgroundColor: 'rgba(98,91,85,.1)', marginTop: 38, overflow: 'hidden' }, calcFill: { height: 1, width: '100%', backgroundColor: '#A7826C', transformOrigin: 'left' },
-  resultLabel: { color: 'rgba(81,75,70,.62)', fontSize: 9, fontWeight: '800', letterSpacing: 2, marginTop: 44, paddingHorizontal: 20 }, resultTitle: { color: ink, fontFamily: display, fontSize: 58, lineHeight: 55, letterSpacing: -2, paddingHorizontal: 20, marginTop: 16 }, resultIntro: { color: 'rgba(81,75,70,.7)', fontSize: 15, lineHeight: 24, paddingHorizontal: 20, marginTop: 22 }, resultGrid: { marginTop: 36, borderTopWidth: 1, borderTopColor: 'rgba(98,91,85,.2)' }, resultCard: { minHeight: 210, borderBottomWidth: 1, borderBottomColor: 'rgba(98,91,85,.18)', padding: 22, overflow: 'hidden' }, cardIndex: { color: 'rgba(81,75,70,.56)', fontSize: 9, fontWeight: '800', letterSpacing: 1.3 }, cardTitle: { color: ink, fontFamily: display, fontSize: 31, lineHeight: 34, marginTop: 30 }, cardBody: { color: 'rgba(81,75,70,.68)', fontSize: 13, lineHeight: 21, marginTop: 12 }, sourceBody: { color: 'rgba(81,75,70,.5)', fontSize: 11, lineHeight: 19, marginTop: 16, borderTopWidth: 1, borderTopColor: 'rgba(98,91,85,.14)', paddingTop: 14 }, cardAccent: { position: 'absolute', width: 90, height: 1, backgroundColor: '#A7826C', right: 0, bottom: 0 }, darkButton: { backgroundColor: ink, marginHorizontal: 20, marginTop: 30, minHeight: 50, alignItems: 'center', justifyContent: 'center' }, darkButtonText: { color: cloud, fontSize: 11, fontWeight: '800' },
+  safe: { flex: 1, backgroundColor: canvas },
+  page: { backgroundColor: canvas, minHeight: '100%', paddingBottom: 48, overflow: 'hidden' },
+  resultPage: { backgroundColor: canvas, minHeight: '100%', paddingBottom: 48 },
+  decorSage: { position: 'absolute', width: 360, height: 270, borderRadius: 180, backgroundColor: '#DCE3D7', top: 118, right: -190 },
+  decorClay: { position: 'absolute', width: 155, height: 155, borderRadius: 80, backgroundColor: '#E5CABE', top: 265, left: -102 },
+  brandRow: { height: 72, paddingHorizontal: 20, flexDirection: 'row', alignItems: 'center', backgroundColor: 'transparent' },
+  mark: { width: 38, height: 38, borderRadius: 19, backgroundColor: paper, borderWidth: 1, borderColor: 'rgba(77,88,77,.12)', alignItems: 'center', justifyContent: 'center', shadowColor: ink, shadowOpacity: 0.08, shadowRadius: 12, shadowOffset: { width: 0, height: 5 }, elevation: 2 },
+  markText: { color: accent, fontFamily: 'Newsreader_600SemiBold', fontSize: 18 },
+  brand: { color: ink, marginLeft: 12, fontFamily: 'Newsreader_600SemiBold', fontSize: 13, letterSpacing: 2.6 },
+  language: { marginLeft: 'auto', borderRadius: 18, backgroundColor: 'rgba(252,249,244,.76)', borderWidth: 1, borderColor: 'rgba(77,88,77,.12)', paddingHorizontal: 14, paddingVertical: 9 },
+  languageText: { color: olive, fontWeight: '800', fontSize: 10, letterSpacing: 0.7 },
+  hero: { paddingHorizontal: 22, paddingTop: 34, paddingBottom: 34 },
+  editionPill: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 8, borderRadius: 18, backgroundColor: 'rgba(252,249,244,.7)', paddingHorizontal: 12, paddingVertical: 9 },
+  editionDot: { width: 6, height: 6, borderRadius: 3, backgroundColor: clay },
+  edition: { color: olive, fontSize: 9, fontWeight: '800', letterSpacing: 1.45 },
+  title: { color: ink, fontFamily: display, fontSize: 48, lineHeight: 49, letterSpacing: -1.75, marginTop: 22, maxWidth: 340 },
+  intro: { color: 'rgba(67,72,64,.67)', fontSize: 15, lineHeight: 24, marginTop: 20, maxWidth: 338 },
+  trustRow: { marginTop: 25, flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+  trustPill: { flexDirection: 'row', alignItems: 'center', gap: 7, borderRadius: 16, borderWidth: 1, borderColor: 'rgba(77,88,77,.11)', backgroundColor: 'rgba(252,249,244,.57)', paddingHorizontal: 10, paddingVertical: 8 },
+  trustDot: { width: 4, height: 4, borderRadius: 2, backgroundColor: accent },
+  trust: { color: 'rgba(67,72,64,.68)', fontSize: 10 },
+  session: { marginHorizontal: 14, borderRadius: 30, overflow: 'hidden', backgroundColor: paper, borderWidth: 1, borderColor: 'rgba(77,88,77,.1)', shadowColor: ink, shadowOpacity: 0.13, shadowRadius: 30, shadowOffset: { width: 0, height: 16 }, elevation: 5 },
+  sessionTop: { minHeight: 84, paddingHorizontal: 22, paddingVertical: 18, flexDirection: 'row', alignItems: 'center', backgroundColor: '#E6DDCF', borderBottomWidth: 1, borderBottomColor: 'rgba(77,88,77,.08)' },
+  sessionTopText: { color: ink, fontFamily: 'Newsreader_600SemiBold', fontSize: 19 },
+  sessionHint: { color: 'rgba(67,72,64,.5)', fontSize: 8, fontWeight: '700', letterSpacing: 0.8, marginTop: 5 },
+  privatePill: { marginLeft: 'auto', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 14, backgroundColor: 'rgba(252,249,244,.65)', paddingHorizontal: 9, paddingVertical: 7 },
+  privateDot: { width: 5, height: 5, borderRadius: 3, backgroundColor: sage },
+  lock: { color: 'rgba(67,72,64,.58)', fontSize: 8, fontWeight: '800', letterSpacing: 0.9 },
+  sessionBody: { paddingHorizontal: 22, paddingTop: 24, paddingBottom: 22 },
+  inputHeading: { color: accent, fontSize: 9, fontWeight: '800', letterSpacing: 1.4 },
+  fields: { marginTop: 22 },
+  fieldLabel: { color: 'rgba(67,72,64,.76)', fontSize: 11, fontWeight: '700', marginBottom: 8, marginLeft: 3 },
+  input: { height: 57, borderRadius: 17, borderWidth: 1, borderColor: 'rgba(77,88,77,.12)', color: ink, paddingHorizontal: 17, fontSize: 15, marginBottom: 17, backgroundColor: '#F4F0E9' },
+  errorText: { color: '#9B5E55', fontSize: 10, lineHeight: 16, marginTop: -2, marginBottom: 9 },
+  inputNote: { color: 'rgba(67,72,64,.47)', fontSize: 10, lineHeight: 16, paddingRight: 8 },
+  goldButtonWide: { minHeight: 58, borderRadius: 20, backgroundColor: olive, paddingLeft: 20, paddingRight: 12, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 22, shadowColor: olive, shadowOpacity: 0.18, shadowRadius: 14, shadowOffset: { width: 0, height: 8 }, elevation: 3 },
+  goldButtonText: { color: paper, fontSize: 12, fontWeight: '800', letterSpacing: 0.2 },
+  buttonArrow: { width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(252,249,244,.14)', color: paper, textAlign: 'center', lineHeight: 34, fontSize: 17 },
+  buttonPressed: { opacity: 0.82, transform: [{ scale: 0.985 }] },
+  note: { color: 'rgba(67,72,64,.42)', fontSize: 10, lineHeight: 17, textAlign: 'center', paddingHorizontal: 34, marginTop: 26 },
+  calculationPage: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 28, overflow: 'hidden', backgroundColor: oat },
+  calcHaloOuter: { position: 'absolute', width: 330, height: 330, borderRadius: 165, borderWidth: 1, borderColor: 'rgba(77,88,77,.17)', backgroundColor: 'rgba(174,185,166,.18)' },
+  calcHaloInner: { position: 'absolute', width: 220, height: 220, borderRadius: 110, borderWidth: 1, borderColor: 'rgba(154,113,94,.16)', backgroundColor: 'rgba(252,249,244,.28)' },
+  calcMonogram: { width: 82, height: 82, borderRadius: 41, backgroundColor: paper, alignItems: 'center', justifyContent: 'center', shadowColor: ink, shadowOpacity: 0.1, shadowRadius: 22, shadowOffset: { width: 0, height: 10 }, elevation: 4 },
+  calcMonogramText: { color: accent, fontFamily: display, fontSize: 38 },
+  calcEyebrow: { color: accent, fontSize: 9, fontWeight: '800', letterSpacing: 1.6, marginTop: 34 },
+  calcTitle: { color: ink, fontFamily: display, fontSize: 39, lineHeight: 42, textAlign: 'center', marginTop: 12, maxWidth: 330 },
+  calcCopy: { color: 'rgba(67,72,64,.53)', fontSize: 13, lineHeight: 20, textAlign: 'center', marginTop: 12 },
+  calcTrack: { height: 3, width: 210, borderRadius: 2, backgroundColor: 'rgba(77,88,77,.1)', marginTop: 34, overflow: 'hidden' },
+  calcFill: { height: 3, width: '100%', borderRadius: 2, backgroundColor: accent, transformOrigin: 'left' },
+  resultHero: { marginHorizontal: 14, marginTop: 18, borderRadius: 32, overflow: 'hidden', backgroundColor: olive, paddingHorizontal: 24, paddingTop: 27, paddingBottom: 30, shadowColor: olive, shadowOpacity: 0.17, shadowRadius: 24, shadowOffset: { width: 0, height: 12 }, elevation: 4 },
+  resultHalo: { position: 'absolute', width: 280, height: 280, borderRadius: 140, borderWidth: 1, borderColor: paper, backgroundColor: sage, top: -150, right: -120 },
+  resultLabel: { color: '#D9C1B4', fontSize: 9, fontWeight: '800', letterSpacing: 1.8 },
+  resultName: { color: 'rgba(252,249,244,.64)', fontSize: 12, marginTop: 10 },
+  resultRule: { width: 42, height: 1, backgroundColor: 'rgba(252,249,244,.32)', marginTop: 24 },
+  resultTitle: { color: paper, fontFamily: display, fontSize: 46, lineHeight: 47, letterSpacing: -1.4, marginTop: 20, maxWidth: 330 },
+  resultIntro: { color: 'rgba(252,249,244,.72)', fontSize: 14, lineHeight: 23, marginTop: 18, maxWidth: 330 },
+  resultGrid: { marginTop: 15, paddingHorizontal: 14, gap: 12 },
+  resultCard: { minHeight: 190, borderRadius: 25, backgroundColor: paper, borderWidth: 1, borderColor: 'rgba(77,88,77,.09)', padding: 21, shadowColor: ink, shadowOpacity: 0.07, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 2 },
+  resultCardTint: { backgroundColor: '#E5E8DE' },
+  cardTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  cardIndex: { color: 'rgba(67,72,64,.5)', fontSize: 9, fontWeight: '800', letterSpacing: 1.25 },
+  cardDot: { width: 7, height: 7, borderRadius: 4, backgroundColor: clay },
+  cardTitle: { color: ink, fontFamily: display, fontSize: 30, lineHeight: 33, marginTop: 30 },
+  cardBody: { color: 'rgba(67,72,64,.66)', fontSize: 13, lineHeight: 21, marginTop: 11 },
+  darkButton: { backgroundColor: olive, borderRadius: 20, marginHorizontal: 20, marginTop: 24, minHeight: 55, alignItems: 'center', justifyContent: 'center' },
+  darkButtonText: { color: paper, fontSize: 11, fontWeight: '800' },
 });
