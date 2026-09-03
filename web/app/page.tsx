@@ -1,20 +1,8 @@
 import { Experience } from './experience';
-import {
-  chatGPTSignInPath,
-  chatGPTSignOutPath,
-  getChatGPTUser,
-} from './chatgpt-auth';
+import { getPublicAuthConfig } from '@/lib/runtime-config';
 
 export const dynamic = 'force-dynamic';
 
 export default async function Home() {
-  const user = await getChatGPTUser();
-
-  return (
-    <Experience
-      user={user ? { displayName: user.displayName, email: user.email } : null}
-      signInPath={chatGPTSignInPath('/')}
-      signOutPath={chatGPTSignOutPath('/')}
-    />
-  );
+  return <Experience authConfig={getPublicAuthConfig()} />;
 }
