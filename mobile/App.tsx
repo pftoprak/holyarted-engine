@@ -97,8 +97,13 @@ export default function App() {
       setFormError(true);
       return;
     }
-    setFormError(false);
-    setProfile(calculateDesign(firstName, lastName, birthDate));
+    try {
+      setProfile(calculateDesign(firstName, lastName, birthDate));
+      setFormError(false);
+    } catch {
+      setFormError(true);
+      return;
+    }
     setCalculating(true);
     scan.setValue(0);
     Animated.timing(scan, { toValue: 1, duration: 1350, easing: Easing.inOut(Easing.cubic), useNativeDriver: true }).start(() => {

@@ -19,7 +19,7 @@ const copy = {
     start: 'Discover my design', sample: 'Preview the experience', trust: ['Personal to you', 'Private by design', 'No fixed labels'],
     panelLabel: 'PERSONAL PORTRAIT · PRIVATE SESSION', panelTitle: 'Your private portrait begins here.', panelCopy: 'A few details are all it takes to begin. Your individual reading will unfold in moments.',
     progress: 'Your private profile', inputLabel: 'PRIVATE INPUT', back: 'Back', next: 'Continue', finish: 'Reveal my portrait', calculating: 'Creating your personal portrait', calculatingNote: 'Your individual reading is taking shape…', focusHint: 'Select an insight to bring it into focus',
-    firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details stay private and are never shown publicly.',
+    firstName: 'First name', firstPlaceholder: 'Your first name', lastName: 'Last name', lastPlaceholder: 'Your last name', birthDate: 'Date of birth', inputNote: 'Your details stay private and are never shown publicly.', invalidProfile: 'Please enter a complete name and a valid birth date.',
     questions: [
       { eyebrow: 'DECISION STYLE', title: 'When a decision matters, what helps you trust it?', options: { facts: ['Clear facts', 'I want the evidence in front of me.'], voice: ['Talking it through', 'I hear what I think as I say it.'], instinct: ['An immediate inner response', 'I notice a clear yes or no early.'], time: ['Time to settle', 'Clarity arrives after the first reaction passes.'] } },
       { eyebrow: 'BEST ENVIRONMENT', title: 'Where do you do your best thinking?', options: { quiet: ['Quiet structure', 'A protected space with a clear plan.'], together: ['A collaborative room', 'Ideas sharpen around trusted people.'], variety: ['Changing inputs', 'New perspectives and settings keep me engaged.'], motion: ['Hands-on momentum', 'Thinking becomes clear while I make or move.'] } },
@@ -56,7 +56,7 @@ const copy = {
     start: 'Tasarımımı keşfet', sample: 'Deneyimi önizle', trust: ['Sana özel', 'Gizlilik odaklı', 'Sabit etiket yok'],
     panelLabel: 'KİŞİSEL PORTRE · ÖZEL OTURUM', panelTitle: 'Özel portren burada başlıyor.', panelCopy: 'Başlamak için birkaç bilgi yeterli. Sana özel okuma kısa süre içinde şekillenecek.',
     progress: 'Özel profilin', inputLabel: 'KİŞİSEL GİRDİ', back: 'Geri', next: 'Devam et', finish: 'Portremi göster', calculating: 'Kişisel portren hazırlanıyor', calculatingNote: 'Sana özel okuma şekilleniyor…', focusHint: 'Odağa almak için bir içgörü seç',
-    firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin gizli kalır ve hiçbir zaman herkese açık gösterilmez.',
+    firstName: 'Ad', firstPlaceholder: 'Adın', lastName: 'Soyad', lastPlaceholder: 'Soyadın', birthDate: 'Doğum tarihi', inputNote: 'Bilgilerin gizli kalır ve hiçbir zaman herkese açık gösterilmez.', invalidProfile: 'Lütfen adını, soyadını ve geçerli bir doğum tarihini gir.',
     questions: [
       { eyebrow: 'KARAR BİÇİMİ', title: 'Önemli bir kararda neye güvenmek sana en çok yardımcı olur?', options: { facts: ['Net bilgiler', 'Gerekli veriyi önümde görmek isterim.'], voice: ['Konuşarak düşünmek', 'Ne düşündüğümü söylerken daha iyi duyarım.'], instinct: ['İlk iç tepki', 'Başta belirgin bir evet ya da hayır fark ederim.'], time: ['Zamana bırakmak', 'İlk tepki geçince netlik gelir.'] } },
       { eyebrow: 'EN İYİ ORTAM', title: 'En iyi nerede düşünürsün?', options: { quiet: ['Sessiz düzen', 'Korunaklı bir alan ve net bir plan.'], together: ['Birlikte düşünmek', 'Güvendiğim insanların yanında fikirlerim keskinleşir.'], variety: ['Değişen uyaranlar', 'Yeni bakış açıları ve ortamlar ilgimi canlı tutar.'], motion: ['Hareket içinde', 'Üretirken veya hareket ederken düşüncem netleşir.'] } },
@@ -107,7 +107,13 @@ export function Experience({ authConfig }: ExperienceProps) {
   function begin() { document.querySelector('#assessment')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   function calculate(event: { preventDefault: () => void }) {
     event.preventDefault();
-    setProfile(calculateDesign(firstName, lastName, birthDate));
+    try {
+      setProfile(calculateDesign(firstName, lastName, birthDate));
+      setError(null);
+    } catch {
+      setError(text.invalidProfile);
+      return;
+    }
     setComplete(false);
     setIsCalculating(true);
     window.setTimeout(() => {

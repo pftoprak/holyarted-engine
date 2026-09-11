@@ -1,34 +1,30 @@
-import abilities from '../data/abilities.json';
-import idealJobs from '../data/ideal_job.json';
-import showcase from '../data/showcase.json';
+import { calculateCoreProfile } from './calculation-core';
 
 export type Decision = 'facts' | 'voice' | 'instinct' | 'time';
 export type Environment = 'quiet' | 'together' | 'variety' | 'motion';
 export type Friction = 'switching' | 'ambiguity' | 'access' | 'stagnation';
 export type Purpose = 'build' | 'guide' | 'create' | 'connect';
-type ContentMap = Record<string, string>;
 
-const letterValues: Record<string, number> = { A: 1, B: 2, C: 3, Ç: 3, D: 4, E: 5, F: 6, G: 7, Ğ: 7, H: 8, I: 9, İ: 9, J: 1, K: 2, L: 3, M: 4, N: 5, O: 6, Ö: 6, P: 7, Q: 8, R: 9, S: 1, Ş: 1, T: 2, U: 3, Ü: 3, V: 4, W: 5, X: 6, Y: 7, Z: 8 };
 const decisionKeys: Decision[] = ['instinct', 'voice', 'facts', 'time'];
 const environmentKeys: Environment[] = ['motion', 'together', 'variety', 'quiet'];
 const frictionKeys: Friction[] = ['ambiguity', 'access', 'switching', 'stagnation'];
 const purposeKeys: Purpose[] = ['build', 'connect', 'create', 'guide'];
 
-function reduceNumber(total: number) { let value = total; while (value > 9 && ![11, 22, 33].includes(value)) value = String(value).split('').reduce((sum, digit) => sum + Number(digit), 0); return value; }
-function sumDigits(value: string) { return value.replace(/\D/g, '').split('').reduce((sum, digit) => sum + Number(digit), 0); }
-function sumName(name: string) { return Array.from(name.toLocaleUpperCase('tr-TR')).reduce((sum, letter) => sum + (letterValues[letter] ?? 0), 0); }
-function pick(map: ContentMap, key: number) { return map[String(key)] ?? map[String(reduceNumber(key))] ?? map['9']; }
-function contentHash(value: string) { return Array.from(value).reduce((hash, character) => (hash * 31 + (character.codePointAt(0) ?? 0)) % 1000003, 17); }
-function mappedKey<T>(keys: T[], value: number) { return keys[(reduceNumber(value) - 1 + keys.length) % keys.length]; }
+function mappedKey<T>(keys: T[], value: number): T {
+  return keys[Math.abs(Math.trunc(value)) % keys.length];
+}
 
 export function calculateDesign(firstName: string, lastName: string, birthDate: string) {
-  const fullName = `${firstName.trim()} ${lastName.trim()}`.trim();
-  const lifeNumber = reduceNumber(sumDigits(birthDate));
-  const expressionNumber = reduceNumber(sumName(fullName));
-  const directionNumber = reduceNumber(lifeNumber + expressionNumber);
-  const selectedContent = [pick(showcase as ContentMap, lifeNumber), pick(abilities as ContentMap, expressionNumber), pick(idealJobs as ContentMap, directionNumber)];
-  const contentSeed = selectedContent.reduce((sum, value) => sum + contentHash(value), 0);
-  return { fullName: fullName || 'Your profile', decision: mappedKey(decisionKeys, lifeNumber + contentSeed), environment: mappedKey(environmentKeys, expressionNumber + contentSeed), friction: mappedKey(frictionKeys, lifeNumber + directionNumber + contentSeed), purpose: mappedKey(purposeKeys, directionNumber + contentSeed) };
+  const core = calculateCoreProfile(firstName, lastName, birthDate);
+  const { signals } = core;
+  return {
+    fullName: core.fullName,
+    decision: mappedKey(decisionKeys, signals.dateTotal + signals.birthDay),
+    environment: mappedKey(environmentKeys, signals.nameTotal + signals.birthMonth),
+    friction: mappedKey(frictionKeys, signals.consonantTotal + signals.birthYearTotal),
+    purpose: mappedKey(purposeKeys, signals.vowelTotal + signals.dateSignature),
+    calculation: core,
+  };
 }
 
 export type CalculatedProfile = ReturnType<typeof calculateDesign>;
