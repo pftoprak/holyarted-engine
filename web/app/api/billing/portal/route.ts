@@ -1,16 +1,17 @@
 import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost } from '@/lib/stripe-api';
+import { privateJson } from '@/lib/private-response';
 
 type PortalSession = { url: string | null };
 
 export async function POST(request: Request) {
   try {
     const user = await authenticateRequest(request);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return privateJson({ error: 'Unauthorized' }, 401);
     const membership = await getMembership(user.id);
     if (!membership?.stripeCustomerId) {
-      return Response.json({ error: 'No paid membership found.' }, { status: 404 });
+      return privateJson({ error: 'No paid membership found.' }, 404);
     }
 
     const values = new URLSearchParams({
@@ -22,9 +23,9 @@ export async function POST(request: Request) {
       values,
     );
     if (!session.url) throw new Error('Billing portal URL was not returned.');
-    return Response.json({ url: session.url });
+    return privateJson({ url: session.url });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Portal failed.';
-    return Response.json({ error: message }, { status: 500 });
+    console.error('billing_portal_failed', error);
+    return privateJson({ error: 'Billing management is currently unavailable. Please try again later.' }, 503);
   }
 }

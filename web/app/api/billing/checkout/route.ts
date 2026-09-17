@@ -1,17 +1,18 @@
 import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost, stripePriceFor } from '@/lib/stripe-api';
+import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
 
 type CheckoutSession = { url: string | null };
 
 export async function POST(request: Request) {
   try {
     const user = await authenticateRequest(request);
-    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!user) return privateJson({ error: 'Unauthorized' }, 401);
 
-    const body = (await request.json()) as { plan?: string };
-    if (body.plan !== 'plus' && body.plan !== 'premium') {
-      return Response.json({ error: 'Unknown membership plan.' }, { status: 400 });
+    const body = (await readSmallJson(request)) as { plan?: string } | null;
+    if (body?.plan !== 'plus' && body?.plan !== 'premium') {
+      return privateJson({ error: 'Unknown membership plan.' }, 400);
     }
 
     const origin = new URL(request.url).origin;
@@ -21,9 +22,9 @@ export async function POST(request: Request) {
       membership.plan !== 'basic' &&
       ['active', 'trialing', 'past_due'].includes(membership.status)
     ) {
-      return Response.json(
+      return privateJson(
         { error: 'Manage your existing membership from the billing portal.' },
-        { status: 409 },
+        409,
       );
     }
     const values = new URLSearchParams({
@@ -47,9 +48,10 @@ export async function POST(request: Request) {
 
     const session = await stripePost<CheckoutSession>('checkout/sessions', values);
     if (!session.url) throw new Error('Checkout URL was not returned.');
-    return Response.json({ url: session.url });
+    return privateJson({ url: session.url });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Checkout failed.';
-    return Response.json({ error: message }, { status: 500 });
+    if (error instanceof RequestBodyError) return privateJson({ error: error.message }, error.status);
+    console.error('billing_checkout_failed', error);
+    return privateJson({ error: 'Checkout is currently unavailable. Please try again later.' }, 503);
   }
 }

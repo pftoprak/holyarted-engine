@@ -1,9 +1,15 @@
 import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership, publicMembership } from '@/lib/membership-store';
+import { privateJson } from '@/lib/private-response';
 
 export async function GET(request: Request) {
-  const user = await authenticateRequest(request);
-  if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 });
-  const membership = await getMembership(user.id);
-  return Response.json(publicMembership(membership));
+  try {
+    const user = await authenticateRequest(request);
+    if (!user) return privateJson({ error: 'Unauthorized' }, 401);
+    const membership = await getMembership(user.id);
+    return privateJson(publicMembership(membership));
+  } catch (error) {
+    console.error('membership_load_failed', error);
+    return privateJson({ error: 'Your membership could not be opened.' }, 503);
+  }
 }
