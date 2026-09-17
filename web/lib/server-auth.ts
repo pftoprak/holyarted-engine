@@ -20,6 +20,8 @@ export async function authenticateRequest(
   if (!config || !authorization?.startsWith('Bearer ')) return null;
 
   const response = await fetch(`${config.url}/auth/v1/user`, {
+    cache: 'no-store',
+    signal: AbortSignal.timeout(10000),
     headers: {
       apikey: config.publishableKey,
       authorization,
