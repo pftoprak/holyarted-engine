@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,7 +35,7 @@ const copy = {
     environments: { quiet: ['Protected focus', 'You do your best work with defined priorities, fewer interruptions and enough room to think deeply.'], together: ['Trusted collaboration', 'Your thinking becomes more precise around people who challenge ideas without competing for attention.'], variety: ['Fresh perspective', 'You stay engaged when your work includes new inputs, changing contexts and room to connect different ideas.'], motion: ['Progress you can touch', 'You understand problems by acting on them. Prototypes, drafts and physical movement help thought become clear.'] },
     frictions: { switching: ['Protect continuity', 'Too many parallel demands can make you mistake motion for progress. Keep one primary thread visible and park the rest.'], ambiguity: ['Name the finish line', 'Unclear expectations quietly consume your attention. Before starting, agree what “done” needs to look like.'], access: ['Make access intentional', 'Being useful can become over-availability. Decide when you are open to others and when your priorities are protected.'], stagnation: ['Create visible movement', 'Repetition is hardest when its purpose disappears. Link routine work to a meaningful outcome or change the method.'] },
     purposes: { build: ['Make the useful thing real', 'Your direction is not a job title. It is a recurring contribution: creating structures, products or practices that hold up over time.'], guide: ['Turn complexity into direction', 'Your direction is to help people orient themselves—through teaching, leadership, care or clear communication.'], create: ['Give new ideas a form', 'Your direction is to open possibilities, then shape the strongest one into work others can experience and use.'], connect: ['Strengthen the human network', 'Your direction is to create understanding across people, disciplines or communities that would otherwise remain separate.'] },
-    restart: 'Create another portrait', savePrompt: 'Keep your portrait close.', saveCopy: 'Continue with your Google account to return to your private space and keep your membership in one place.', saveIn: 'Open my account', saveOut: 'Continue with Google', lockedTitle: 'Two deeper chapters are waiting.', lockedCopy: 'Plus unlocks your complete portrait. Premium adds dedicated relationship and work lenses.',
+    restart: 'Create another portrait', savePrompt: 'Keep your portrait close.', saveCopy: 'Continue with your Google account to return to your private space and keep your membership in one place.', saveIn: 'Open my account', saveOut: 'Continue with Google', portraitSaving: 'Saving to your private space…', portraitSaved: 'Saved to your private space', portraitSaveFailed: 'Your portrait is ready, but it could not be saved. Please try again.', lockedTitle: 'Two deeper chapters are waiting.', lockedCopy: 'Plus unlocks your complete portrait. Premium adds dedicated relationship and work lenses.',
     extendedSections: ['Relationship lens', 'Work lens'],
     relationships: { quiet: ['Space makes connection clearer', 'You relate best when closeness still leaves room for quiet thought and an unhurried response.'], together: ['Trust grows through conversation', 'Shared thinking helps you feel known. The right relationships make room for both honesty and exchange.'], variety: ['Curiosity keeps connection alive', 'You connect through fresh experiences, evolving conversations and room to keep discovering one another.'], motion: ['Connection deepens through doing', 'Shared plans, movement and making something together often say more to you than prolonged analysis.'] },
     workLenses: { build: ['Make reliability your signature', 'Your strongest work turns intention into something clear, useful and built to last.'], guide: ['Make direction your signature', 'Your strongest work helps people find the next clear step without taking their agency away.'], create: ['Make originality useful', 'Your strongest work gives an unexpected idea enough structure to become real for other people.'], connect: ['Make understanding possible', 'Your strongest work brings people, perspectives and opportunities into a more meaningful relationship.'] },
@@ -72,7 +72,7 @@ const copy = {
     environments: { quiet: ['Korunan odak', 'Net öncelikler, daha az bölünme ve derin düşünme alanı olduğunda en iyi işini çıkarırsın.'], together: ['Güvenilir işbirliği', 'Fikirlerle rekabet etmeden onları zorlayan insanların yanında düşüncen daha kesin hale gelir.'], variety: ['Taze bakış', 'İşin yeni girdiler, değişen bağlamlar ve farklı fikirleri birleştirme alanı içerdiğinde ilgini korursun.'], motion: ['Dokunabildiğin ilerleme', 'Problemleri onlara etki ederek anlarsın. Taslaklar, denemeler ve fiziksel hareket düşünceni netleştirir.'] },
     frictions: { switching: ['Sürekliliği koru', 'Çok fazla eşzamanlı talep, hareketi ilerleme sanmana neden olabilir. Tek bir ana işi görünür tut, diğerlerini beklet.'], ambiguity: ['Bitiş çizgisini adlandır', 'Belirsiz beklentiler dikkatini sessizce tüketir. Başlamadan önce “bitti”nin nasıl görüneceğini netleştir.'], access: ['Ulaşılabilirliği bilinçli seç', 'Faydalı olmak aşırı ulaşılabilirliğe dönüşebilir. Başkalarına ne zaman açık, kendi önceliklerine ne zaman kapalı olduğunu belirle.'], stagnation: ['Görünür ilerleme yarat', 'Tekrarın amacı kaybolduğunda zorlanırsın. Rutin işi anlamlı bir sonuca bağla veya yöntemini değiştir.'] },
     purposes: { build: ['Faydalı olanı gerçeğe dönüştür', 'Yönün bir iş unvanı değil, tekrarlayan bir katkıdır: zamana dayanan yapılar, ürünler veya uygulamalar kurmak.'], guide: ['Karmaşıklığı yöne dönüştür', 'Yönün; öğretme, liderlik, bakım veya açık iletişim aracılığıyla insanların kendini konumlandırmasına yardım etmek.'], create: ['Yeni fikre biçim ver', 'Yönün olasılık açmak, ardından en güçlü olanı başkalarının deneyimleyip kullanabileceği bir işe dönüştürmek.'], connect: ['İnsan ağını güçlendir', 'Yönün normalde ayrı kalacak insanlar, alanlar veya topluluklar arasında anlayış yaratmak.'] },
-    restart: 'Başka bir portre oluştur', savePrompt: 'Portreni yanında tut.', saveCopy: 'Özel alanına geri dönmek ve üyeliğini tek yerde tutmak için Google hesabınla devam et.', saveIn: 'Hesabımı aç', saveOut: 'Google ile devam et', lockedTitle: 'İki derin bölüm seni bekliyor.', lockedCopy: 'Plus tam portrenin kilidini açar. Premium ise ilişki ve iş yaşamına özel bakışlar ekler.',
+    restart: 'Başka bir portre oluştur', savePrompt: 'Portreni yanında tut.', saveCopy: 'Özel alanına geri dönmek ve üyeliğini tek yerde tutmak için Google hesabınla devam et.', saveIn: 'Hesabımı aç', saveOut: 'Google ile devam et', portraitSaving: 'Kişisel alanına kaydediliyor…', portraitSaved: 'Kişisel alanına kaydedildi', portraitSaveFailed: 'Portren hazır, ancak kaydedilemedi. Lütfen tekrar dene.', lockedTitle: 'İki derin bölüm seni bekliyor.', lockedCopy: 'Plus tam portrenin kilidini açar. Premium ise ilişki ve iş yaşamına özel bakışlar ekler.',
     extendedSections: ['İlişki bakışı', 'İş yaşamı bakışı'],
     relationships: { quiet: ['Alan, bağı daha net kılar', 'Yakınlığın içinde sessiz düşünmeye ve acele etmeden yanıt vermeye yer olduğunda daha iyi bağ kurarsın.'], together: ['Güven konuşmayla büyür', 'Birlikte düşünmek kendini anlaşılmış hissettirir. Doğru ilişkiler hem dürüstlüğe hem alışverişe alan açar.'], variety: ['Merak bağı canlı tutar', 'Yeni deneyimler, gelişen konuşmalar ve birbirini yeniden keşfetme alanı bağını besler.'], motion: ['Bağ birlikte yaparken derinleşir', 'Ortak planlar, hareket ve birlikte bir şey üretmek sana uzun analizlerden daha çok şey söyleyebilir.'] },
     workLenses: { build: ['Güvenilirliği imzan yap', 'En güçlü işin niyeti net, faydalı ve zamana dayanacak bir şeye dönüştürür.'], guide: ['Yön vermeyi imzan yap', 'En güçlü işin insanların kendi iradesini elinden almadan bir sonraki net adımı görmesine yardım eder.'], create: ['Özgünlüğü faydaya dönüştür', 'En güçlü işin beklenmedik bir fikre başkaları için gerçek olacak kadar yapı kazandırır.'], connect: ['Anlayışı mümkün kıl', 'En güçlü işin insanları, bakış açılarını ve fırsatları daha anlamlı bir ilişkide buluşturur.'] },
@@ -98,17 +98,34 @@ export function Experience({ authConfig }: ExperienceProps) {
   const [lastName, setLastName] = useState('');
   const [birthDate, setBirthDate] = useState('');
   const [profile, setProfile] = useState(() => calculateDesign('Alex', 'Morgan', '1992-07-16'));
-  const { user, membership, pending, error, setError, signInWithGoogle, signOut, startCheckout, openBillingPortal } = useHolyartedAccount(authConfig);
+  const [portraitStatus, setPortraitStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const restoredForUser = useRef<string | null>(null);
+  const { user, membership, pending, error, setError, signInWithGoogle, signOut, startCheckout, openBillingPortal, loadPortrait, savePortrait } = useHolyartedAccount(authConfig);
   const text = copy[locale];
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const resultCards = useMemo(() => [text.decision[profile.decision], text.environments[profile.environment], text.frictions[profile.friction], text.purposes[profile.purpose]], [text, profile]);
   const visibleResultCards = membership.plan === 'basic' ? resultCards.slice(0, 2) : resultCards;
   const extendedCards = useMemo(() => [text.relationships[profile.environment], text.workLenses[profile.purpose]], [text, profile]);
+  useEffect(() => {
+    if (!user || restoredForUser.current === user.id || new URLSearchParams(window.location.search).get('saved') !== '1') return;
+    restoredForUser.current = user.id;
+    void loadPortrait().then((saved) => {
+      if (!saved) return;
+      setFirstName(saved.firstName);
+      setLastName(saved.lastName);
+      setBirthDate(saved.birthDate);
+      setProfile(saved.profile);
+      setPortraitStatus('saved');
+      setComplete(true);
+      window.setTimeout(() => document.querySelector('#profile')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
+    }).catch((loadError) => setError(loadError instanceof Error ? loadError.message : text.portraitSaveFailed));
+  }, [loadPortrait, setError, text.portraitSaveFailed, user]);
   function begin() { document.querySelector('#assessment')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   function calculate(event: { preventDefault: () => void }) {
     event.preventDefault();
     try {
-      setProfile(calculateDesign(firstName, lastName, birthDate));
+      const nextProfile = calculateDesign(firstName, lastName, birthDate);
+      setProfile(nextProfile);
       setError(null);
     } catch {
       setError(text.invalidProfile);
@@ -116,6 +133,16 @@ export function Experience({ authConfig }: ExperienceProps) {
     }
     setComplete(false);
     setIsCalculating(true);
+    setPortraitStatus(user ? 'saving' : 'idle');
+    if (user) {
+      void savePortrait({ firstName, lastName, birthDate }).then((saved) => {
+        setProfile(saved.profile);
+        setPortraitStatus('saved');
+      }).catch(() => {
+        setPortraitStatus('idle');
+        setError(text.portraitSaveFailed);
+      });
+    }
     window.setTimeout(() => {
       setIsCalculating(false);
       setComplete(true);
@@ -177,7 +204,7 @@ export function Experience({ authConfig }: ExperienceProps) {
         <div className="mx-auto max-w-[1400px]">
           {complete ? <div>
             <div className="grid gap-10 border-b border-[#625b55]/22 pb-14 lg:grid-cols-[0.65fr_1.35fr]">
-              <div><p className="eyebrow">{text.profileLabel}</p><p className="mt-4 text-xs text-[#514b46]/55">{text.profileFor}</p><p className="mt-2 font-heading text-2xl">{profile.fullName}</p></div>
+              <div><p className="eyebrow">{text.profileLabel}</p><p className="mt-4 text-xs text-[#514b46]/55">{text.profileFor}</p><p className="mt-2 font-heading text-2xl">{profile.fullName}</p>{user && portraitStatus !== 'idle' && <p className="mt-4 text-xs font-bold text-[#514b46]/52">{portraitStatus === 'saving' ? text.portraitSaving : text.portraitSaved}</p>}</div>
               <div><h2 className="font-heading text-6xl leading-[0.9] tracking-[-0.05em] md:text-8xl">{text.profileNames[profile.purpose]}</h2><p className="mt-7 max-w-3xl text-lg leading-8 text-[#514b46]/70">{text.profileIntros[profile.purpose]}</p></div>
             </div>
             <div className="grid md:grid-cols-2">{visibleResultCards.map(([title, body], index) => <article key={title} className={`profile-result-card min-h-72 border-b border-[#625b55]/18 py-9 md:p-9 ${index % 2 === 0 ? 'md:border-r' : ''}`} style={{ animationDelay: `${index * 110}ms` }}><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#514b46]/55">{text.sections[index]}</p><h3 className="mt-10 font-heading text-4xl">{title}</h3><p className="mt-4 max-w-xl text-sm leading-7 text-[#514b46]/68">{body}</p></article>)}</div>

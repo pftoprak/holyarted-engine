@@ -3,6 +3,7 @@
 import { createClient, type Session, type SupabaseClient } from '@supabase/supabase-js';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import type { MembershipPlan } from '@/lib/membership-store';
+import type { PortraitInput, SavedPortrait } from '@/lib/portrait-types';
 import type { PublicAuthConfig } from '@/lib/runtime-config';
 
 export type AccountUser = {
@@ -156,6 +157,20 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     }
   }, [authorizedFetch]);
 
+  const loadPortrait = useCallback(async (): Promise<SavedPortrait | null> => {
+    const response = await authorizedFetch('/api/portrait');
+    const payload = (await response.json()) as { portrait?: SavedPortrait | null; error?: string };
+    if (!response.ok) throw new Error(payload.error || 'Your portrait could not be opened.');
+    return payload.portrait ?? null;
+  }, [authorizedFetch]);
+
+  const savePortrait = useCallback(async (input: PortraitInput): Promise<SavedPortrait> => {
+    const response = await authorizedFetch('/api/portrait', { method: 'PUT', body: JSON.stringify(input) });
+    const payload = (await response.json()) as { portrait?: SavedPortrait; error?: string };
+    if (!response.ok || !payload.portrait) throw new Error(payload.error || 'Your portrait could not be saved.');
+    return payload.portrait;
+  }, [authorizedFetch]);
+
   return {
     user: accountUser(session),
     membership,
@@ -168,5 +183,7 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     startCheckout,
     openBillingPortal,
     refreshMembership,
+    loadPortrait,
+    savePortrait,
   };
 }

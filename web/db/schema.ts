@@ -12,3 +12,18 @@ export const memberships = sqliteTable('memberships', {
   currentPeriodEnd: integer('current_period_end'),
   updatedAt: text('updated_at').notNull(),
 });
+
+export const portraits = sqliteTable('portraits', {
+  userId: text('user_id').primaryKey(),
+  firstName: text('first_name').notNull(),
+  lastName: text('last_name').notNull(),
+  birthDate: text('birth_date').notNull(),
+  fullName: text('full_name').notNull(),
+  decision: text('decision', { enum: ['facts', 'voice', 'instinct', 'time'] }).notNull(),
+  environment: text('environment', { enum: ['quiet', 'together', 'variety', 'motion'] }).notNull(),
+  friction: text('friction', { enum: ['switching', 'ambiguity', 'access', 'stagnation'] }).notNull(),
+  purpose: text('purpose', { enum: ['build', 'guide', 'create', 'connect'] }).notNull(),
+  algorithmVersion: text('algorithm_version').notNull(),
+  createdAt: text('created_at').notNull(),
+  updatedAt: text('updated_at').notNull(),
+});

@@ -23,7 +23,6 @@ export function calculateDesign(firstName: string, lastName: string, birthDate: 
     environment: mappedKey(environmentKeys, signals.nameTotal + signals.birthMonth),
     friction: mappedKey(frictionKeys, signals.consonantTotal + signals.birthYearTotal),
     purpose: mappedKey(purposeKeys, signals.vowelTotal + signals.dateSignature),
-    calculation: core,
   };
 }
 
