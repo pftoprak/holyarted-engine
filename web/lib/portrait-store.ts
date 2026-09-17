@@ -61,6 +61,10 @@ export async function getPortrait(userId: string): Promise<SavedPortrait | null>
   };
 }
 
+export async function deletePortrait(userId: string): Promise<void> {
+  await database().prepare('DELETE FROM portraits WHERE user_id = ?').bind(userId).run();
+}
+
 export async function savePortrait(userId: string, input: PortraitInput): Promise<SavedPortrait> {
   const clean = cleanInput(input);
   const profile = calculateDesign(clean.firstName, clean.lastName, clean.birthDate);
