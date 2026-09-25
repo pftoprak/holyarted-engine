@@ -175,6 +175,14 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     return response.blob();
   }, [authorizedFetch]);
 
+  const deleteAccount = useCallback(async () => {
+    const response = await authorizedFetch('/api/account', { method: 'DELETE' });
+    if (!response.ok) throw new Error('Your account could not be deleted.');
+    await client?.auth.signOut();
+    setSession(null);
+    setMembership({ plan: 'basic', status: 'active', currentPeriodEnd: null });
+  }, [authorizedFetch, client]);
+
   const savePortrait = useCallback(async (input: PortraitInput): Promise<SavedPortrait> => {
     const response = await authorizedFetch('/api/portrait', { method: 'PUT', body: JSON.stringify(input) });
     const payload = (await response.json()) as { portrait?: SavedPortrait; error?: string };
@@ -198,5 +206,6 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     savePortrait,
     deletePortrait,
     exportAccountData,
+    deleteAccount,
   };
 }

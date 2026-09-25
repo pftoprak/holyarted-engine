@@ -19,7 +19,7 @@ export async function DELETE(request: Request) {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
     await deletePortrait(user.id);
-    return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
+    return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
   } catch (error) {
     console.error('portrait_delete_failed');
     return privateJson({ error: 'Your portrait could not be deleted.' }, 503);

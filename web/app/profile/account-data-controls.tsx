@@ -4,20 +4,22 @@ import { useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const copy = {
-  en: { title: 'Your data, your choice', download: 'Download my data', remove: 'Delete saved portrait', confirm: 'Delete your saved portrait?', description: 'This removes your saved portrait and its personal details from Holyarted. It cannot be undone. Your Google sign-in and membership remain unchanged.', cancel: 'Keep portrait', deleting: 'Deleting…', deleted: 'Your saved portrait was deleted.', failure: 'The request could not be completed. Please try again.', account: 'For account deletion, contact support@holyarted.com.' },
-  tr: { title: 'Verilerin senin kontrolünde', download: 'Verilerimi indir', remove: 'Kayıtlı portreyi sil', confirm: 'Kayıtlı portren silinsin mi?', description: 'Kayıtlı portren ve ona ait kişisel bilgiler Holyarted’den silinir. Bu işlem geri alınamaz. Google girişin ve üyeliğin değişmez.', cancel: 'Portreyi sakla', deleting: 'Siliniyor…', deleted: 'Kayıtlı portren silindi.', failure: 'İşlem tamamlanamadı. Lütfen tekrar dene.', account: 'Hesap silme için support@holyarted.com adresine yazabilirsin.' },
+  en: { title: 'Your data, your choice', download: 'Download my data', remove: 'Delete saved portrait', confirm: 'Delete your saved portrait?', description: 'This removes your saved portrait and its personal details from Holyarted. It cannot be undone. Your Google sign-in and membership remain unchanged.', cancel: 'Keep portrait', deleting: 'Deleting…', deleted: 'Your saved portrait was deleted.', failure: 'The request could not be completed. Please try again.', account: 'Delete the full account', accountConfirm: 'Delete your full account?', accountDescription: 'This permanently deletes your Holyarted account, saved portrait and membership record. Any active paid subscription is canceled first. You will be signed out and cannot undo this action.', accountDelete: 'Delete full account', accountDeleted: 'Your account was deleted.' },
+  tr: { title: 'Verilerin senin kontrolünde', download: 'Verilerimi indir', remove: 'Kayıtlı portreyi sil', confirm: 'Kayıtlı portren silinsin mi?', description: 'Kayıtlı portren ve ona ait kişisel bilgiler Holyarted’den silinir. Bu işlem geri alınamaz. Google girişin ve üyeliğin değişmez.', cancel: 'Portreyi sakla', deleting: 'Siliniyor…', deleted: 'Kayıtlı portren silindi.', failure: 'İşlem tamamlanamadı. Lütfen tekrar dene.', account: 'Hesabın tamamını sil', accountConfirm: 'Hesabın tamamen silinsin mi?', accountDescription: 'Holyarted hesabın, kayıtlı portren ve üyelik kaydın kalıcı olarak silinir. Aktif ücretli üyelik önce iptal edilir. Oturumun kapatılır ve bu işlem geri alınamaz.', accountDelete: 'Hesabı tamamen sil', accountDeleted: 'Hesabın silindi.' },
 };
 
-export function AccountDataControls({ locale, hasPortrait, onDelete, onExport }: {
+export function AccountDataControls({ locale, hasPortrait, onDelete, onExport, onDeleteAccount }: {
   locale: 'en' | 'tr';
   hasPortrait: boolean;
   onDelete: () => Promise<void>;
   onExport: () => Promise<Blob>;
+  onDeleteAccount: () => Promise<void>;
 }) {
   const text = copy[locale];
   const [open, setOpen] = useState(false);
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
+  const [accountOpen, setAccountOpen] = useState(false);
 
   async function download() {
     setPending(true);
@@ -30,6 +32,17 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport }:
       link.download = 'holyarted-data.json';
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch { setMessage(text.failure); }
+    finally { setPending(false); }
+  }
+
+  async function removeAccount() {
+    setPending(true);
+    setMessage('');
+    try {
+      await onDeleteAccount();
+      setMessage(text.accountDeleted);
+      setAccountOpen(false);
     } catch { setMessage(text.failure); }
     finally { setPending(false); }
   }
@@ -59,6 +72,12 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport }:
       </AlertDialog>}
     </div>
     {message && <p role="status" className="mt-4 text-sm">{message}</p>}
-    <p className="mt-5 text-sm text-[#514b46]/58">{text.account}</p>
+    <AlertDialog open={accountOpen} onOpenChange={setAccountOpen}>
+      <AlertDialogTrigger disabled={pending} className="mt-5 text-sm font-bold text-[#9b5e55] underline underline-offset-4">{text.account}</AlertDialogTrigger>
+      <AlertDialogContent className="bg-[#fbf8f2] text-[#514b46]">
+        <AlertDialogHeader><AlertDialogTitle>{text.accountConfirm}</AlertDialogTitle><AlertDialogDescription>{text.accountDescription}</AlertDialogDescription></AlertDialogHeader>
+        <AlertDialogFooter><AlertDialogCancel disabled={pending}>{text.cancel}</AlertDialogCancel><AlertDialogAction disabled={pending} onClick={removeAccount} className="bg-[#9b5e55] text-white">{pending ? text.deleting : text.accountDelete}</AlertDialogAction></AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   </div>;
 }

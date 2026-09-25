@@ -80,6 +80,7 @@ async function fixture(t) {
   const billing = await route('app/api/billing/status/route.ts');
   const checkout = await route('app/api/billing/checkout/route.ts');
   const portal = await route('app/api/billing/portal/route.ts');
+  const account = await route('app/api/account/route.ts');
   function request(token, method = 'GET', body, suffix = '') {
     const headers = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -87,7 +88,7 @@ async function fixture(t) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, portrait, exported, billing, checkout, portal, request };
+  return { db, env, faults, logs, portrait, exported, billing, checkout, portal, account, request };
 }
 
 test('anonymous and invalid sessions cannot read, save, delete, or export data', async (t) => {
@@ -133,6 +134,7 @@ test('save, reopen, export, and delete remain isolated between two users', async
   const deleted = await f.portrait.DELETE(f.request('alice', 'DELETE', { userId: people.bob.id }));
   assert.equal(deleted.status, 204);
   assert.equal(deleted.headers.get('cache-control'), 'no-store');
+  assert.equal(deleted.headers.get('x-content-type-options'), 'nosniff');
   assert.equal((await (await f.portrait.GET(f.request('alice'))).json()).portrait, null);
   assert.equal((await (await f.portrait.GET(f.request('bob'))).json()).portrait.profile.fullName, 'Bob Test');
   assert.equal((await (await f.exported.GET(f.request('alice'))).json()).portrait, null);
@@ -182,4 +184,13 @@ test('upstream failures fail closed and do not leak private data in responses or
   }
   assert.equal(f.logs.length, 14);
   assert.doesNotMatch(f.logs.join('\n'), /alice@example.test|1990-01-05|private-test-token/);
+});
+
+test('full account deletion fails closed until the server-only admin key is configured', async (t) => {
+  const f = await fixture(t);
+  await f.portrait.PUT(f.request('alice', 'PUT', input));
+  const response = await f.account.DELETE(f.request('alice', 'DELETE'));
+  assert.equal(response.status, 503);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal((await (await f.portrait.GET(f.request('alice'))).json()).portrait.firstName, input.firstName);
 });

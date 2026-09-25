@@ -99,6 +99,10 @@ export async function upsertMembership(input: Membership): Promise<void> {
     .run();
 }
 
+export async function deleteMembership(userId: string): Promise<void> {
+  await database().prepare('DELETE FROM memberships WHERE user_id = ?').bind(userId).run();
+}
+
 export function publicMembership(
   membership: Membership | null,
 ): Pick<Membership, 'plan' | 'status' | 'currentPeriodEnd'> {
