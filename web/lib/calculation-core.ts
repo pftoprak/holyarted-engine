@@ -69,10 +69,6 @@ export function calculateCoreProfile(firstName: string, lastName: string, birthD
   const cleanFirstName = firstName.trim().replace(/\s+/g, ' ');
   const cleanLastName = lastName.trim().replace(/\s+/g, ' ');
   if (!cleanFirstName || !cleanLastName) throw new Error('A first and last name are required.');
-  if (cleanFirstName.length > 80 || cleanLastName.length > 80) throw new Error('Name is too long.');
-  if (!normalizeLetters(cleanFirstName).length || !normalizeLetters(cleanLastName).length) {
-    throw new Error('Both first and last names must contain supported letters.');
-  }
 
   const fullName = `${cleanFirstName} ${cleanLastName}`;
   const letters = normalizeLetters(fullName);

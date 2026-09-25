@@ -25,7 +25,7 @@ export async function POST(request: Request) {
     if (!session.url) throw new Error('Billing portal URL was not returned.');
     return privateJson({ url: session.url });
   } catch (error) {
-    console.error('billing_portal_failed', error);
+    console.error('billing_portal_failed');
     return privateJson({ error: 'Billing management is currently unavailable. Please try again later.' }, 503);
   }
 }

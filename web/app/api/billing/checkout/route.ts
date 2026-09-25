@@ -51,7 +51,7 @@ export async function POST(request: Request) {
     return privateJson({ url: session.url });
   } catch (error) {
     if (error instanceof RequestBodyError) return privateJson({ error: error.message }, error.status);
-    console.error('billing_checkout_failed', error);
+    console.error('billing_checkout_failed');
     return privateJson({ error: 'Checkout is currently unavailable. Please try again later.' }, 503);
   }
 }

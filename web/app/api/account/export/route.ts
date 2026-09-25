@@ -13,7 +13,7 @@ export async function GET(request: Request) {
       200, { 'content-disposition': 'attachment; filename="holyarted-data.json"' },
     );
   } catch (error) {
-    console.error('account_export_failed', error);
+    console.error('account_export_failed');
     return privateJson({ error: 'Your data could not be exported.' }, 503);
   }
 }

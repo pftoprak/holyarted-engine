@@ -30,7 +30,7 @@ pnpm exec tsc --noEmit
 pnpm build
 ```
 
-`pnpm test` hesaplama ve özel API yanıtı testlerini birlikte çalıştırır.
+`pnpm test` hesaplama, özel API yanıtı ve yerel hesap/veri izolasyonu testlerini birlikte çalıştırır.
 `pnpm test:engine` yalnızca hesaplama testlerini çalıştırır.
 
 ## Bağlantı gerektiren özellikler
@@ -41,11 +41,24 @@ Gerekli değişken adları `web/.env.example` dosyasında bulunur. Gerçek anaht
 
 ## Son yerel doğrulama — 25 Eylül 2026
 
-- 9 otomatik test, TypeScript kontrolü ve üretim derlemesi geçti.
+- 13 otomatik test, TypeScript kontrolü ve üretim derlemesi geçti.
 - Türkçe arayüzde portre oluşturma tarayıcıda doğrulandı.
 - Gizlilik, kullanım koşulları ve hesap giriş sayfaları açıldı.
 - Form gönderimi alan değerlerini doğrudan okur; otomatik doldurma/tarih alanı ile React durumu arasındaki fark sonucu boş tarih okunmasını önler.
-- Web hesaplama motoru ad ve soyadı ayrı ayrı doğrular ve kayıt katmanıyla aynı 80 karakter sınırını uygular.
+- Form alanları kayıt katmanının mevcut 80 karakter sınırını uygular. Hesaplama motoru, sonuç metinleri ve tasarım korunmuştur.
 - Google oturumu, kalıcı kayıt, ödeme ve mobil uygulama bu kontrolde uçtan uca test edilmedi.
 
 Web portresi şu anda hesaplanan sinyalleri önceden yazılmış metinlere eşler. Önceki konuşmalardaki dört kapsamlı rapor protokolü bu web akışının parçası değildir.
+
+## Yerel hesap testlerinin kapsamı
+
+`web/tests/account.test.mjs`, gerçek API, kimlik doğrulama ve veri erişim kodunu çalıştırır. Gerçek SQL şemaları bellekteki SQLite üzerinde uygulanır; D1 aktarım katmanı ve Supabase HTTP yanıtları yerel test karşılıklarıyla değiştirilir. Dış ağa, gerçek kullanıcılara veya ödeme sistemine erişilmez.
+
+- Oturumsuz ve geçersiz oturumlu isteklerin reddedilmesi.
+- İki ayrı kullanıcı arasında kayıt, tekrar okuma, dışa aktarma ve silme izolasyonu.
+- Gövde veya URL ile başka bir kullanıcı kimliği verilmesinin etkisiz olması.
+- Geçersiz güncellemenin mevcut portreyi bozmaması.
+- Üyelik durumunun doğru kullanıcıya ait olması ve dışa aktarmada ödeme tanımlayıcılarının bulunmaması.
+- Servis hatalarında özel verilerin yanıta veya loglara aktarılmaması.
+
+Bu testler gerçek Google OAuth akışını, tarayıcıdaki oturum geri yüklemeyi veya Cloudflare D1 ortamını uçtan uca doğrulamaz. Bunlar ayrı bir test hesabıyla sonraki adımdır. Tam hesap silme henüz uygulanmamıştır; mevcut silme işlemi yalnızca kayıtlı portreyi kaldırır.

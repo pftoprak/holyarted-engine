@@ -9,7 +9,7 @@ export async function GET(request: Request) {
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
     return privateJson({ portrait: await getPortrait(user.id) });
   } catch (error) {
-    console.error('portrait_load_failed', error);
+    console.error('portrait_load_failed');
     return privateJson({ error: 'Your portrait could not be opened.' }, 503);
   }
 }
@@ -21,7 +21,7 @@ export async function DELETE(request: Request) {
     await deletePortrait(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store' } });
   } catch (error) {
-    console.error('portrait_delete_failed', error);
+    console.error('portrait_delete_failed');
     return privateJson({ error: 'Your portrait could not be deleted.' }, 503);
   }
 }
@@ -37,7 +37,7 @@ export async function PUT(request: Request) {
     if (error instanceof SyntaxError || error instanceof InvalidPortraitError) {
       return privateJson({ error: 'Please provide a complete name and valid birth date.' }, 400);
     }
-    console.error('portrait_save_failed', error);
+    console.error('portrait_save_failed');
     return privateJson({ error: 'Your portrait could not be saved.' }, 503);
   }
 }
