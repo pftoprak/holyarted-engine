@@ -81,6 +81,7 @@ async function fixture(t) {
   const checkout = await route('app/api/billing/checkout/route.ts');
   const portal = await route('app/api/billing/portal/route.ts');
   const account = await route('app/api/account/route.ts');
+  const health = await route('app/api/health/route.ts');
   function request(token, method = 'GET', body, suffix = '') {
     const headers = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -88,8 +89,21 @@ async function fixture(t) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, portrait, exported, billing, checkout, portal, account, request };
+  return { db, env, faults, logs, portrait, exported, billing, checkout, portal, account, health, request };
 }
+
+test('health check reports only availability and never configuration details', async (t) => {
+  const f = await fixture(t);
+  const response = await f.health.GET();
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  f.faults.database = true;
+  const failed = await f.health.GET();
+  assert.equal(failed.status, 503);
+  assert.deepEqual(await failed.json(), { status: 'unavailable' });
+  assert.equal(f.logs.join('\n'), 'health_check_failed');
+});
 
 test('anonymous and invalid sessions cannot read, save, delete, or export data', async (t) => {
   const f = await fixture(t);
