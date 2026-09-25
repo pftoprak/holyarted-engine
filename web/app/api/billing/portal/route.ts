@@ -2,6 +2,7 @@ import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost } from '@/lib/stripe-api';
 import { privateJson } from '@/lib/private-response';
+import { enforceRateLimit } from '@/lib/request-limits';
 
 type PortalSession = { url: string | null };
 
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);
+    const limited = enforceRateLimit(request, 'billing-portal', user.id, 10);
+    if (limited) return limited;
     const membership = await getMembership(user.id);
     if (!membership?.stripeCustomerId) {
       return privateJson({ error: 'No paid membership found.' }, 404);

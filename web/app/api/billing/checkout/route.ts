@@ -2,6 +2,7 @@ import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost, stripePriceFor } from '@/lib/stripe-api';
 import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
+import { enforceRateLimit } from '@/lib/request-limits';
 
 type CheckoutSession = { url: string | null };
 
@@ -9,6 +10,8 @@ export async function POST(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);
+    const limited = enforceRateLimit(request, 'billing-checkout', user.id, 5);
+    if (limited) return limited;
 
     const body = (await readSmallJson(request)) as { plan?: string } | null;
     if (body?.plan !== 'plus' && body?.plan !== 'premium') {

@@ -64,3 +64,5 @@ Web portresi şu anda hesaplanan sinyalleri önceden yazılmış metinlere eşle
 Bu testler gerçek Google OAuth akışını, tarayıcıdaki oturum geri yüklemeyi veya Cloudflare D1 ortamını uçtan uca doğrulamaz. Bunlar ayrı bir test hesabıyla sonraki adımdır.
 
 Hesap sayfasındaki tam hesap silme akışı `/api/account` üzerinden portreyi ve üyelik kaydını kaldırır, ücretli aktif aboneliği Stripe üzerinden iptal eder ve ardından Supabase kullanıcısını siler. Bu sunucu işlemi için hosting ortamında yalnızca sunucu tarafında tutulacak `SUPABASE_SERVICE_ROLE_KEY` ve ücretli abonelik iptali için `STRIPE_SECRET_KEY` tanımlanmalıdır. Yönetici anahtarı yoksa işlem güvenli biçimde başarısız olur; yerel testler gerçek kullanıcı, Supabase hesabı veya ödeme sistemi üzerinde silme yapmaz.
+
+Hassas API işlemleri kullanıcı ve istemci başına dakikalık istek sınırları uygular. Sınır aşıldığında yanıt `429` ve `Retry-After` başlığı döndürür. Bu koruma uygulama katmanındadır; üretimde Cloudflare katmanındaki ek WAF veya rate limit kurallarıyla desteklenmelidir.

@@ -4,6 +4,7 @@ import {
   upsertMembership,
 } from '@/lib/membership-store';
 import { requireRuntimeValue } from '@/lib/runtime-config';
+import { privateJson } from '@/lib/private-response';
 
 type StripeEvent = {
   type: string;
@@ -60,7 +61,7 @@ export async function POST(request: Request) {
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');
     if (!signature || !(await verifySignature(body, signature))) {
-      return Response.json({ error: 'Invalid signature.' }, { status: 400 });
+      return privateJson({ error: 'Invalid signature.' }, 400);
     }
 
     const event = JSON.parse(body) as StripeEvent;
@@ -115,9 +116,9 @@ export async function POST(request: Request) {
       }
     }
 
-    return Response.json({ received: true });
+    return privateJson({ received: true });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'Webhook failed.';
-    return Response.json({ error: message }, { status: 500 });
+    console.error('billing_webhook_failed');
+    return privateJson({ error: 'Webhook processing failed.' }, 500);
   }
 }
