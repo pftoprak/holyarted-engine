@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
 import { calculateDesign } from '@/lib/profile-engine';
@@ -120,10 +120,19 @@ export function Experience({ authConfig }: ExperienceProps) {
     }).catch((loadError) => setError(loadError instanceof Error ? loadError.message : text.portraitSaveFailed));
   }, [loadPortrait, setError, text.portraitSaveFailed, user]);
   function begin() { document.querySelector('#assessment')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
-  function calculate(event: { preventDefault: () => void }) {
+  function calculate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const form = new FormData(event.currentTarget);
+    const input = {
+      firstName: String(form.get('firstName') ?? ''),
+      lastName: String(form.get('lastName') ?? ''),
+      birthDate: String(form.get('birthDate') ?? ''),
+    };
     try {
-      const nextProfile = calculateDesign(firstName, lastName, birthDate);
+      const nextProfile = calculateDesign(input.firstName, input.lastName, input.birthDate);
+      setFirstName(input.firstName);
+      setLastName(input.lastName);
+      setBirthDate(input.birthDate);
       setProfile(nextProfile);
       setError(null);
     } catch {
@@ -134,7 +143,7 @@ export function Experience({ authConfig }: ExperienceProps) {
     setIsCalculating(true);
     setPortraitStatus(user ? 'saving' : 'idle');
     if (user) {
-      void savePortrait({ firstName, lastName, birthDate }).then((saved) => {
+      void savePortrait(input).then((saved) => {
         setProfile(saved.profile);
         setPortraitStatus('saved');
       }).catch(() => {
@@ -183,9 +192,9 @@ export function Experience({ authConfig }: ExperienceProps) {
                 <div className="mb-3 flex items-center justify-between text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/42"><span>{text.progress}</span><span>{text.inputLabel}</span></div>
                 <div className="h-px bg-[#625b55]/10"><div className="h-px w-full bg-[#a7826c]" /></div>
                 <div className="mt-8 grid gap-5 sm:grid-cols-2">
-                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.firstName}<input value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder={text.firstPlaceholder} autoComplete="name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
-                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.lastName}<input value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder={text.lastPlaceholder} autoComplete="name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
-                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70 sm:col-span-2">{text.birthDate}<input type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} autoComplete="bday" max={new Date().toISOString().slice(0, 10)} className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition focus:border-[#a7826c]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.firstName}<input name="firstName" maxLength={80} value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder={text.firstPlaceholder} autoComplete="given-name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.lastName}<input name="lastName" maxLength={80} value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder={text.lastPlaceholder} autoComplete="family-name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70 sm:col-span-2">{text.birthDate}<input name="birthDate" type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} autoComplete="bday" max={new Date().toISOString().slice(0, 10)} className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition focus:border-[#a7826c]" required /></label>
                 </div>
                 <div className="mt-7 flex flex-col items-start justify-between gap-5 border-t border-[#625b55]/10 pt-6 sm:flex-row sm:items-center"><p className="max-w-sm text-[11px] leading-5 text-[#514b46]/42">{text.inputNote}</p><button type="submit" disabled={isCalculating} className="premium-button magnetic-button h-12 shrink-0 px-5 disabled:cursor-wait">{text.finish}<ArrowRight className="size-4" /></button></div>
               </div>

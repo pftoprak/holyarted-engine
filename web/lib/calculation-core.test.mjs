@@ -34,3 +34,11 @@ test('rejects incomplete names and impossible dates', () => {
   assert.throws(() => calculateCoreProfile('', 'Morgan', '1992-07-16'));
   assert.throws(() => calculateCoreProfile('Alex', 'Morgan', '1992-02-31'));
 });
+
+test('validates each name separately and enforces the storage limit', () => {
+  assert.throws(() => calculateCoreProfile('123', 'Morgan', '1992-07-16'));
+  assert.throws(() => calculateCoreProfile('Alex', '---', '1992-07-16'));
+  assert.throws(() => calculateCoreProfile('A'.repeat(81), 'Morgan', '1992-07-16'));
+  assert.throws(() => calculateCoreProfile('Alex', 'M'.repeat(81), '1992-07-16'));
+  assert.equal(calculateCoreProfile('Anne-Marie', "O’Neill", '1992-07-16').fullName, 'Anne-Marie O’Neill');
+});
