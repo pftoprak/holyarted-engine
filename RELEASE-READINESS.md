@@ -2,6 +2,49 @@
 
 Bu belge tamamlandı iddiası değil, kanıt ve eksik listesidir. Hesaplama motoru, sonuç metinleri ve nihai tasarım bu çalışmanın dışındadır. Canlı testlerde yalnızca ayrı test hesabı kullanılmalıdır; ana hesap test verisi değildir. Hiçbir madde yalnızca kodu mevcut diye canlıda doğrulanmış sayılmaz.
 
+## Öncelik düzeltmesi ve son kanıtlar
+
+### İşletme ve veri kararları — sağlayıcı kodundan önce
+
+- [ ] Şirket ülkesi/türü ve hedef pazarlar kullanıcı tarafından netleştirilmeli. Türkiye şirketi varsayılmamalı. [Stripe ülke listesinde](https://stripe.com/global) Türkiye yer almıyor; sağlayıcı seçilmeden Stripe'a özgü kapsam büyütülmemeli.
+- [ ] Web ödeme sağlayıcısı için şirket uygunluğu, abonelik, iptal/iade, para birimi ve faturalama desteği değerlendirilip karar kaydedilmeli.
+- [ ] Mobilde dijital içerik için StoreKit / Google Play Billing ve sunucuda satın alma doğrulama, geri yükleme, iade ve ortak erişim hakkı modeli planlanmalı. Bölge/program istisnaları güncel [Apple](https://developer.apple.com/app-store/review/guidelines/) ve [Google](https://support.google.com/googleplay/android-developer/answer/9858738) kurallarına göre ayrıca değerlendirilmeli.
+- [ ] Gerçek dış kullanıcı varlığı henüz belirlenmedi. Önceki kontrollerde ana hesap ve test hesabı görülmesi, tüm kullanıcı/anonim kullanım envanteri değildir. Gerçek kullanıcı varsa yedek/geri dönüş doğrulaması riskli veri değişikliklerinden önce gelir; staging dışında yıkıcı test yapılmaz.
+- [ ] iOS Google girişine eşdeğer Sign in with Apple akışı (4.8 kapsam/istisna kontrolüyle), hesap bağlama ve silmede token iptali.
+- [ ] Türkiye kapsamında KVKK aydınlatma metni ve yurt dışı aktarım mekanizması; veri sorumlusu/işleyen ve alt işleyen envanteri.
+- [ ] Mesafeli satış sözleşmesi ve ön bilgilendirme formu; dijital içerik/cayma ve abonelik iptal süreci için hukuk incelemesi.
+- [ ] E-arşiv/e-fatura yükümlülüğü ve muhasebe entegrasyonu için şirket/işlem modeline göre mali müşavir incelemesi. Bu maddeler otomatik hukuki uygunluk iddiası değildir.
+- [ ] LLM için kimlik/üyelik kontrolü yanında kullanıcı ve proje bazlı harcama kotası, atomik bütçe rezervasyonu, token/model sınırı, eşzamanlılık/timeout, alarm ve otomatik durdurma. Yalnızca alarm veya IP rate limit maliyet üst sınırı değildir.
+
+Veri sahipliği: mevcut uygulamada Supabase Auth kimliğin; D1 portre ve uygulama üyelik kaydının; ödeme sağlayıcısı gerçek faturalama durumunun kaynağıdır. D1 üyelik satırı faturalamanın yerel yansımasıdır. İki veri deposu zorunlu değildir: portre/üyelik verisi Supabase Postgres'e taşınabilir. Ancak bu, migration, RLS, atomiklik, maliyet ve geri dönüş planıyla değerlendirilmelidir; ödeme sağlayıcısıyla dağıtık işlem sorunu tek veritabanına geçince bitmez. Mevcut ikili yapıyı seçen özgün karar kaydı bulunmadığı için neden seçildiği hakkında gerekçe uydurulmamalı.
+
+Son API kontrolü: dört eski yol (`/api/admin/login`, `/api/admin/content`, `/api/admin/llm-config`, `/api/generate-composite`) hem `holyarted.com` hem `holyarted-engine.pftoprak.chatgpt.site` üzerinde kimliksiz, boş JSON POST isteğine 404 döndü. Sites özel domain envanterinde yalnızca `holyarted.com` var. Depoda yapılan metin aramasında eski pages.dev/workers.dev/vercel.app/netlify.app adresi bulunmadı. Diğer hesapların hosting envanteri ve bütün HTTP yöntemleri kontrol edilmiş sayılmaz. Bu kontrol hassas veri veya gerçek LLM iş yükü göndermedi.
+
+Paylaşılacak ekran görüntüleri ve hata kayıtlarında e-posta, kullanıcı ID'si ve tokenlar maskelenmeli. Bu tur ekran görüntüsü dışarı gönderilmedi.
+
+**Ücretli yayın onayı verilmemiştir.** Önceki listenin numarası risk önceliğini temsil etmez; aşağıdaki uygulama sırası esas alınır.
+
+- **Kritik ürün engeli — doğrulandı:** `web/app/experience.tsx` portreyi istemcide hesaplar; Basic sonuçları `slice(0, 2)` ile gizlenir. Premium metinleri de istemci kodundadır. `GET /api/portrait` üyelik kontrolü olmadan tüm kayıtlı sonuç alanlarını döndürür. Ücretli içeriğin sunucu tarafında üretilmesi/sunulması ve Basic yanıtından çıkarılması gerekir; yalnızca route filtresi yeterli değildir, istemci paketi de düzeltilmelidir. Kullanıcının kendi verisini dışa aktarma hakkı, ücretli içerik erişiminden ayrı tasarlanmalıdır.
+- **Ödeme yapılandırması — kontrol edildi:** Sites üretim ortamı revision 2 yalnızca üç Supabase değişkeni içeriyor; Stripe secret/webhook/price değişkenleri tanımlı değil. Mevcut checkout kodu bunlar olmadan Stripe oturumu açamaz. Bu tespit başka platformlarda veya geçmişte hiç ödeme alınmadığı anlamına gelmez.
+- **Dağıtım — doğrulandı:** sürüm 19 başarılı; görünür export bağlantısı ve eksik abonelik kimliğinde silmeyi durduran geçici koruma canlıda.
+- **Bilinen eski yollar — sınırlı canlı kontrol:** 28 Eylül 2026 tarihinde `holyarted.com` üzerinde oturumsuz GET ile `/api/admin/content`, `/api/admin/login`, `/api/admin/llm-config`, `/api/generate-composite` 404; `/api/health` 200. Eski yollar web derleme route listesinde de yok. Diğer alan adları, dağıtımlar ve HTTP yöntemleri bu kontrolde doğrulanmadı. "Tüm eski API'ler kapalı" sonucu çıkarılamaz.
+- **Silme — tamamlanmadı:** eksik abonelik kimliğinde hata vermek yalnızca geçici korumadır. Müşteri/abonelik sahipliği doğrulanarak Stripe ile uzlaştırma, kalıcı silme işi, yeniden deneme ve kullanıcıya süreç bilgisi gerekir. Webhook kodu boş subscription ID ile active üyelik yazılmasına izin veriyor; bunu canlıda yaşanmış olay olarak değil, doğrulanmış kod kusuru olarak sınıflandırıyoruz.
+- **Staging — açık:** ayrı Supabase/D1 ve Stripe test kaynaklarıyla bir staging ortamı henüz doğrulanmış değil. Hata enjeksiyonu ve yıkıcı güvenlik testleri üretimde yapılmamalı.
+
+## Her değişiklikte ikinci inceleme
+
+Bu, aynı ajanın uygulamadan ayrı yürüttüğü eleştirel incelemedir; bağımsız insan denetimi veya sızma testi değildir.
+
+1. Değişiklikten önce kabul koşulu, etkilenen veri ve başarısızlık senaryosu yazılır.
+2. Uygulamadan sonra diff yeniden okunur: yetki atlama, veri sızıntısı, tekrar/sıra dışı istek, yarım işlem ve geri alma incelenir.
+3. Test adı/sayısı yerine hangi davranışın kanıtlandığı ve neyin taklit edildiği kaydedilir.
+4. Kaynak commit, yayın sürümü ve canlı doğrulama ayrı durumlar olarak bildirilir. Yayın başarısı uçtan uca işlev kanıtı değildir.
+5. Açık yüksek risk varken "hazır", "güvenli", "hack-free" veya "tamamlandı" denmez. Başarısız test çözülmeden ya da sınırı açıkça belirtilmeden kapatılmaz.
+6. Aynı araç kısıtında tekrarlayan denemeler bırakılır; engellenmiş işlemin etrafından dolaşılmaz. Etkilenmeyen iş sürdürülür.
+7. Her değişiklik turu sonunda commit ve GitHub branch güncellemesi doğrulanır. Push engellenirse açıkça belirtilir; yalnız yerel commit uzakta yedeklenmiş sayılmaz.
+
+Son ikinci inceleme: ödeme ayarlarının yokluğu gelir alınmadığının evrensel kanıtı değil; 404 sonuçları GET ve bu alan adıyla sınırlı; Basic silme kanıtı ücretli silme kanıtı değil; export dosya doğrulaması hâlâ açık. Bu tur ürün kodu veya üretim verisi değiştirilmedi.
+
 ## Mimari ve kapsam
 
 - `web/`: canlı web uygulaması; Google kimliği Supabase Auth, portre ve üyelik kayıtları Cloudflare D1.
@@ -114,15 +157,19 @@ Referanslar: [OWASP ASVS](https://owasp.org/projects/asvs), [MASVS kontrol rehbe
 
 ## Sıradaki uygulama sırası
 
-1. Gerçek export dosyasını desteklenen tarayıcıda alıp incele; indirme problemini yeniden üret ve çöz.
-2. İki ayrı test kimliğiyle canlı D1 izolasyonu ve silme doğrulamasını tamamla.
-3. Silme hatalarına dayanıklılık, dağıtık rate limit ve webhook güvenliği açıklarını kapat; CI/güvenlik taramalarını kur.
-4. Yedek/geri yükleme ve operasyon kontrollerini uygula.
-5. Stripe test ödeme ve sunucu yetkilendirme matrisini tamamla.
-6. Mobil ortak hesap altyapısı ve cihaz testleri.
-7. E-posta, destek, gizlilik ve mağaza hazırlığı.
-8. Bağımsız güvenlik testi ve bütün yayın kapılarının kanıtla kapanışı.
+1. Kullanıcı/veri ve dağıtım envanterini tamamla; gerçek kullanıcı varsa yedek/geri dönüşü öne al. Bilinen GET ve POST yolları kontrol edildi; eski hosting hesapları ve diğer yöntemler açık. Şirket ülkesi/türü ve web/mobil ödeme sağlayıcısı kararını sağlayıcıya özgü geliştirmeden önce ver. Gerekli olmayan, erişilebilir uçları kapat; ücretli yayına izin verme.
+2. Ayrı staging ortamı kur. Ücretli sonuçları istemci paketinden çıkar, sunucuda plan bazlı erişim uygula. Kabul: Basic istemcinin bundle, HTML ve API yanıtından ücretli sonucu alamaması; Plus/Premium için izin matrisi testleri.
+3. Webhook'ta eksik kayıt, olay tekrarı/sırası ve ödeme durumunu düzelt. Stripe müşteri eşleşmesini doğrula; yarım kalan silmelerin kalıcı iş kaydı ve yeniden denemesini uygula. Kabul: servis kesintisinden sonra işlem tamamlanır, başka müşteri etkilenmez, silinen kayıt gecikmiş webhook ile geri gelmez.
+4. Staging'de iki ayrı kullanıcıyla izolasyon ve gerçek Stripe test senaryoları; CI, bağımlılık/secret taraması, dağıtık rate limit ve eski API/LLM güvenliği.
+5. D1/Supabase yedeklerini doğrula; geri yükleme tatbikatı, alarmlar ve müdahale planını tamamla.
+6. Mobil ortak hesap, güvenli oturum, deep-link ve cihaz testleri.
+7. E-posta, destek, gizlilik ve mağaza hazırlığı; erişilebilirlik, performans ve ürün kalite testleri.
+8. Bağımsız güvenlik testi ve yayın kapılarının kanıtla kapanışı.
+
+Export dosyasının manuel indirme/içerik kontrolü açık kalır; güvenlik işlerinin önünü kesen tekrar döngüsüne dönüştürülmez.
 
 ## Bu incelemenin otomatik doğrulaması
 
 21 yerel otomatik test ve TypeScript kontrolü geçti. Testler Supabase/Stripe ağ sınırlarında yerel karşılıklar kullanır; gerçek ödeme sağlayıcısı testinin yerini tutmaz. Canlı test hesabının yeni boş kaydı, kalan export testleri için korunmuştur.
+
+Test dağılımı: 4 hesaplama/girdi testi, 5 yanıt/gövde sınırı/rate limit testi, 12 hesap/API testi. Hesap testleri kimlik, izolasyon, export, üyelik, servis hatası, silme ve export limiti davranışlarını kapsar. Gerçek OAuth, Stripe, mobil cihaz, tarayıcı indirmesi, performans ve bağımsız güvenlik testi bu 21 testin kapsamına girmez. Derlemenin geçmesi yalnızca teknik asgari koşuldur.
