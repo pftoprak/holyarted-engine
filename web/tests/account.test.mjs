@@ -22,7 +22,9 @@ async function fixture(t) {
   for (const file of ['0000_bizarre_cable.sql', '0001_youthful_prism.sql']) {
     db.exec(readFileSync(path.join(root, 'drizzle', file), 'utf8'));
   }
-  const faults = { database: false, auth: false };
+  const faults = { database: false, auth: false, stripe: false, admin: false };
+  const calls = [];
+  const deletedUsers = new Set();
   const logs = [];
   const env = {
     SUPABASE_URL: 'https://auth.example.test',
@@ -42,14 +44,29 @@ async function fixture(t) {
     },
   };
   const context = vm.createContext({
-    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array,
+    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa,
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
+      if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) {
+        calls.push('stripe');
+        assert.equal(init.method, 'DELETE');
+        assert.equal(init.headers.authorization, `Basic ${btoa('test-stripe-key:')}`);
+        return Response.json(faults.stripe ? { error: { message: 'private billing error' } } : { status: 'canceled' }, { status: faults.stripe ? 503 : 200 });
+      }
+      if (url.startsWith('https://auth.example.test/auth/v1/admin/users/')) {
+        calls.push('admin');
+        assert.equal(init.method, 'DELETE');
+        assert.equal(init.headers.apikey, 'test-admin-key');
+        assert.equal(init.headers.authorization, 'Bearer test-admin-key');
+        if (faults.admin) return Response.json({}, { status: 503 });
+        deletedUsers.add(decodeURIComponent(url.split('/').at(-1)));
+        return Response.json({});
+      }
       assert.equal(url, 'https://auth.example.test/auth/v1/user');
       assert.equal(init.headers.apikey, 'test-public-key');
       if (faults.auth) throw new Error('auth failed: Bearer private-test-token');
       const token = init.headers.authorization?.replace(/^Bearer /, '');
-      return people[token] ? Response.json(people[token]) : Response.json({}, { status: 401 });
+      return people[token] && !deletedUsers.has(people[token].id) ? Response.json(people[token]) : Response.json({}, { status: 401 });
     },
   });
   const modules = new Map();
@@ -89,7 +106,7 @@ async function fixture(t) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, portrait, exported, billing, checkout, portal, account, health, request };
+  return { db, env, faults, logs, calls, deletedUsers, portrait, exported, billing, checkout, portal, account, health, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -112,6 +129,7 @@ test('anonymous and invalid sessions cannot read, save, delete, or export data',
       [f.portrait.GET, 'GET'], [f.portrait.PUT, 'PUT', input],
       [f.portrait.DELETE, 'DELETE'], [f.exported.GET, 'GET'], [f.billing.GET, 'GET'],
       [f.checkout.POST, 'POST', { plan: 'plus' }], [f.portal.POST, 'POST'],
+      [f.account.DELETE, 'DELETE'],
     ]) {
       const response = await handler(f.request(token, method, body));
       assert.equal(response.status, 401);
@@ -207,4 +225,67 @@ test('full account deletion fails closed until the server-only admin key is conf
   assert.equal(response.status, 503);
   assert.equal(response.headers.get('cache-control'), 'no-store');
   assert.equal((await (await f.portrait.GET(f.request('alice'))).json()).portrait.firstName, input.firstName);
+});
+
+async function deletionFixture(t, subscription = 'sub_test') {
+  const f = await fixture(t);
+  f.env.SUPABASE_SERVICE_ROLE_KEY = 'test-admin-key';
+  f.env.STRIPE_SECRET_KEY = 'test-stripe-key';
+  await f.portrait.PUT(f.request('alice', 'PUT', input));
+  await f.portrait.PUT(f.request('bob', 'PUT', { ...input, firstName: 'Bob' }));
+  f.db.prepare(`INSERT INTO memberships (user_id,email,plan,status,stripe_customer_id,stripe_subscription_id,updated_at)
+    VALUES (?,?,?,?,?,?,?)`).run(people.alice.id, people.alice.email, 'premium', 'active', 'cus_test', subscription, '2026-09-28');
+  return f;
+}
+
+test('full deletion cancels billing, deletes only the authenticated user, and rejects their old session', async (t) => {
+  const f = await deletionFixture(t);
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE', { userId: people.bob.id }))).status, 204);
+  assert.deepEqual(f.calls, ['stripe', 'admin']);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM memberships').get().count, 0);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM portraits WHERE user_id = ?').get(people.alice.id).count, 0);
+  assert.equal((await f.exported.GET(f.request('alice'))).status, 401);
+  assert.equal((await (await f.portrait.GET(f.request('bob'))).json()).portrait.firstName, 'Bob');
+});
+
+test('billing cancellation failure preserves account data and does not call admin deletion', async (t) => {
+  const f = await deletionFixture(t);
+  f.faults.stripe = true;
+  const result = await f.account.DELETE(f.request('alice', 'DELETE'));
+  assert.equal(result.status, 503);
+  assert.deepEqual(f.calls, ['stripe']);
+  assert.equal((await (await f.portrait.GET(f.request('alice'))).json()).portrait.firstName, input.firstName);
+  assert.equal((await (await f.billing.GET(f.request('alice'))).json()).plan, 'premium');
+  assert.doesNotMatch(await result.text(), /private billing|test-admin-key|test-stripe-key/);
+  assert.deepEqual(f.logs, ['account_delete_failed']);
+});
+
+test('active paid membership without a subscription reference blocks deletion', async (t) => {
+  const f = await deletionFixture(t, null);
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 503);
+  assert.deepEqual(f.calls, []);
+  assert.equal((await (await f.portrait.GET(f.request('alice'))).json()).portrait.firstName, input.firstName);
+});
+
+test('provider deletion failure reports failure and a retry can finish deleting the user', async (t) => {
+  const f = await deletionFixture(t);
+  f.faults.admin = true;
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 503);
+  assert.equal(f.deletedUsers.size, 0);
+  f.faults.admin = false;
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+  assert.deepEqual(f.calls, ['stripe', 'admin', 'admin']);
+  assert.equal((await f.exported.GET(f.request('alice'))).status, 401);
+});
+
+test('export rate limit blocks excess requests without blocking another user', async (t) => {
+  const f = await fixture(t);
+  for (let index = 0; index < 20; index++) {
+    assert.equal((await f.exported.GET(f.request('alice'))).status, 200);
+  }
+  const limited = await f.exported.GET(f.request('alice'));
+  assert.equal(limited.status, 429);
+  assert.ok(Number(limited.headers.get('retry-after')) > 0);
+  assert.equal(limited.headers.get('cache-control'), 'no-store');
+  assert.equal((await f.exported.GET(f.request('bob'))).status, 200);
 });

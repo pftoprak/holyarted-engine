@@ -1,5 +1,7 @@
 # HOLYARTED
 
+Güncel tamamlananlar, açık riskler ve sıradaki işler: [Yayın hazırlığı kontrol listesi](RELEASE-READINESS.md). 28 Eylül incelemesinde 21 yerel test ve TypeScript kontrolü geçti; canlı ve yerel doğrulamalar listede ayrı tutulur.
+
 ## Proje yapısı
 
 - `web/`: React ve Vinext web uygulaması; Cloudflare Workers/D1 çalışma ortamı.

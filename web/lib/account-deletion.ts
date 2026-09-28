@@ -9,7 +9,10 @@ export async function deleteAccount(userId: string): Promise<void> {
   requireRuntimeValue('SUPABASE_SERVICE_ROLE_KEY');
   const membership = await getMembership(userId);
   const paid = membership && membership.plan !== 'basic' && ['active', 'trialing', 'past_due'].includes(membership.status);
-  if (paid && membership.stripeSubscriptionId) {
+  if (paid) {
+    // An inconsistent billing record must not erase the reference needed to
+    // resolve a potentially live subscription and stop future charges.
+    if (!membership.stripeSubscriptionId) throw new Error('Subscription reference is unavailable.');
     await stripeDelete(`subscriptions/${encodeURIComponent(membership.stripeSubscriptionId)}`);
   }
 
