@@ -108,7 +108,10 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     }
     const { error: authError } = await client.auth.signInWithOAuth({
       provider: 'google',
-      options: { redirectTo: `${window.location.origin}/` },
+      options: {
+        redirectTo: `${window.location.origin}/`,
+        queryParams: { prompt: 'select_account' },
+      },
     });
     if (authError) setError(authError.message);
   }, [client]);
