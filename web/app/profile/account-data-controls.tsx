@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from '@/components/ui/alert-dialog';
 
 const copy = {
@@ -20,18 +20,26 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport, o
   const [pending, setPending] = useState(false);
   const [message, setMessage] = useState('');
   const [accountOpen, setAccountOpen] = useState(false);
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  useEffect(() => {
+    if (!downloadUrl) return;
+    return () => URL.revokeObjectURL(downloadUrl);
+  }, [downloadUrl]);
 
   async function download() {
     setPending(true);
     setMessage('');
+    setDownloadUrl(null);
     try {
       const blob = await onExport();
       const url = URL.createObjectURL(blob);
+      setDownloadUrl(url);
       const link = document.createElement('a');
       link.href = url;
       link.download = 'holyarted-data.json';
-      link.click();
-      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      document.body.appendChild(link);
+      try { link.click(); }
+      finally { link.remove(); }
     } catch { setMessage(text.failure); }
     finally { setPending(false); }
   }
@@ -52,6 +60,7 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport, o
     setMessage('');
     try {
       await onDelete();
+      setDownloadUrl(null);
       setMessage(text.deleted);
       setOpen(false);
     } catch { setMessage(text.failure); }
@@ -71,6 +80,12 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport, o
         </AlertDialogContent>
       </AlertDialog>}
     </div>
+    {downloadUrl && <p role="status" className="mt-4 text-sm">
+      {locale === 'tr' ? 'Dosyan hazır. İndirme başlamadıysa: ' : 'Your file is ready. If the download did not start: '}
+      <a href={downloadUrl} download="holyarted-data.json" className="font-bold underline underline-offset-4">
+        {locale === 'tr' ? 'JSON dosyasını indir' : 'Download the JSON file'}
+      </a>
+    </p>}
     {message && <p role="status" className="mt-4 text-sm">{message}</p>}
     <AlertDialog open={accountOpen} onOpenChange={setAccountOpen}>
       <AlertDialogTrigger disabled={pending} className="mt-5 text-sm font-bold text-[#9b5e55] underline underline-offset-4">{text.account}</AlertDialogTrigger>

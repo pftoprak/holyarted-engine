@@ -16,6 +16,8 @@ Bu belge tamamlandı iddiası değil, kanıt ve eksik listesidir. Hesaplama moto
 - [x] Test portresi silindi; profil boş göründü.
 - [x] Veri dışa aktarma API'sinin başarılı yanıtı önceki canlı loglarda görüldü; JSON içerik ve kullanıcı izolasyonu yerel testte doğrulandı.
 - [ ] İndirilen gerçek dosyanın içerik, UTF-8 ve kullanıcı eşleşmesi. Uygulama içi tarayıcıda iki denemede download olayı zaman aşımına uğradı. Bu, tek başına uygulama hatası veya tarayıcı kısıtı olduğunu kanıtlamaz.
+- [x] Sürüm 19'da dosya hazırlığı sonrası görünür JSON indirme bağlantısı yayınlandı. Otomatik tıklama için bağlantı DOM'a ekleniyor; dosya URL'si sabit bir saniye sonra değil, değiştirilince veya bileşen kapanınca temizleniyor. Canlı test hesabında bağlantı oluştu.
+- [ ] Sürüm 19'da doğrudan link tıklaması da uygulama içi tarayıcıda download olayı üretmedi. İçeriği açma denemesi tarayıcı URL politikası tarafından `blob:` adresi nedeniyle reddedildi; bu yöntemle doğrulama durduruldu. Kullanıcının gerçek tarayıcı indirmesiyle kontrol gerekli.
 - [ ] İptal edilen / süresi dolan OAuth, bağlantı kesilmesi ve çoklu sekmede oturum testleri.
 - [ ] Chrome, Safari, iOS Safari ve Android Chrome üzerinde hesap akışı.
 
@@ -26,6 +28,7 @@ Bu belge tamamlandı iddiası değil, kanıt ve eksik listesidir. Hesaplama moto
 - [x] Yeniden Google girişi boş Basic hesap açtı; eski portre geri dönmedi. Testlerin devamı için bu yeni boş test hesabı şu anda mevcut. Yeniden kayıt olabilmek silmenin başarısız olduğu anlamına gelmez.
 - [x] Yerel test: ücretli abonelik önce iptal edilir; yalnızca doğrulanmış kullanıcının verileri silinir; başka kullanıcı korunur.
 - [x] Yerel test: Stripe iptal hatasında ve eksik abonelik kimliğinde veri silinmez. Eksik kimlik koruması bu incelemede eklendi.
+- [x] Eksik abonelik kimliği koruması sürüm 19 ile canlıya dağıtıldı; gerçek Stripe senaryosu hâlâ aşağıdaki açık maddedir.
 - [x] Yerel test: Supabase silme hatası başarı sayılmaz; tekrar deneme tamamlayabilir.
 - [ ] D1 + Stripe + Supabase işlemleri atomik değil. Yarım kalan silmeler için kalıcı iş durumu, yeniden deneme ve operasyonel uzlaştırma tasarlanmalı.
 - [ ] Canlı D1 üyelik satırının yokluğu doğrudan doğrulanmalı; UI ve Supabase doğrulaması bunun yerine geçmez.
