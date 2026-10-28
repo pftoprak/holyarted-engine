@@ -1,3 +1,4 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import {
   getMembershipByCustomer,
   type MembershipPlan,
@@ -57,6 +58,8 @@ function planValue(value: unknown): MembershipPlan {
 }
 
 export async function POST(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const body = await request.text();
     const signature = request.headers.get('stripe-signature');

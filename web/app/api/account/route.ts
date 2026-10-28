@@ -1,9 +1,12 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { deleteAccount } from '@/lib/account-deletion';
 import { privateJson } from '@/lib/private-response';
 import { enforceRateLimit } from '@/lib/request-limits';
 
 export async function DELETE(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);

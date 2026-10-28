@@ -16,7 +16,7 @@ const input = { firstName: 'Ada', lastName: 'Yılmaz', birthDate: '1990-01-05' }
 
 // Use the real migrations and SQL with an in-memory SQLite database. Only the
 // D1 transport and Supabase HTTP boundary are replaced; route/store/auth code runs.
-async function fixture(t) {
+async function fixture(t, { accounts = true } = {}) {
   const db = new DatabaseSync(':memory:');
   t.after(() => db.close());
   for (const file of ['0000_bizarre_cable.sql', '0001_youthful_prism.sql']) {
@@ -26,11 +26,14 @@ async function fixture(t) {
   const calls = [];
   const deletedUsers = new Set();
   const logs = [];
+  const network = { requests: 0, queries: 0 };
   const env = {
+    HOLYARTED_ACCOUNTS_ENABLED: accounts ? 'true' : 'false',
     SUPABASE_URL: 'https://auth.example.test',
     SUPABASE_PUBLISHABLE_KEY: 'test-public-key',
     DB: {
       prepare(sql) {
+        network.queries += 1;
         if (faults.database) throw new Error('database failed: alice@example.test 1990-01-05');
         return {
           bind(...values) {
@@ -47,6 +50,7 @@ async function fixture(t) {
     Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa,
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
+      network.requests += 1;
       if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) {
         calls.push('stripe');
         assert.equal(init.method, 'DELETE');
@@ -73,6 +77,12 @@ async function fixture(t) {
   const runtime = new vm.SyntheticModule(['env'], function () { this.setExport('env', env); }, { context });
   function moduleFor(filename) {
     if (modules.has(filename)) return modules.get(filename);
+    if (filename.endsWith('.json')) {
+      const data = JSON.parse(readFileSync(filename, 'utf8'));
+      const json = new vm.SyntheticModule(['default'], function () { this.setExport('default', data); }, { context });
+      modules.set(filename, json);
+      return json;
+    }
     const source = ts.transpileModule(readFileSync(filename, 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
     }).outputText;
@@ -87,7 +97,7 @@ async function fixture(t) {
       const filename = specifier.startsWith('@/')
         ? path.join(root, specifier.slice(2))
         : path.resolve(path.dirname(parent.identifier), specifier);
-      return moduleFor(`${filename}.ts`);
+      return moduleFor(filename.endsWith('.json') ? filename : `${filename}.ts`);
     });
     await module.evaluate();
     return module.namespace;
@@ -99,6 +109,8 @@ async function fixture(t) {
   const portal = await route('app/api/billing/portal/route.ts');
   const account = await route('app/api/account/route.ts');
   const health = await route('app/api/health/route.ts');
+  const reading = await route('app/api/reading/route.ts');
+  const webhook = await route('app/api/billing/webhook/route.ts');
   function request(token, method = 'GET', body, suffix = '') {
     const headers = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -106,7 +118,7 @@ async function fixture(t) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, deletedUsers, portrait, exported, billing, checkout, portal, account, health, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -288,4 +300,44 @@ test('export rate limit blocks excess requests without blocking another user', a
   assert.ok(Number(limited.headers.get('retry-after')) > 0);
   assert.equal(limited.headers.get('cache-control'), 'no-store');
   assert.equal((await f.exported.GET(f.request('bob'))).status, 200);
+});
+
+test('with accounts disabled, account and billing routes return 404 without touching auth, D1 or Stripe', async (t) => {
+  const f = await fixture(t, { accounts: false });
+  for (const token of [null, 'alice']) {
+    for (const [handler, method, body] of [
+      [f.portrait.GET, 'GET'], [f.portrait.PUT, 'PUT', input],
+      [f.portrait.DELETE, 'DELETE'], [f.exported.GET, 'GET'], [f.billing.GET, 'GET'],
+      [f.checkout.POST, 'POST', { plan: 'plus' }], [f.portal.POST, 'POST'],
+      [f.account.DELETE, 'DELETE'], [f.webhook.POST, 'POST', {}],
+    ]) {
+      const response = await handler(f.request(token, method, body));
+      assert.equal(response.status, 404);
+      assert.equal(response.headers.get('cache-control'), 'no-store');
+    }
+  }
+  assert.deepEqual(f.network, { requests: 0, queries: 0 });
+  const health = await f.health.GET();
+  assert.equal(health.status, 200);
+  assert.deepEqual(await health.json(), { status: 'ok' });
+});
+
+test('detailed reading is public, returns the dataset texts and stores nothing', async (t) => {
+  const f = await fixture(t, { accounts: false });
+  const response = await f.reading.POST(f.request(null, 'POST', input));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  const { reading } = await response.json();
+  assert.equal(reading.locale, 'tr');
+  assert.deepEqual(reading.sections.map((section) => section.id), ['showcase', 'abilities', 'idealJob', 'lifePath']);
+  const showcase = JSON.parse(readFileSync(path.join(root, 'data', 'showcase.json'), 'utf8'));
+  assert.equal(reading.sections[0].key, '5');
+  assert.ok(showcase['5'].includes(reading.sections[0].paragraphs[0]));
+  for (const section of reading.sections) assert.ok(section.paragraphs.length > 0);
+  for (const body of [null, {}, { ...input, birthDate: '1990-02-31' }, { ...input, birthDate: '2999-01-01' }, { ...input, firstName: 'A'.repeat(81) }]) {
+    assert.equal((await f.reading.POST(f.request(null, 'POST', body))).status, 400);
+  }
+  assert.equal((await f.reading.POST(f.request(null, 'POST', { ...input, firstName: 'A'.repeat(5000) }))).status, 413);
+  assert.deepEqual(f.network, { requests: 0, queries: 0 });
+  assert.deepEqual(f.logs, []);
 });

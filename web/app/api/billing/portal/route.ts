@@ -1,3 +1,4 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost } from '@/lib/stripe-api';
@@ -7,6 +8,8 @@ import { enforceRateLimit } from '@/lib/request-limits';
 type PortalSession = { url: string | null };
 
 export async function POST(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);
