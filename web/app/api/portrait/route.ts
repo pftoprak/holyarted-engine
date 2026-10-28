@@ -1,3 +1,4 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { deletePortrait, getPortrait, InvalidPortraitError, savePortrait } from '@/lib/portrait-store';
 import type { PortraitInput } from '@/lib/portrait-types';
@@ -5,6 +6,8 @@ import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-resp
 import { enforceRateLimit } from '@/lib/request-limits';
 
 export async function GET(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
@@ -18,6 +21,8 @@ export async function GET(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
@@ -32,6 +37,8 @@ export async function DELETE(request: Request) {
 }
 
 export async function PUT(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);

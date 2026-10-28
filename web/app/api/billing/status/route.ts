@@ -1,8 +1,11 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership, publicMembership } from '@/lib/membership-store';
 import { privateJson } from '@/lib/private-response';
 
 export async function GET(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);

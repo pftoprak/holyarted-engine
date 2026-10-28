@@ -1,3 +1,4 @@
+import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { getPortrait } from '@/lib/portrait-store';
 import { getMembership, publicMembership } from '@/lib/membership-store';
@@ -5,6 +6,8 @@ import { privateJson } from '@/lib/private-response';
 import { enforceRateLimit } from '@/lib/request-limits';
 
 export async function GET(request: Request) {
+  const disabled = accountsDisabledResponse();
+  if (disabled) return disabled;
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);

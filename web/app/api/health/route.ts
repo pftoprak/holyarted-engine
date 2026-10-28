@@ -1,8 +1,11 @@
+import { accountsEnabled } from '@/lib/features';
 import { getPublicAuthConfig, runtimeEnv } from '@/lib/runtime-config';
 import { privateJson } from '@/lib/private-response';
 
 export async function GET() {
   try {
+    // Without accounts the app depends on no external service or database.
+    if (!accountsEnabled()) return privateJson({ status: 'ok' });
     if (!getPublicAuthConfig() || !runtimeEnv.DB) {
       return privateJson({ status: 'unavailable' }, 503);
     }

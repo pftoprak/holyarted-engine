@@ -4,15 +4,18 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
 import { calculateDesign } from '@/lib/profile-engine';
+import type { PortraitInput } from '@/lib/portrait-types';
+import type { Reading } from '@/lib/reading';
 import type { PublicAuthConfig } from '@/lib/runtime-config';
 import { useHolyartedAccount } from './use-holyarted-account';
 
 type Locale = 'en' | 'tr';
-type ExperienceProps = { authConfig: PublicAuthConfig | null };
+type ExperienceProps = { accountsEnabled: boolean; authConfig: PublicAuthConfig | null };
+type ReadingState = { status: 'idle' | 'loading' | 'error' } | { status: 'ready'; reading: Reading };
 
 const copy = {
   en: {
-    nav: ['Discover', 'Your portrait', 'Membership', 'Approach'], signIn: 'Continue with Google', account: 'Account', signOut: 'Sign out', menu: 'Menu',
+    nav: ['Discover', 'Your portrait', 'Membership', 'Approach'], readingNav: 'Detailed reading', signIn: 'Continue with Google', account: 'Account', signOut: 'Sign out', menu: 'Menu',
     edition: 'A private Human Design experience', titleA: 'Meet the person', titleB: 'you are becoming.',
     intro: 'A refined portrait of how you think, decide, connect and grow—translated into clear guidance you can use in real life.',
     start: 'Discover my design', sample: 'Preview the experience', trust: ['Personal to you', 'Private by design', 'No fixed labels'],
@@ -36,6 +39,8 @@ const copy = {
     purposes: { build: ['Make the useful thing real', 'Your direction is not a job title. It is a recurring contribution: creating structures, products or practices that hold up over time.'], guide: ['Turn complexity into direction', 'Your direction is to help people orient themselves—through teaching, leadership, care or clear communication.'], create: ['Give new ideas a form', 'Your direction is to open possibilities, then shape the strongest one into work others can experience and use.'], connect: ['Strengthen the human network', 'Your direction is to create understanding across people, disciplines or communities that would otherwise remain separate.'] },
     restart: 'Create another portrait', savePrompt: 'Keep your portrait close.', saveCopy: 'Continue with your Google account to return to your private space and keep your membership in one place.', saveIn: 'Open my account', saveOut: 'Continue with Google', portraitSaving: 'Saving to your private space…', portraitSaved: 'Saved to your private space', portraitSaveFailed: 'Your portrait is ready, but it could not be saved. Please try again.', lockedTitle: 'Two deeper chapters are waiting.', lockedCopy: 'Plus unlocks your complete portrait. Premium adds dedicated relationship and work lenses.',
     extendedSections: ['Relationship lens', 'Work lens'],
+    readingLabel: 'DETAILED READING', readingTitle: 'Your full reading.', readingCopy: 'The complete texts behind your portrait, calculated from your name and birth date.', readingLocaleNote: 'The detailed reading is currently available in Turkish only.', readingLoading: 'Preparing your detailed reading…', readingError: 'Your detailed reading could not be prepared. Please try again.', readingRetry: 'Try again',
+    readingSections: { showcase: 'Showcase', abilities: 'Abilities', idealJob: 'Ideal work', lifePath: 'Life path' },
     relationships: { quiet: ['Space makes connection clearer', 'You relate best when closeness still leaves room for quiet thought and an unhurried response.'], together: ['Trust grows through conversation', 'Shared thinking helps you feel known. The right relationships make room for both honesty and exchange.'], variety: ['Curiosity keeps connection alive', 'You connect through fresh experiences, evolving conversations and room to keep discovering one another.'], motion: ['Connection deepens through doing', 'Shared plans, movement and making something together often say more to you than prolonged analysis.'] },
     workLenses: { build: ['Make reliability your signature', 'Your strongest work turns intention into something clear, useful and built to last.'], guide: ['Make direction your signature', 'Your strongest work helps people find the next clear step without taking their agency away.'], create: ['Make originality useful', 'Your strongest work gives an unexpected idea enough structure to become real for other people.'], connect: ['Make understanding possible', 'Your strongest work brings people, perspectives and opportunities into a more meaningful relationship.'] },
     membershipLabel: 'MEMBERSHIP', membershipTitle: 'Choose how deeply you want to explore.', membershipCopy: 'Start free. Upgrade when you want the complete portrait. Payments, invoices and cancellations are handled securely through Stripe.', currentPlan: 'Current plan', manageBilling: 'Manage billing', popular: 'MOST CHOSEN',
@@ -49,7 +54,7 @@ const copy = {
     disclaimer: 'Holyarted is an independent self-inquiry product and is not affiliated with any third-party system or brand. It offers reflective guidance, not medical or psychological diagnosis.', footer: 'A clearer way to understand yourself.',
   },
   tr: {
-    nav: ['Keşfet', 'Portren', 'Üyelik', 'Yaklaşım'], signIn: 'Google ile devam et', account: 'Hesap', signOut: 'Çıkış yap', menu: 'Menü',
+    nav: ['Keşfet', 'Portren', 'Üyelik', 'Yaklaşım'], readingNav: 'Detaylı okuma', signIn: 'Google ile devam et', account: 'Hesap', signOut: 'Çıkış yap', menu: 'Menü',
     edition: 'Özel bir Human Design deneyimi', titleA: 'Dönüştüğün kişiyi', titleB: 'daha yakından tanı.',
     intro: 'Nasıl düşündüğünü, karar verdiğini, bağ kurduğunu ve geliştiğini gerçek hayatta kullanabileceğin net bir rehbere dönüştüren rafine bir portre.',
     start: 'Tasarımımı keşfet', sample: 'Deneyimi önizle', trust: ['Sana özel', 'Gizlilik odaklı', 'Sabit etiket yok'],
@@ -73,6 +78,8 @@ const copy = {
     purposes: { build: ['Faydalı olanı gerçeğe dönüştür', 'Yönün bir iş unvanı değil, tekrarlayan bir katkıdır: zamana dayanan yapılar, ürünler veya uygulamalar kurmak.'], guide: ['Karmaşıklığı yöne dönüştür', 'Yönün; öğretme, liderlik, bakım veya açık iletişim aracılığıyla insanların kendini konumlandırmasına yardım etmek.'], create: ['Yeni fikre biçim ver', 'Yönün olasılık açmak, ardından en güçlü olanı başkalarının deneyimleyip kullanabileceği bir işe dönüştürmek.'], connect: ['İnsan ağını güçlendir', 'Yönün normalde ayrı kalacak insanlar, alanlar veya topluluklar arasında anlayış yaratmak.'] },
     restart: 'Başka bir portre oluştur', savePrompt: 'Portreni yanında tut.', saveCopy: 'Özel alanına geri dönmek ve üyeliğini tek yerde tutmak için Google hesabınla devam et.', saveIn: 'Hesabımı aç', saveOut: 'Google ile devam et', portraitSaving: 'Kişisel alanına kaydediliyor…', portraitSaved: 'Kişisel alanına kaydedildi', portraitSaveFailed: 'Portren hazır, ancak kaydedilemedi. Lütfen tekrar dene.', lockedTitle: 'İki derin bölüm seni bekliyor.', lockedCopy: 'Plus tam portrenin kilidini açar. Premium ise ilişki ve iş yaşamına özel bakışlar ekler.',
     extendedSections: ['İlişki bakışı', 'İş yaşamı bakışı'],
+    readingLabel: 'DETAYLI OKUMA', readingTitle: 'Tam okuman.', readingCopy: 'Portrenin arkasındaki metinlerin tamamı; adın ve doğum tarihinden hesaplandı.', readingLocaleNote: '', readingLoading: 'Detaylı okuman hazırlanıyor…', readingError: 'Detaylı okuman hazırlanamadı. Lütfen tekrar dene.', readingRetry: 'Tekrar dene',
+    readingSections: { showcase: 'Vitrin', abilities: 'Yetenekler', idealJob: 'İdeal iş', lifePath: 'Yaşam yolu' },
     relationships: { quiet: ['Alan, bağı daha net kılar', 'Yakınlığın içinde sessiz düşünmeye ve acele etmeden yanıt vermeye yer olduğunda daha iyi bağ kurarsın.'], together: ['Güven konuşmayla büyür', 'Birlikte düşünmek kendini anlaşılmış hissettirir. Doğru ilişkiler hem dürüstlüğe hem alışverişe alan açar.'], variety: ['Merak bağı canlı tutar', 'Yeni deneyimler, gelişen konuşmalar ve birbirini yeniden keşfetme alanı bağını besler.'], motion: ['Bağ birlikte yaparken derinleşir', 'Ortak planlar, hareket ve birlikte bir şey üretmek sana uzun analizlerden daha çok şey söyleyebilir.'] },
     workLenses: { build: ['Güvenilirliği imzan yap', 'En güçlü işin niyeti net, faydalı ve zamana dayanacak bir şeye dönüştürür.'], guide: ['Yön vermeyi imzan yap', 'En güçlü işin insanların kendi iradesini elinden almadan bir sonraki net adımı görmesine yardım eder.'], create: ['Özgünlüğü faydaya dönüştür', 'En güçlü işin beklenmedik bir fikre başkaları için gerçek olacak kadar yapı kazandırır.'], connect: ['Anlayışı mümkün kıl', 'En güçlü işin insanları, bakış açılarını ve fırsatları daha anlamlı bir ilişkide buluşturur.'] },
     membershipLabel: 'ÜYELİK', membershipTitle: 'Ne kadar derine inmek istediğini seç.', membershipCopy: 'Ücretsiz başla. Tam portreni istediğinde yükselt. Ödemeler, faturalar ve iptaller Stripe üzerinden güvenle yönetilir.', currentPlan: 'Mevcut plan', manageBilling: 'Ödemeyi yönet', popular: 'EN ÇOK SEÇİLEN',
@@ -87,7 +94,7 @@ const copy = {
   },
 } as const;
 
-export function Experience({ authConfig }: ExperienceProps) {
+export function Experience({ accountsEnabled, authConfig }: ExperienceProps) {
   const [locale, setLocale] = useState<Locale>('en');
   const [complete, setComplete] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
@@ -98,12 +105,17 @@ export function Experience({ authConfig }: ExperienceProps) {
   const [birthDate, setBirthDate] = useState('');
   const [profile, setProfile] = useState(() => calculateDesign('Alex', 'Morgan', '1992-07-16'));
   const [portraitStatus, setPortraitStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [readingInput, setReadingInput] = useState<PortraitInput | null>(null);
+  const [readingState, setReadingState] = useState<ReadingState>({ status: 'idle' });
   const restoredForUser = useRef<string | null>(null);
   const { user, membership, pending, error, setError, signInWithGoogle, signOut, startCheckout, openBillingPortal, loadPortrait, savePortrait } = useHolyartedAccount(authConfig);
   const text = copy[locale];
+  // With accounts off there is no membership: every chapter is open to everyone.
+  const showsPlusChapters = !accountsEnabled || membership.plan !== 'basic';
+  const showsPremiumChapters = !accountsEnabled || membership.plan === 'premium';
   useEffect(() => { document.documentElement.lang = locale; }, [locale]);
   const resultCards = useMemo(() => [text.decision[profile.decision], text.environments[profile.environment], text.frictions[profile.friction], text.purposes[profile.purpose]], [text, profile]);
-  const visibleResultCards = membership.plan === 'basic' ? resultCards.slice(0, 2) : resultCards;
+  const visibleResultCards = showsPlusChapters ? resultCards : resultCards.slice(0, 2);
   const extendedCards = useMemo(() => [text.relationships[profile.environment], text.workLenses[profile.purpose]], [text, profile]);
   useEffect(() => {
     if (!user || restoredForUser.current === user.id || new URLSearchParams(window.location.search).get('saved') !== '1') return;
@@ -116,9 +128,28 @@ export function Experience({ authConfig }: ExperienceProps) {
       setProfile(saved.profile);
       setPortraitStatus('saved');
       setComplete(true);
+      setReadingState({ status: 'loading' });
+      setReadingInput({ firstName: saved.firstName, lastName: saved.lastName, birthDate: saved.birthDate });
       window.setTimeout(() => document.querySelector('#profile')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
     }).catch((loadError) => setError(loadError instanceof Error ? loadError.message : text.portraitSaveFailed));
   }, [loadPortrait, setError, text.portraitSaveFailed, user]);
+  useEffect(() => {
+    if (!readingInput) return;
+    const controller = new AbortController();
+    void fetch('/api/reading', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(readingInput), signal: controller.signal })
+      .then(async (response) => {
+        const payload = (await response.json()) as { reading?: Reading };
+        if (!response.ok || !payload.reading) throw new Error('reading_failed');
+        setReadingState({ status: 'ready', reading: payload.reading });
+      })
+      .catch(() => { if (!controller.signal.aborted) setReadingState({ status: 'error' }); });
+    return () => controller.abort();
+  }, [readingInput]);
+  function requestReading(input: PortraitInput) {
+    setReadingState({ status: 'loading' });
+    // A fresh object re-runs the request, also for "try again" with the same input.
+    setReadingInput({ firstName: input.firstName, lastName: input.lastName, birthDate: input.birthDate });
+  }
   function begin() { document.querySelector('#assessment')?.scrollIntoView({ behavior: 'smooth', block: 'center' }); }
   function calculate(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -141,6 +172,7 @@ export function Experience({ authConfig }: ExperienceProps) {
     }
     setComplete(false);
     setIsCalculating(true);
+    requestReading(input);
     setPortraitStatus(user ? 'saving' : 'idle');
     if (user) {
       void savePortrait(input).then((saved) => {
@@ -164,10 +196,10 @@ export function Experience({ authConfig }: ExperienceProps) {
       <nav className="relative z-50 border-b border-[#625b55]/10 bg-[#f7f3ec]/95 px-5 text-[#514b46] backdrop-blur-md md:px-10">
         <div className="mx-auto flex h-[76px] max-w-[1400px] items-center justify-between">
           <a href="#top" className="flex items-center gap-3" aria-label="Holyarted home"><span className="grid size-9 place-items-center border border-[#a7826c]/55 font-heading text-base text-[#7d695d]">H</span><span className="font-heading text-sm tracking-[0.24em]">HOLYARTED</span></a>
-          <div className="hidden items-center gap-8 lg:flex"><a href="#assessment" className="nav-link">{text.nav[0]}</a><a href="#profile" className="nav-link">{text.nav[1]}</a><a href="#membership" className="nav-link">{text.nav[2]}</a><a href="#method" className="nav-link">{text.nav[3]}</a><div className="flex items-center border-l border-[#625b55]/15 pl-5 text-[11px] font-bold tracking-[0.12em]"><button onClick={() => setLocale('en')} className={locale === 'en' ? 'text-[#8f705e]' : 'text-[#514b46]/45'}>EN</button><span className="mx-2 text-[#514b46]/20">/</span><button onClick={() => setLocale('tr')} className={locale === 'tr' ? 'text-[#8f705e]' : 'text-[#514b46]/45'}>TR</button></div>{user ? <a href="/profile" className="inline-flex h-10 items-center gap-2 border border-[#625b55]/25 px-5 text-xs font-bold transition hover:border-[#8f705e] hover:text-[#8f705e]"><UserRound className="size-4" />{text.account}</a> : <button onClick={signInWithGoogle} className="inline-flex h-10 items-center gap-2 border border-[#625b55]/25 px-5 text-xs font-bold transition hover:border-[#8f705e] hover:text-[#8f705e]"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46] shadow-sm">G</span>{text.signIn}</button>}</div>
+          <div className="hidden items-center gap-8 lg:flex"><a href="#assessment" className="nav-link">{text.nav[0]}</a><a href="#profile" className="nav-link">{text.nav[1]}</a>{accountsEnabled ? <a href="#membership" className="nav-link">{text.nav[2]}</a> : <a href="#reading" className="nav-link">{text.readingNav}</a>}<a href="#method" className="nav-link">{text.nav[3]}</a><div className="flex items-center border-l border-[#625b55]/15 pl-5 text-[11px] font-bold tracking-[0.12em]"><button onClick={() => setLocale('en')} className={locale === 'en' ? 'text-[#8f705e]' : 'text-[#514b46]/45'}>EN</button><span className="mx-2 text-[#514b46]/20">/</span><button onClick={() => setLocale('tr')} className={locale === 'tr' ? 'text-[#8f705e]' : 'text-[#514b46]/45'}>TR</button></div>{accountsEnabled && (user ? <a href="/profile" className="inline-flex h-10 items-center gap-2 border border-[#625b55]/25 px-5 text-xs font-bold transition hover:border-[#8f705e] hover:text-[#8f705e]"><UserRound className="size-4" />{text.account}</a> : <button onClick={signInWithGoogle} className="inline-flex h-10 items-center gap-2 border border-[#625b55]/25 px-5 text-xs font-bold transition hover:border-[#8f705e] hover:text-[#8f705e]"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46] shadow-sm">G</span>{text.signIn}</button>)}</div>
           <button onClick={() => setMenuOpen(!menuOpen)} className="grid size-10 place-items-center border border-[#625b55]/20 lg:hidden" aria-label={text.menu}>{menuOpen ? <X className="size-5" /> : <Menu className="size-5" />}</button>
         </div>
-        {menuOpen && <div className="border-t border-[#625b55]/10 pb-6 pt-4 lg:hidden"><div className="mx-auto grid max-w-[1400px] gap-4 text-sm"><a href="#assessment" onClick={() => setMenuOpen(false)}>{text.nav[0]}</a><a href="#profile" onClick={() => setMenuOpen(false)}>{text.nav[1]}</a><a href="#membership" onClick={() => setMenuOpen(false)}>{text.nav[2]}</a><a href="#method" onClick={() => setMenuOpen(false)}>{text.nav[3]}</a><div className="flex gap-4"><button onClick={() => setLocale('en')} className={locale === 'en' ? 'text-[#8f705e]' : ''}>EN</button><button onClick={() => setLocale('tr')} className={locale === 'tr' ? 'text-[#8f705e]' : ''}>TR</button></div>{user ? <a href="/profile">{text.account}</a> : <button className="text-left" onClick={signInWithGoogle}>{text.signIn}</button>}</div></div>}
+        {menuOpen && <div className="border-t border-[#625b55]/10 pb-6 pt-4 lg:hidden"><div className="mx-auto grid max-w-[1400px] gap-4 text-sm"><a href="#assessment" onClick={() => setMenuOpen(false)}>{text.nav[0]}</a><a href="#profile" onClick={() => setMenuOpen(false)}>{text.nav[1]}</a>{accountsEnabled ? <a href="#membership" onClick={() => setMenuOpen(false)}>{text.nav[2]}</a> : <a href="#reading" onClick={() => setMenuOpen(false)}>{text.readingNav}</a>}<a href="#method" onClick={() => setMenuOpen(false)}>{text.nav[3]}</a><div className="flex gap-4"><button onClick={() => setLocale('en')} className={locale === 'en' ? 'text-[#8f705e]' : ''}>EN</button><button onClick={() => setLocale('tr')} className={locale === 'tr' ? 'text-[#8f705e]' : ''}>TR</button></div>{accountsEnabled && (user ? <a href="/profile">{text.account}</a> : <button className="text-left" onClick={signInWithGoogle}>{text.signIn}</button>)}</div></div>}
       </nav>
 
       <section id="top" className="hero-stage relative bg-[#dfe5db] px-5 pb-20 pt-14 text-[#514b46] md:px-10 md:pb-28 md:pt-24">
@@ -216,25 +248,44 @@ export function Experience({ authConfig }: ExperienceProps) {
               <div><h2 className="font-heading text-6xl leading-[0.9] tracking-[-0.05em] md:text-8xl">{text.profileNames[profile.purpose]}</h2><p className="mt-7 max-w-3xl text-lg leading-8 text-[#514b46]/70">{text.profileIntros[profile.purpose]}</p></div>
             </div>
             <div className="grid md:grid-cols-2">{visibleResultCards.map(([title, body], index) => <article key={title} className={`profile-result-card min-h-72 border-b border-[#625b55]/18 py-9 md:p-9 ${index % 2 === 0 ? 'md:border-r' : ''}`} style={{ animationDelay: `${index * 110}ms` }}><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#514b46]/55">{text.sections[index]}</p><h3 className="mt-10 font-heading text-4xl">{title}</h3><p className="mt-4 max-w-xl text-sm leading-7 text-[#514b46]/68">{body}</p></article>)}</div>
-            {membership.plan === 'basic' && <div className="mt-8 grid items-center gap-7 rounded-[2rem] border border-[#625b55]/18 bg-[#f7f3ec]/45 p-7 md:grid-cols-[1fr_auto] md:p-10"><div><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8f705e]"><LockKeyhole className="size-4" />Plus & Premium</div><h3 className="mt-4 font-heading text-4xl">{text.lockedTitle}</h3><p className="mt-3 max-w-2xl text-sm leading-7 text-[#514b46]/62">{text.lockedCopy}</p></div><button onClick={() => document.querySelector('#membership')?.scrollIntoView({ behavior: 'smooth' })} className="premium-button">{text.nav[2]}<ArrowRight className="size-4" /></button></div>}
-            {membership.plan === 'premium' && <div className="mt-8 grid gap-4 md:grid-cols-2">{extendedCards.map(([title, body], index) => <article key={title} className="rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{text.extendedSections[index]}</p><h3 className="mt-8 font-heading text-4xl">{title}</h3><p className="mt-4 text-sm leading-7 text-[#514b46]/68">{body}</p></article>)}</div>}
-            <div className="mt-10 flex flex-col items-start justify-between gap-6 border-t border-[#625b55]/22 pt-8 sm:flex-row sm:items-center"><button onClick={() => { setComplete(false); begin(); }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em]"><ArrowLeft className="size-4" />{text.restart}</button>{user ? <a href="/profile" className="inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]">{text.saveIn}<ArrowRight className="size-4" /></a> : <button onClick={signInWithGoogle} className="inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46]">G</span>{text.saveOut}</button>}</div>
-          </div> : <div className="grid items-end gap-10 lg:grid-cols-2"><div><p className="eyebrow">{text.profileLabel}</p><h2 className="mt-6 font-heading text-6xl leading-[0.9] tracking-[-0.045em] md:text-8xl">{text.profileNames[profile.purpose]}</h2></div><div className="max-w-xl lg:justify-self-end"><p className="text-lg leading-8 text-[#514b46]/70">{text.profileIntros[profile.purpose]}</p><button onClick={begin} className="mt-8 inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]">{text.start}<ArrowRight className="size-4" /></button></div></div>}
+            {!showsPlusChapters && <div className="mt-8 grid items-center gap-7 rounded-[2rem] border border-[#625b55]/18 bg-[#f7f3ec]/45 p-7 md:grid-cols-[1fr_auto] md:p-10"><div><div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.16em] text-[#8f705e]"><LockKeyhole className="size-4" />Plus & Premium</div><h3 className="mt-4 font-heading text-4xl">{text.lockedTitle}</h3><p className="mt-3 max-w-2xl text-sm leading-7 text-[#514b46]/62">{text.lockedCopy}</p></div><button onClick={() => document.querySelector('#membership')?.scrollIntoView({ behavior: 'smooth' })} className="premium-button">{text.nav[2]}<ArrowRight className="size-4" /></button></div>}
+            {showsPremiumChapters && <div className="mt-8 grid gap-4 md:grid-cols-2">{extendedCards.map(([title, body], index) => <article key={title} className="rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9"><p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{text.extendedSections[index]}</p><h3 className="mt-8 font-heading text-4xl">{title}</h3><p className="mt-4 text-sm leading-7 text-[#514b46]/68">{body}</p></article>)}</div>}
+            <div className="mt-10 flex flex-col items-start justify-between gap-6 border-t border-[#625b55]/22 pt-8 sm:flex-row sm:items-center"><button onClick={() => { setComplete(false); begin(); }} className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-[0.14em]"><ArrowLeft className="size-4" />{text.restart}</button>{accountsEnabled && (user ? <a href="/profile" className="inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]">{text.saveIn}<ArrowRight className="size-4" /></a> : <button onClick={signInWithGoogle} className="inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46]">G</span>{text.saveOut}</button>)}</div>
+            <DetailedReading text={text} locale={locale} state={readingState} onRetry={() => readingInput && requestReading(readingInput)} />
+          </div> : <div id={accountsEnabled ? undefined : 'reading'} className="grid scroll-mt-24 items-end gap-10 lg:grid-cols-2"><div><p className="eyebrow">{text.profileLabel}</p><h2 className="mt-6 font-heading text-6xl leading-[0.9] tracking-[-0.045em] md:text-8xl">{text.profileNames[profile.purpose]}</h2></div><div className="max-w-xl lg:justify-self-end"><p className="text-lg leading-8 text-[#514b46]/70">{text.profileIntros[profile.purpose]}</p><button onClick={begin} className="mt-8 inline-flex h-12 items-center gap-2 bg-[#625b55] px-6 text-xs font-bold text-[#f7f3ec]">{text.start}<ArrowRight className="size-4" /></button></div></div>}
         </div>
       </section>
 
-      <section className="bg-[#bfc8ba] px-5 py-20 text-[#514b46] md:px-10 md:py-28"><div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"><div><p className="eyebrow text-[#7d695d]">{text.savePrompt}</p><h2 className="mt-5 max-w-3xl font-heading text-5xl leading-[0.95] md:text-7xl">{user ? `${text.account}: ${user.displayName}` : text.savePrompt}</h2><p className="mt-6 max-w-xl leading-7 text-[#514b46]/58">{text.saveCopy}</p></div>{user ? <a href="/profile" className="premium-button lg:justify-self-end">{text.saveIn}<ArrowRight className="size-4" /></a> : <button onClick={signInWithGoogle} className="premium-button lg:justify-self-end"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46]">G</span>{text.saveOut}</button>}</div></section>
+      {accountsEnabled && <section className="bg-[#bfc8ba] px-5 py-20 text-[#514b46] md:px-10 md:py-28"><div className="mx-auto grid max-w-[1400px] gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:items-center"><div><p className="eyebrow text-[#7d695d]">{text.savePrompt}</p><h2 className="mt-5 max-w-3xl font-heading text-5xl leading-[0.95] md:text-7xl">{user ? `${text.account}: ${user.displayName}` : text.savePrompt}</h2><p className="mt-6 max-w-xl leading-7 text-[#514b46]/58">{text.saveCopy}</p></div>{user ? <a href="/profile" className="premium-button lg:justify-self-end">{text.saveIn}<ArrowRight className="size-4" /></a> : <button onClick={signInWithGoogle} className="premium-button lg:justify-self-end"><span className="grid size-5 place-items-center rounded-full bg-white text-[11px] font-black text-[#514b46]">G</span>{text.saveOut}</button>}</div></section>}
 
-      <section id="membership" className="scroll-mt-20 bg-[#f7f3ec] px-5 py-20 md:px-10 md:py-28">
+      {accountsEnabled && <section id="membership" className="scroll-mt-20 bg-[#f7f3ec] px-5 py-20 md:px-10 md:py-28">
         <div className="mx-auto max-w-[1400px]"><div className="grid gap-8 lg:grid-cols-[0.8fr_1.2fr] lg:items-end"><div><p className="eyebrow text-[#8f705e]">{text.membershipLabel}</p><h2 className="mt-5 font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">{text.membershipTitle}</h2></div><p className="max-w-xl text-base leading-8 text-[#514b46]/60 lg:justify-self-end">{text.membershipCopy}</p></div>
           <div className="mt-14 grid gap-4 lg:grid-cols-3">{text.plans.map((plan, index) => { const isCurrent = membership.plan === plan.id; return <article key={plan.id} className={`relative flex min-h-[34rem] flex-col rounded-[2rem] border p-7 md:p-9 ${index === 1 ? 'border-[#625b55] bg-[#625b55] text-[#f7f3ec] shadow-[0_28px_80px_rgba(98,91,85,.2)]' : 'border-[#625b55]/14 bg-[#fbf8f2]'}`}>{index === 1 && <span className="absolute right-6 top-6 rounded-full bg-[#dcc4b8] px-3 py-1.5 text-[10px] font-bold tracking-[0.12em] text-[#514b46]">{text.popular}</span>}<p className={`text-xs font-bold uppercase tracking-[0.16em] ${index === 1 ? 'text-[#dcc4b8]' : 'text-[#8f705e]'}`}>{plan.name}</p><div className="mt-8 flex items-end gap-2"><span className="font-heading text-6xl">{plan.price}</span><span className={`pb-2 text-xs ${index === 1 ? 'text-[#f7f3ec]/55' : 'text-[#514b46]/45'}`}>{plan.cadence}</span></div><p className={`mt-5 min-h-14 text-sm leading-6 ${index === 1 ? 'text-[#f7f3ec]/65' : 'text-[#514b46]/58'}`}>{plan.description}</p><div className={`my-7 h-px ${index === 1 ? 'bg-[#f7f3ec]/14' : 'bg-[#625b55]/12'}`} /><ul className="grid gap-4">{plan.features.map((feature) => <li key={feature} className="flex items-center gap-3 text-sm"><Check className={`size-4 ${index === 1 ? 'text-[#dcc4b8]' : 'text-[#8f705e]'}`} />{feature}</li>)}</ul><div className="mt-auto pt-9">{isCurrent ? <div className={`flex h-13 items-center justify-center gap-2 rounded-2xl border text-xs font-bold ${index === 1 ? 'border-[#f7f3ec]/25' : 'border-[#625b55]/18'}`}><ShieldCheck className="size-4" />{text.currentPlan}</div> : plan.id === 'basic' ? <button onClick={user ? () => window.location.assign('/profile') : signInWithGoogle} className={`flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-xs font-bold ${index === 1 ? 'bg-[#f7f3ec] text-[#514b46]' : 'bg-[#625b55] text-[#f7f3ec]'}`}>{plan.cta}<ArrowRight className="size-4" /></button> : <button disabled={pending} onClick={membership.plan === 'basic' ? () => startCheckout(plan.id) : openBillingPortal} className={`flex h-13 w-full items-center justify-center gap-2 rounded-2xl text-xs font-bold disabled:opacity-50 ${index === 1 ? 'bg-[#f7f3ec] text-[#514b46]' : 'bg-[#625b55] text-[#f7f3ec]'}`}><CreditCard className="size-4" />{plan.cta}</button>}</div></article> })}</div>
           {user && membership.plan !== 'basic' && <div className="mt-8 flex justify-end"><button disabled={pending} onClick={openBillingPortal} className="inline-flex items-center gap-2 text-xs font-bold text-[#514b46]/65 hover:text-[#514b46]"><CreditCard className="size-4" />{text.manageBilling}</button></div>}
         </div>
-      </section>
+      </section>}
 
       <section id="method" className="px-5 py-20 md:px-10 md:py-28"><div className="mx-auto max-w-[1400px]"><p className="eyebrow text-[#8f705e]">{text.methodLabel}</p><h2 className="mt-5 max-w-4xl font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-7xl">{text.methodTitle}</h2><div className="mt-14 grid border-y border-[#625b55]/18 md:grid-cols-3">{text.principles.map(([title, body], index) => <article key={title} className={`py-8 md:min-h-64 md:p-8 ${index < 2 ? 'border-b border-[#625b55]/14 md:border-b-0 md:border-r' : ''}`}><span className="block h-px w-12 bg-[#a7826c]" aria-hidden="true" /><h3 className="mt-12 font-heading text-3xl">{title}</h3><p className="mt-4 text-sm leading-7 text-[#514b46]/58">{body}</p></article>)}</div><p className="mt-8 max-w-3xl text-xs leading-6 text-[#514b46]/45">{text.disclaimer}</p></div></section>
 
       <footer className="border-t border-[#625b55]/12 px-5 py-8 md:px-10"><div className="mx-auto flex max-w-[1400px] flex-col gap-4 text-[10px] font-bold uppercase tracking-[0.16em] text-[#514b46]/50 sm:flex-row sm:items-center sm:justify-between"><span>© HOLYARTED</span><div className="flex flex-wrap gap-5"><a href="/privacy" className="hover:text-[#514b46]">Privacy</a><a href="/terms" className="hover:text-[#514b46]">Terms</a><a href="mailto:support@holyarted.com" className="hover:text-[#514b46]">Support</a></div><span>{text.footer}</span>{user && <button onClick={signOut} className="inline-flex items-center gap-2 hover:text-[#514b46]"><LogOut className="size-3.5" />{text.signOut}</button>}</div></footer>
     </main>
+  );
+}
+
+type DetailedReadingProps = { text: (typeof copy)[Locale]; locale: Locale; state: ReadingState; onRetry: () => void };
+
+// The full numerology texts are fetched from /api/reading, never bundled here.
+function DetailedReading({ text, locale, state, onRetry }: DetailedReadingProps) {
+  if (state.status === 'idle') return null;
+  return (
+    <div id="reading" className="mt-14 scroll-mt-24 border-t border-[#625b55]/22 pt-14">
+      <div className="grid gap-6 lg:grid-cols-[0.65fr_1.35fr]">
+        <div><p className="eyebrow">{text.readingLabel}</p><h2 className="mt-5 font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-6xl">{text.readingTitle}</h2></div>
+        <div><p className="max-w-2xl text-base leading-8 text-[#514b46]/70">{text.readingCopy}</p>{locale !== 'tr' && <p className="mt-3 text-xs font-bold text-[#514b46]/55">{text.readingLocaleNote}</p>}</div>
+      </div>
+      {state.status === 'loading' && <p className="mt-10 text-sm text-[#514b46]/60" aria-live="polite">{text.readingLoading}</p>}
+      {state.status === 'error' && <div className="mt-10 flex flex-wrap items-center gap-4 text-sm text-[#514b46]/70" role="alert"><span>{text.readingError}</span><button onClick={onRetry} className="text-xs font-bold uppercase tracking-[0.14em] underline underline-offset-4">{text.readingRetry}</button></div>}
+      {state.status === 'ready' && <div className="mt-10 grid gap-4">{state.reading.sections.map((section) => <details key={section.id} open={section.id === 'showcase'} className="group rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9"><summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{text.readingSections[section.id]}</span><ArrowRight className="size-4 transition group-open:rotate-90" /></summary><div lang={state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}</div></details>)}</div>}
+    </div>
   );
 }
