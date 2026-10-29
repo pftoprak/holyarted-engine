@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
 import { calculateDesign } from '@/lib/profile-engine';
@@ -40,7 +40,7 @@ const copy = {
     restart: 'Create another portrait', savePrompt: 'Keep your portrait close.', saveCopy: 'Continue with your Google account to return to your private space and keep your membership in one place.', saveIn: 'Open my account', saveOut: 'Continue with Google', portraitSaving: 'Saving to your private space…', portraitSaved: 'Saved to your private space', portraitSaveFailed: 'Your portrait is ready, but it could not be saved. Please try again.', lockedTitle: 'Two deeper chapters are waiting.', lockedCopy: 'Plus unlocks your complete portrait. Premium adds dedicated relationship and work lenses.',
     extendedSections: ['Relationship lens', 'Work lens'],
     readingLabel: 'DETAILED READING', readingTitle: 'Your full reading.', readingCopy: 'The complete texts behind your portrait, calculated from your name and birth date.', readingLocaleNote: 'The detailed reading is currently available in Turkish only.', readingLoading: 'Preparing your detailed reading…', readingError: 'Your detailed reading could not be prepared. Please try again.', readingRetry: 'Try again',
-    readingSections: { showcase: 'Showcase', abilities: 'Abilities', idealJob: 'Ideal work', lifePath: 'Life path' },
+    readingTiers: { basic: 'Basic', plus: 'Plus', premium: 'Premium' }, readingWhy: 'Why this result', readingPending: 'This section is being prepared.', readingRelationships: 'You in relationships', readingRelationshipsCopy: 'Sentences about closeness, boundaries and conflict, quoted from the sections above.', readingRelationshipsEmpty: 'Your reading says nothing specific about this.',
     relationships: { quiet: ['Space makes connection clearer', 'You relate best when closeness still leaves room for quiet thought and an unhurried response.'], together: ['Trust grows through conversation', 'Shared thinking helps you feel known. The right relationships make room for both honesty and exchange.'], variety: ['Curiosity keeps connection alive', 'You connect through fresh experiences, evolving conversations and room to keep discovering one another.'], motion: ['Connection deepens through doing', 'Shared plans, movement and making something together often say more to you than prolonged analysis.'] },
     workLenses: { build: ['Make reliability your signature', 'Your strongest work turns intention into something clear, useful and built to last.'], guide: ['Make direction your signature', 'Your strongest work helps people find the next clear step without taking their agency away.'], create: ['Make originality useful', 'Your strongest work gives an unexpected idea enough structure to become real for other people.'], connect: ['Make understanding possible', 'Your strongest work brings people, perspectives and opportunities into a more meaningful relationship.'] },
     membershipLabel: 'MEMBERSHIP', membershipTitle: 'Choose how deeply you want to explore.', membershipCopy: 'Start free. Upgrade when you want the complete portrait. Payments, invoices and cancellations are handled securely through Stripe.', currentPlan: 'Current plan', manageBilling: 'Manage billing', popular: 'MOST CHOSEN',
@@ -79,7 +79,7 @@ const copy = {
     restart: 'Başka bir portre oluştur', savePrompt: 'Portreni yanında tut.', saveCopy: 'Özel alanına geri dönmek ve üyeliğini tek yerde tutmak için Google hesabınla devam et.', saveIn: 'Hesabımı aç', saveOut: 'Google ile devam et', portraitSaving: 'Kişisel alanına kaydediliyor…', portraitSaved: 'Kişisel alanına kaydedildi', portraitSaveFailed: 'Portren hazır, ancak kaydedilemedi. Lütfen tekrar dene.', lockedTitle: 'İki derin bölüm seni bekliyor.', lockedCopy: 'Plus tam portrenin kilidini açar. Premium ise ilişki ve iş yaşamına özel bakışlar ekler.',
     extendedSections: ['İlişki bakışı', 'İş yaşamı bakışı'],
     readingLabel: 'DETAYLI OKUMA', readingTitle: 'Tam okuman.', readingCopy: 'Portrenin arkasındaki metinlerin tamamı; adın ve doğum tarihinden hesaplandı.', readingLocaleNote: '', readingLoading: 'Detaylı okuman hazırlanıyor…', readingError: 'Detaylı okuman hazırlanamadı. Lütfen tekrar dene.', readingRetry: 'Tekrar dene',
-    readingSections: { showcase: 'Vitrin', abilities: 'Yetenekler', idealJob: 'İdeal iş', lifePath: 'Yaşam yolu' },
+    readingTiers: { basic: 'Basic', plus: 'Plus', premium: 'Premium' }, readingWhy: 'Neden bu sonuç', readingPending: 'Bu bölüm hazırlanıyor.', readingRelationships: 'İlişkide sen', readingRelationshipsCopy: 'Yakınlık, sınır ve çatışmayla ilgili cümleler; yukarıdaki bölümlerden olduğu gibi alındı.', readingRelationshipsEmpty: 'Verin bu konuda belirgin bir şey söylemiyor.',
     relationships: { quiet: ['Alan, bağı daha net kılar', 'Yakınlığın içinde sessiz düşünmeye ve acele etmeden yanıt vermeye yer olduğunda daha iyi bağ kurarsın.'], together: ['Güven konuşmayla büyür', 'Birlikte düşünmek kendini anlaşılmış hissettirir. Doğru ilişkiler hem dürüstlüğe hem alışverişe alan açar.'], variety: ['Merak bağı canlı tutar', 'Yeni deneyimler, gelişen konuşmalar ve birbirini yeniden keşfetme alanı bağını besler.'], motion: ['Bağ birlikte yaparken derinleşir', 'Ortak planlar, hareket ve birlikte bir şey üretmek sana uzun analizlerden daha çok şey söyleyebilir.'] },
     workLenses: { build: ['Güvenilirliği imzan yap', 'En güçlü işin niyeti net, faydalı ve zamana dayanacak bir şeye dönüştürür.'], guide: ['Yön vermeyi imzan yap', 'En güçlü işin insanların kendi iradesini elinden almadan bir sonraki net adımı görmesine yardım eder.'], create: ['Özgünlüğü faydaya dönüştür', 'En güçlü işin beklenmedik bir fikre başkaları için gerçek olacak kadar yapı kazandırır.'], connect: ['Anlayışı mümkün kıl', 'En güçlü işin insanları, bakış açılarını ve fırsatları daha anlamlı bir ilişkide buluşturur.'] },
     membershipLabel: 'ÜYELİK', membershipTitle: 'Ne kadar derine inmek istediğini seç.', membershipCopy: 'Ücretsiz başla. Tam portreni istediğinde yükselt. Ödemeler, faturalar ve iptaller Stripe üzerinden güvenle yönetilir.', currentPlan: 'Mevcut plan', manageBilling: 'Ödemeyi yönet', popular: 'EN ÇOK SEÇİLEN',
@@ -285,7 +285,28 @@ function DetailedReading({ text, locale, state, onRetry }: DetailedReadingProps)
       </div>
       {state.status === 'loading' && <p className="mt-10 text-sm text-[#514b46]/60" aria-live="polite">{text.readingLoading}</p>}
       {state.status === 'error' && <div className="mt-10 flex flex-wrap items-center gap-4 text-sm text-[#514b46]/70" role="alert"><span>{text.readingError}</span><button onClick={onRetry} className="text-xs font-bold uppercase tracking-[0.14em] underline underline-offset-4">{text.readingRetry}</button></div>}
-      {state.status === 'ready' && <div className="mt-10 grid gap-4">{state.reading.sections.map((section) => <details key={section.id} open={section.id === 'showcase'} className="group rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9"><summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{text.readingSections[section.id]}</span><ArrowRight className="size-4 transition group-open:rotate-90" /></summary><div lang={state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}</div></details>)}</div>}
+      {state.status === 'ready' && <div className="mt-10 grid gap-4">{state.reading.sections.map((section) => <Fragment key={section.id}>
+        <details open={section.id === 'showcase'} className="group rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="flex flex-wrap items-center gap-3"><span lang="en" className="rounded-full border border-[#8f705e]/30 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8f705e]">{text.readingTiers[section.tier]}</span><span lang={state.reading.locale} className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{section.title} · {section.key}</span></span><ArrowRight className="size-4 shrink-0 transition group-open:rotate-90" /></summary>
+          <div lang={state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">
+            <p className="text-xs leading-6 text-[#514b46]/60"><span className="font-bold">{text.readingWhy}: </span>{section.reason}</p>
+            {section.note && <p className="border-l-2 border-[#a7826c]/45 pl-3 text-xs leading-6 text-[#514b46]/60">{section.note}</p>}
+            {section.status === 'pending' ? <p className="italic">{text.readingPending}</p> : section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
+          </div>
+        </details>
+        {section.id === 'lifePath' && <RelationshipLines text={text} reading={state.reading} />}
+      </Fragment>)}</div>}
     </div>
+  );
+}
+
+// "İlişkide sen": dataset sentences regrouped by the server, never rewritten.
+function RelationshipLines({ text, reading }: { text: (typeof copy)[Locale]; reading: Reading }) {
+  return (
+    <section className="rounded-[2rem] border border-[#625b55]/14 bg-[#fbf8f2]/70 p-7 md:p-9">
+      <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]"><span lang="en" className="mr-3 rounded-full border border-[#8f705e]/30 px-2.5 py-1 text-[9px] tracking-[0.14em]">{text.readingTiers.plus}</span>{text.readingRelationships}</p>
+      <p className="mt-4 text-xs leading-6 text-[#514b46]/60">{text.readingRelationshipsCopy}</p>
+      {reading.relationships.length === 0 ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingRelationshipsEmpty}</p> : <ul lang={reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{reading.relationships.map((line) => <li key={line.sentence} className="border-l-2 border-[#a7826c]/45 pl-4">{line.sentence}<span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/45">{line.source}</span></li>)}</ul>}
+    </section>
   );
 }

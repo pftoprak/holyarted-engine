@@ -1,6 +1,6 @@
 # Holyarted rapor denetimi — 29 Ekim 2026
 
-**Durum: ONAY BEKLİYOR.** Bu belge tanı ve öneridir. Hiçbir veri dosyası, hesaplama kuralı veya üretim metni değiştirilmedi. Bölüm 3 ve 4'teki öneriler Furkan Öksüz "APPROVED" demeden uygulanmayacak.
+**Durum: ONAYLANDI (29 Ekim 2026, Furkan Öksüz: "hepsini onaylıyorum").** Uygulanabilen öneriler bu branch'te uygulandı; neyin uygulanıp neyin beklediği [Bölüm 6](#6-uygulama-durumu)'da. Veri metinleri ve hesaplama kuralı değiştirilmedi.
 
 - Branch: `feature/report-audit-tests` (`clean-skeleton`'dan ayrıldı; ana branch'e dokunulmadı)
 - Tekrar üretmek için: `node audit/run-audit.mjs` (Node 22.13+)
@@ -218,3 +218,25 @@ Yalnızca bu kaynaklarla, sistem kurallarına uyarak yol haritasını yaz.
 3. Piramit ve sinerji metinleri hangi sayıyla seçiliyor? Kural Excel'de varsa paylaşılmalı. Bu kural olmadan Platinum ilişki katmanı kurulamaz.
 4. Rakamları yer değiştirmiş hayat yolu çiftlerindeki (145/415 vb.) ortak paragraflar kasıtlı mı?
 5. Katman eşlemesi: Gold = Plus, Platinum = Premium varsayımı doğru mu, yoksa ürün adları değişecek mi?
+
+## 6. Uygulama durumu
+
+Onaydan sonra bu branch'te yapılanlar. Hepsi sunum katmanında; `data/` içindeki rapor metinleri ve `web/lib/calculation-core.ts` aynen duruyor.
+
+| Öneri | Durum | Nerede |
+| --- | --- | --- |
+| Yer tutucu (`n/a`) veya eksik metin gösterilmesin; "hazırlanıyor" notu ve log | **Uygulandı.** Barış Kaya'da "İdeal iş", Lyn Sky'da "Yetenekler" artık "Bu bölüm hazırlanıyor." gösteriyor; sunucu `reading_section_unavailable idealJob:33` gibi yalnızca bölüm ve sayı loglar, kişisel veri loglamaz. | `web/lib/reading.ts` |
+| Her bölümde "Neden bu sonuç" satırı | **Uygulandı.** Ör.: "Adındaki sesli harflerin (A, E, I, O, U) toplamı 12; bu 3 sayısına indirgeniyor." | `web/lib/reading.ts`, `web/app/experience.tsx` |
+| Şablon sırası ve katman etiketi (Basic: Vitrin · Plus: Yetenekler, Hayat yolu, İlişkide sen · Premium: İdeal iş) | **Uygulandı** (etiket olarak). Hesap kapalıyken herkes hepsini görür. Katmana göre **kilitleme** sunucu tarafında üyelik kontrolü ister; HANDOFF.md 2. madde, arka uç mühendisinde. | aynı |
+| "İlişkide sen" bölümü | **Uygulandı.** Vitrin, yetenek ve hayat yolu metinlerinden ilişkiyle ilgili cümleler (her bölümden en fazla 2) **değiştirilmeden** alıntılanıyor ve kaynağı yazılıyor. Cümle yoksa "Verin bu konuda belirgin bir şey söylemiyor." Seçim anahtar kelimeyle yapılıyor; kusursuz değil. | aynı |
+| Yaşa göre meslek başlığı | **Uygulandı.** 25 yaş altı "Yöneldiğin alanlar", 25 ve üstü "Derinleşme alanların". Liste metni aynen. | `web/lib/reading.ts` |
+| Hayat yolunda olasılık notu | **Uygulandı.** "Bu metin bir olasılığı anlatır, yaşadıklarına dair bir tespit değildir." | aynı |
+| Revize LLM prompt'ları (4-B) | **Uygulandı.** `system_prompt`, `user_prompt_template`, `summary_system_prompt` güncellendi; eski kodun beklediği `{context}`, `{label}`, `{text}` yer tutucuları korundu. Not: bu prompt'u kullanan kod repoda değil (`@holyarted/api-shared`), şu an hiçbir yerde çalışmıyor. | `data/llm_config.json` |
+| Testler | **Eklendi.** `n/a` ve eksik metnin hiç gönderilmediği, yaş başlığının metni değiştirmediği, ilişki cümlelerinin kişinin kendi metninde birebir bulunduğu doğrulanıyor. 25 testin hepsi geçiyor. | `web/tests/account.test.mjs` |
+
+**Onaya rağmen yapılmayanlar ve nedeni:**
+
+- **Bozuk veri kayıtlarının düzeltilmesi** (meslek 33, yetenek 1, hayat yolu 213) ve **en yoğun Barnum metinlerinin yeniden yazılması**: Görev kuralı 1'e göre veri değiştirilemez kaynak. Doğru metinler Excel'den gelmeli; ben metin uydurmadım.
+- **Y'nin sesli harf sayılması**: Hesaplama değişikliği; görev kuralı hesaplamaya dokunmayı yasaklıyor. Bölüm 5, soru 2.
+- **Piramit, sinerji ve iki kişilik rapor**: Seçim kuralı kodda ve veride yok. Bölüm 5, soru 3.
+- **Basic portre kartlarının veriye bağlanması**: Kartlar (karar biçimi, ortam vb.) 4 seçenekli elle yazılmış metinler; veriyle eşleştirme kuralı bir ürün kararı. Şimdilik Basic'in veri karşılığı "Vitrin" bölümü ve "Neden bu sonuç" satırı.

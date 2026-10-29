@@ -329,7 +329,11 @@ test('detailed reading is public, returns the dataset texts and stores nothing',
   assert.equal(response.headers.get('cache-control'), 'no-store');
   const { reading } = await response.json();
   assert.equal(reading.locale, 'tr');
-  assert.deepEqual(reading.sections.map((section) => section.id), ['showcase', 'abilities', 'idealJob', 'lifePath']);
+  assert.deepEqual(reading.sections.map((section) => [section.id, section.tier]), [['showcase', 'basic'], ['abilities', 'plus'], ['lifePath', 'plus'], ['idealJob', 'premium']]);
+  assert.equal(reading.sections[0].reason, 'Doğum günün 5.');
+  assert.equal(reading.sections[3].title, 'Derinleşme alanların');
+  assert.match(reading.sections[2].note, /tespit değildir/);
+  for (const section of reading.sections) assert.equal(section.status, 'ready');
   const showcase = JSON.parse(readFileSync(path.join(root, 'data', 'showcase.json'), 'utf8'));
   assert.equal(reading.sections[0].key, '5');
   assert.ok(showcase['5'].includes(reading.sections[0].paragraphs[0]));
@@ -340,4 +344,36 @@ test('detailed reading is public, returns the dataset texts and stores nothing',
   assert.equal((await f.reading.POST(f.request(null, 'POST', { ...input, firstName: 'A'.repeat(5000) }))).status, 413);
   assert.deepEqual(f.network, { requests: 0, queries: 0 });
   assert.deepEqual(f.logs, []);
+});
+
+test('detailed reading never shows placeholder or missing texts and quotes relationship lines verbatim', async (t) => {
+  const f = await fixture(t, { accounts: false });
+  const read = async (body) => (await (await f.reading.POST(f.request(null, 'POST', body))).json()).reading;
+  const data = (name) => JSON.parse(readFileSync(path.join(root, 'data', `${name}.json`), 'utf8'));
+
+  // Name total 33: ideal_job["33"] is "n/a" in the dataset.
+  const placeholder = await read({ firstName: 'Barış', lastName: 'Kaya', birthDate: '1995-03-03' });
+  const job = placeholder.sections.find((section) => section.id === 'idealJob');
+  assert.deepEqual([job.key, job.status, job.paragraphs], ['33', 'pending', []]);
+  assert.ok(!JSON.stringify(placeholder).includes('n/a'));
+  // No A, E, I, O, U: vowel total 0 has no dataset row.
+  const noVowels = await read({ firstName: 'Lyn', lastName: 'Sky', birthDate: '1991-04-14' });
+  const skills = noVowels.sections.find((section) => section.id === 'abilities');
+  assert.deepEqual([skills.key, skills.status], ['0', 'pending']);
+  assert.deepEqual(f.logs, ['reading_section_unavailable idealJob:33', 'reading_section_unavailable abilities:0']);
+
+  // Age framing changes only the heading, never the text.
+  const young = await read({ firstName: 'Ece Su', lastName: 'Kaya', birthDate: '2008-03-11' });
+  const youngJob = young.sections.find((section) => section.id === 'idealJob');
+  assert.equal(youngJob.title, 'Yöneldiğin alanlar');
+  assert.equal(youngJob.paragraphs.join(' ').replace(/\s+/g, ' '), data('ideal_job')[youngJob.key].trim().replace(/\s+/g, ' '));
+
+  // "İlişkide sen" lines are sentences that exist unchanged in the person's own sections.
+  assert.ok(young.relationships.length > 0);
+  for (const line of young.relationships) {
+    const section = young.sections.find((candidate) => candidate.id === line.sectionId);
+    assert.ok(section.paragraphs.join(' ').replace(/\s+/g, ' ').includes(line.sentence));
+    assert.notEqual(line.sectionId, 'idealJob');
+  }
+  assert.ok(young.relationships.filter((line) => line.sectionId === 'showcase').length <= 2);
 });
