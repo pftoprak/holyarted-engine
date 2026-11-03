@@ -195,6 +195,8 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
 
   return {
     user: accountUser(session),
+    // Sent with requests for paid content, so the server can check the plan.
+    accessToken: session?.access_token ?? null,
     membership,
     ready,
     pending,

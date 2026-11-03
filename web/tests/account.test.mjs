@@ -322,7 +322,7 @@ test('with accounts disabled, account and billing routes return 404 without touc
   assert.deepEqual(await health.json(), { status: 'ok' });
 });
 
-test('detailed reading is public, returns the dataset texts and stores nothing', async (t) => {
+test('in local open mode the detailed reading returns every dataset text and stores nothing', async (t) => {
   const f = await fixture(t, { accounts: false });
   const response = await f.reading.POST(f.request(null, 'POST', input));
   assert.equal(response.status, 200);
@@ -376,4 +376,84 @@ test('detailed reading never shows placeholder or missing texts and quotes relat
     assert.notEqual(line.sectionId, 'idealJob');
   }
   assert.ok(young.relationships.filter((line) => line.sectionId === 'showcase').length <= 2);
+});
+
+test('reading and portrait chapters are filtered on the server by the signed-in plan', async (t) => {
+  const f = await fixture(t);
+  const membership = (plan, status = 'active') => f.db.prepare(`INSERT INTO memberships (user_id,email,plan,status,stripe_customer_id,stripe_subscription_id,updated_at)
+    VALUES (?,?,?,?,?,?,?) ON CONFLICT(user_id) DO UPDATE SET plan = excluded.plan, status = excluded.status`)
+    .run(people.alice.id, people.alice.email, plan, status, 'cus_private', 'sub_private', '2026-11-03');
+  const served = async (token) => {
+    const response = await f.reading.POST(f.request(token, 'POST', input));
+    assert.equal(response.status, 200);
+    return response.json();
+  };
+  const status = (body) => Object.fromEntries(body.reading.sections.map((section) => [section.id, section.status]));
+  const texts = (body) => [
+    ...body.reading.sections.flatMap((section) => section.paragraphs),
+    ...body.reading.relationships.map((line) => line.sentence),
+    ...['en', 'tr'].flatMap((locale) => [...body.chapters[locale].cards, ...body.chapters[locale].lenses].flat()),
+  ];
+
+  membership('premium');
+  const premium = await served('alice');
+  assert.equal(premium.plan, 'premium');
+  assert.deepEqual(status(premium), { showcase: 'ready', abilities: 'ready', lifePath: 'ready', idealJob: 'ready' });
+  for (const locale of ['en', 'tr']) {
+    assert.equal(premium.chapters[locale].cards.length, 4);
+    assert.equal(premium.chapters[locale].lenses.length, 2);
+  }
+  assert.equal(premium.reading.relationshipsLocked, false);
+
+  // Anonymous and invalid sessions are Basic: no paid text appears anywhere in the response.
+  for (const token of [null, 'invalid', 'bob']) {
+    const basic = await served(token);
+    assert.equal(basic.plan, 'basic');
+    assert.deepEqual(status(basic), { showcase: 'ready', abilities: 'locked', lifePath: 'locked', idealJob: 'locked' });
+    for (const section of basic.reading.sections.filter((candidate) => candidate.status === 'locked')) assert.deepEqual(section.paragraphs, []);
+    assert.deepEqual([basic.reading.relationships, basic.reading.relationshipsLocked], [[], true]);
+    for (const locale of ['en', 'tr']) {
+      assert.deepEqual(basic.chapters[locale].cards, premium.chapters[locale].cards.slice(0, 2));
+      assert.deepEqual(basic.chapters[locale].lenses, []);
+    }
+    const json = JSON.stringify(basic);
+    // Relationship lines quote open sections too, so compare with the open text as a whole.
+    const open = texts(basic).join(' ').replace(/s+/g, ' ');
+    const paid = texts(premium).filter((text) => !open.includes(text.replace(/s+/g, ' ')));
+    assert.ok(paid.length > 0);
+    for (const text of paid) assert.ok(!json.includes(text), text.slice(0, 40));
+  }
+
+  membership('plus');
+  const plus = await served('alice');
+  assert.equal(plus.plan, 'plus');
+  assert.deepEqual(status(plus), { showcase: 'ready', abilities: 'ready', lifePath: 'ready', idealJob: 'locked' });
+  assert.equal(plus.chapters.tr.cards.length, 4);
+  assert.deepEqual(plus.chapters.tr.lenses, []);
+  assert.equal(plus.reading.relationshipsLocked, false);
+  for (const line of plus.reading.relationships) assert.notEqual(line.sectionId, 'idealJob');
+  assert.ok(!JSON.stringify(plus).includes(premium.reading.sections[3].paragraphs[0]));
+
+  // A canceled paid membership falls back to Basic.
+  membership('premium', 'canceled');
+  assert.equal((await served('alice')).plan, 'basic');
+  // Accounts are on unless the flag is exactly "false", so a missing value never opens paid content.
+  for (const value of [undefined, '', 'FALSE ', 'no']) {
+    f.env.HOLYARTED_ACCOUNTS_ENABLED = value;
+    assert.equal((await served(null)).plan, 'basic');
+  }
+  assert.deepEqual(f.logs, []);
+});
+
+test('reading fails closed when the plan cannot be checked', async (t) => {
+  const f = await fixture(t);
+  f.faults.auth = true;
+  const response = await f.reading.POST(f.request('alice', 'POST', input));
+  assert.equal(response.status, 503);
+  const body = await response.text();
+  assert.deepEqual(JSON.parse(body), { error: 'Your reading could not be opened.' });
+  assert.deepEqual(f.logs, ['reading_plan_unavailable']);
+  f.faults.auth = false;
+  f.faults.database = true;
+  assert.equal((await f.reading.POST(f.request('alice', 'POST', input))).status, 503);
 });

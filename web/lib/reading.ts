@@ -3,6 +3,7 @@ import idealJob from '@/data/ideal_job.json';
 import lifePath from '@/data/life_path.json';
 import showcase from '@/data/showcase.json';
 import { calculateCoreProfile } from './calculation-core';
+import { planIncludes, type MembershipPlan } from './plans';
 
 // Server-only: the full numerology texts are read here and returned per
 // request, so they never ship in the client bundle. Dataset texts are shown
@@ -11,7 +12,7 @@ import { calculateCoreProfile } from './calculation-core';
 type Dataset = Record<string, string>;
 
 export type ReadingSectionId = 'showcase' | 'abilities' | 'idealJob' | 'lifePath';
-export type ReadingTier = 'basic' | 'plus' | 'premium';
+export type ReadingTier = MembershipPlan;
 export type ReadingSection = {
   id: ReadingSectionId;
   tier: ReadingTier;
@@ -19,11 +20,16 @@ export type ReadingSection = {
   key: string;
   reason: string;
   note: string | null;
-  status: 'ready' | 'pending';
+  status: 'ready' | 'pending' | 'locked';
   paragraphs: string[];
 };
 export type RelationshipLine = { sectionId: ReadingSectionId; source: string; sentence: string };
-export type Reading = { locale: 'tr'; sections: ReadingSection[]; relationships: RelationshipLine[] };
+export type Reading = {
+  locale: 'tr';
+  sections: ReadingSection[];
+  relationships: RelationshipLine[];
+  relationshipsLocked: boolean;
+};
 
 const datasets: Record<ReadingSectionId, Dataset> = { showcase, abilities, idealJob, lifePath };
 const order: { id: ReadingSectionId; tier: ReadingTier }[] = [
@@ -36,6 +42,7 @@ const titles: Record<ReadingSectionId, string> = { showcase: 'Vitrin', abilities
 const LIFE_PATH_NOTE = 'Bu metin bir olasılığı anlatır, yaşadıklarına dair bir tespit değildir.';
 const YOUNG_ADULT_AGE = 25;
 const RELATIONSHIP_LINES_PER_SECTION = 2;
+const RELATIONSHIP_TIER: ReadingTier = 'plus';
 // Placeholder rows ("n/a", "-", empty) are data errors; they are never shown.
 const PLACEHOLDER = /^(n\/?a|-|tbd|todo)?$/i;
 // Word stems that mark a sentence as being about relationships.
@@ -97,5 +104,21 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
       .slice(0, RELATIONSHIP_LINES_PER_SECTION)
       .map((sentence) => ({ sectionId: section.id, source: `${section.title} ${section.key}`, sentence })));
 
-  return { locale: 'tr', sections, relationships };
+  return { locale: 'tr', sections, relationships, relationshipsLocked: false };
+}
+
+// Removes every text the plan does not include. Locked sections keep only
+// their heading and reason, so the page can show what an upgrade opens.
+export function readingForPlan(reading: Reading, plan: MembershipPlan): Reading {
+  const sections = reading.sections.map((section): ReadingSection => (planIncludes(plan, section.tier)
+    ? section
+    : { ...section, status: 'locked', paragraphs: [] }));
+  const open = new Set(sections.filter((section) => section.status !== 'locked').map((section) => section.id));
+  const relationshipsLocked = !planIncludes(plan, RELATIONSHIP_TIER);
+  return {
+    ...reading,
+    sections,
+    relationships: relationshipsLocked ? [] : reading.relationships.filter((line) => open.has(line.sectionId)),
+    relationshipsLocked,
+  };
 }
