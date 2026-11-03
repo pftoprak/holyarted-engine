@@ -99,7 +99,7 @@ export function Experience({ accountsEnabled, authConfig, sample }: ExperiencePr
   const [readingInput, setReadingInput] = useState<PortraitInput | null>(null);
   const [readingState, setReadingState] = useState<ReadingState>({ status: 'idle' });
   const restoredForUser = useRef<string | null>(null);
-  const { user, accessToken, ready, membership, pending, error, setError, signInWithGoogle, signOut, startCheckout, openBillingPortal, loadPortrait, savePortrait } = useHolyartedAccount(authConfig);
+  const { user, accessToken, ready, membership, pending, error, setError, signInWithGoogle, signOut, startCheckout, openBillingPortal, loadPortrait, savePortrait } = useHolyartedAccount(authConfig, locale);
   const text = copy[locale];
   // The server decides the plan and sends only the chapters it includes.
   const served = readingState.status === 'ready' ? readingState : null;

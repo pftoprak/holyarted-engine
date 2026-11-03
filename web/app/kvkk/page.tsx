@@ -5,7 +5,7 @@ export const metadata = { title: 'KVKK Aydınlatma Metni — Holyarted' };
 // DRAFT: köşeli parantezli alanlar doldurulmalı ve metnin
 // tamamı yayından önce bir avukat tarafından incelenmeli (docs/OPERATIONS.md).
 export default function KvkkPage() {
-  return <LegalPage eyebrow="KVKK" title="Kişisel verilerin işlenmesine ilişkin aydınlatma metni." updated="TASLAK — hukuki inceleme bekliyor" sections={[
+  return <LegalPage lang="tr" eyebrow="KVKK" title="Kişisel verilerin işlenmesine ilişkin aydınlatma metni." updated="TASLAK — hukuki inceleme bekliyor" sections={[
     { heading: 'Veri sorumlusu', body: '6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca veri sorumlusu Furkan Öksüz\'dür (şahıs işletmesi; [ADRES], Vergi No: [VERGİ NO]) ("Holyarted").' },
     { heading: 'İşlenen veriler', body: 'Kimlik: ad, soyad.\nDoğum tarihi.\nİletişim: e-posta adresi (Google ile giriş yaptığınızda).\nMüşteri işlem: üyelik planı ve durumu; ödeme sağlayıcısındaki müşteri ve abonelik numarası. Kart bilgileriniz bize ulaşmaz, doğrudan ödeme sağlayıcısında işlenir.\nİşlem güvenliği: IP adresinin geri döndürülemez özeti ve istek sayısı (en fazla 1 saat tutulur), hesap kimliği.\n\nGiriş yapmadan portre oluşturduğunuzda girdiğiniz ad ve doğum tarihi yalnızca sonucu hesaplamak için kullanılır, saklanmaz.' },
     { heading: 'Amaçlar ve hukuki sebepler', body: 'Portrenizin ve okumanızın hazırlanması, hesabınızın ve üyeliğinizin yürütülmesi: sözleşmenin kurulması ve ifası (KVKK m. 5/2-c).\nÖdeme ve faturalandırma kayıtları: hukuki yükümlülük (m. 5/2-ç).\nHizmetin kötüye kullanıma karşı korunması ve bilgi güvenliği: meşru menfaat (m. 5/2-f).\nDestek taleplerinin yanıtlanması: sözleşmenin ifası ve meşru menfaat.' },
