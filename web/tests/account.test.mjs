@@ -1,7 +1,8 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
+import { createHash, createHmac } from 'node:crypto';
 import { DatabaseSync } from 'node:sqlite';
 import vm from 'node:vm';
 import test from 'node:test';
@@ -19,12 +20,13 @@ const input = { firstName: 'Ada', lastName: 'Yılmaz', birthDate: '1990-01-05' }
 async function fixture(t, { accounts = true } = {}) {
   const db = new DatabaseSync(':memory:');
   t.after(() => db.close());
-  for (const file of ['0000_bizarre_cable.sql', '0001_youthful_prism.sql']) {
-    db.exec(readFileSync(path.join(root, 'drizzle', file), 'utf8'));
+  for (const file of readdirSync(path.join(root, 'drizzle')).filter((name) => name.endsWith('.sql')).sort()) {
+    db.exec(readFileSync(path.join(root, 'drizzle', file), 'utf8').replaceAll('--> statement-breakpoint', ''));
   }
   const faults = { database: false, auth: false, stripe: false, admin: false };
   const calls = [];
   const deletedUsers = new Set();
+  const subscriptions = {};
   const logs = [];
   const network = { requests: 0, queries: 0 };
   const env = {
@@ -47,13 +49,20 @@ async function fixture(t, { accounts = true } = {}) {
     },
   };
   const context = vm.createContext({
-    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa,
+    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa, crypto, Math, Array,
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
       network.requests += 1;
+      if (url.startsWith('https://api.stripe.com/v1/subscriptions/') && init.method === 'GET') {
+        calls.push('stripe-read');
+        const subscription = subscriptions[decodeURIComponent(url.split('/').at(-1))];
+        return Response.json(subscription ?? { error: { code: 'resource_missing' } }, { status: subscription ? 200 : 404 });
+      }
       if (url.startsWith('https://api.stripe.com/v1/subscriptions/')) {
         calls.push('stripe');
         assert.equal(init.method, 'DELETE');
+        assert.equal(init.headers['stripe-version'], '2024-06-20');
+        if (faults.stripe === 'missing') return Response.json({ error: { code: 'resource_missing', message: 'No such subscription' } }, { status: 404 });
         assert.equal(init.headers.authorization, `Basic ${btoa('test-stripe-key:')}`);
         return Response.json(faults.stripe ? { error: { message: 'private billing error' } } : { status: 'canceled' }, { status: faults.stripe ? 503 : 200 });
       }
@@ -118,7 +127,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -226,7 +235,9 @@ test('upstream failures fail closed and do not leak private data in responses or
     }
     f.faults[failure] = false;
   }
-  assert.equal(f.logs.length, 14);
+  // During the database outage the rate limit falls back to memory and says so once per request.
+  assert.equal(f.logs.filter((line) => line === 'rate_limit_store_failed').length, 6);
+  assert.equal(f.logs.length, 20);
   assert.doesNotMatch(f.logs.join('\n'), /alice@example.test|1990-01-05|private-test-token/);
 });
 
@@ -456,4 +467,89 @@ test('reading fails closed when the plan cannot be checked', async (t) => {
   f.faults.auth = false;
   f.faults.database = true;
   assert.equal((await f.reading.POST(f.request('alice', 'POST', input))).status, 503);
+});
+
+function stripeWebhook(event, secret = 'whsec_test') {
+  const body = JSON.stringify(event);
+  const timestamp = Math.floor(Date.now() / 1000);
+  const signature = createHmac('sha256', secret).update(`${timestamp}.${body}`).digest('hex');
+  return new Request('https://holyarted.example.test/api/billing/webhook', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'stripe-signature': `t=${timestamp},v1=${signature}` }, body,
+  });
+}
+
+test('billing webhook takes the plan from the billed price, ignores stale and repeated events', async (t) => {
+  const f = await fixture(t);
+  Object.assign(f.env, { STRIPE_WEBHOOK_SECRET: 'whsec_test', STRIPE_SECRET_KEY: 'test-stripe-key', STRIPE_PLUS_PRICE_ID: 'price_plus', STRIPE_PREMIUM_PRICE_ID: 'price_premium' });
+  const row = (userId) => f.db.prepare('SELECT plan, status, current_period_end, billing_event_at FROM memberships WHERE user_id = ?').get(userId);
+  const checkout = (id, created, userId, email, subscription) => ({
+    id, created, type: 'checkout.session.completed',
+    data: { object: { client_reference_id: userId, subscription, customer: 'cus_1', customer_details: { email }, metadata: { plan: 'plus' } } },
+  });
+  // Metadata says Plus, but the billed price is Premium; the newer API keeps the period end on the item.
+  f.subscriptions.sub_1 = { id: 'sub_1', customer: 'cus_1', status: 'active', metadata: { plan: 'plus' }, items: { data: [{ price: { id: 'price_premium' }, current_period_end: 1800000000 }] } };
+
+  assert.equal((await f.webhook.POST(stripeWebhook(checkout('evt_1', 100, people.alice.id, people.alice.email, 'sub_1'), 'wrong'))).status, 400);
+  assert.equal((await f.webhook.POST(stripeWebhook(checkout('evt_1', 100, people.alice.id, people.alice.email, 'sub_1')))).status, 200);
+  assert.deepEqual({ ...row(people.alice.id) }, { plan: 'premium', status: 'active', current_period_end: 1800000000, billing_event_at: 100 });
+
+  // A repeated delivery is acknowledged without being applied again.
+  assert.equal((await f.webhook.POST(stripeWebhook(checkout('evt_1', 100, people.alice.id, people.alice.email, 'sub_1')))).status, 200);
+  assert.deepEqual(f.calls, ['stripe-read']);
+
+  const subscriptionEvent = (id, created, type, status) => ({
+    id, created, type, data: { object: { ...f.subscriptions.sub_1, status, current_period_end: 1700000000 } },
+  });
+  await f.webhook.POST(stripeWebhook(subscriptionEvent('evt_3', 300, 'customer.subscription.deleted', 'canceled')));
+  assert.equal(row(people.alice.id).status, 'canceled');
+  // Delivered late: an older "active" update must not revive a canceled subscription.
+  await f.webhook.POST(stripeWebhook(subscriptionEvent('evt_2', 200, 'customer.subscription.updated', 'active')));
+  assert.deepEqual([row(people.alice.id).status, row(people.alice.id).billing_event_at], ['canceled', 300]);
+  assert.equal((await (await f.billing.GET(f.request('alice'))).json()).plan, 'basic');
+
+  // An unknown price grants nothing; a session without a subscription writes nothing.
+  f.subscriptions.sub_2 = { id: 'sub_2', customer: 'cus_2', status: 'active', current_period_end: 1800000000, items: { data: [{ price: { id: 'price_other' } }] } };
+  await f.webhook.POST(stripeWebhook({ ...checkout('evt_4', 400, people.bob.id, people.bob.email, 'sub_2'), data: { object: { client_reference_id: people.bob.id, subscription: 'sub_2', customer: 'cus_2', customer_details: { email: people.bob.email } } } }));
+  assert.equal(row(people.bob.id).plan, 'basic');
+  await f.webhook.POST(stripeWebhook(checkout('evt_5', 500, 'test-carol', 'carol@example.test', null)));
+  assert.equal(row('test-carol'), undefined);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM stripe_events').get().count, 5);
+  assert.deepEqual(f.logs, ['billing_unknown_price']);
+});
+
+test('an interrupted account deletion resumes without charging or cancelling twice', async (t) => {
+  const f = await deletionFixture(t);
+  // An earlier attempt stopped billing, then failed before removing data.
+  f.db.prepare('INSERT INTO account_deletions (user_id, requested_at, billing_canceled, attempts, last_attempt_at) VALUES (?, ?, 1, 1, ?)')
+    .run(people.alice.id, '2026-11-03T10:00:00Z', '2026-11-03T10:00:00Z');
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+  assert.deepEqual(f.calls, ['admin']);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM account_deletions').get().count, 0);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM memberships').get().count, 0);
+});
+
+test('a subscription already removed in Stripe does not block account deletion', async (t) => {
+  const f = await deletionFixture(t);
+  f.faults.stripe = 'missing';
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+  assert.deepEqual(f.calls, ['stripe', 'admin']);
+});
+
+test('a failed deletion stays recorded so it can be found and resumed', async (t) => {
+  const f = await deletionFixture(t);
+  f.faults.admin = true;
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 503);
+  assert.deepEqual({ ...f.db.prepare('SELECT billing_canceled, attempts FROM account_deletions WHERE user_id = ?').get(people.alice.id) }, { billing_canceled: 1, attempts: 1 });
+});
+
+test('rate limits are counted in the shared database under hashed keys', async (t) => {
+  const f = await fixture(t);
+  assert.equal((await f.exported.GET(f.request('alice'))).status, 200);
+  const keys = f.db.prepare('SELECT key FROM rate_limits').all().map((entry) => entry.key);
+  assert.equal(keys.length, 1);
+  assert.match(keys[0], /^[0-9a-f]{64}$/);
+  assert.equal(keys[0], createHash('sha256').update(`account-export:${people.alice.id}:local-client`).digest('hex'));
+  // Another server instance has already used up this window: the limit applies here too.
+  f.db.prepare('UPDATE rate_limits SET count = 20').run();
+  assert.equal((await f.exported.GET(f.request('alice'))).status, 429);
 });

@@ -27,12 +27,12 @@ test('rejects unsupported content and malformed JSON', async () => {
   await assert.rejects(readSmallJson(request('{}', { 'content-type': 'text/plain' })), error => error.status === 415);
   await assert.rejects(readSmallJson(request('{')), error => error.status === 400);
 });
-test('rate limits sensitive requests and returns a retry window', () => {
+test('rate limits sensitive requests and returns a retry window', async () => {
   const scope = `test-${crypto.randomUUID()}`;
   const input = new Request('https://example.test/api/account', { method: 'DELETE' });
-  assert.equal(enforceRateLimit(input, scope, 'user-1', 2), null);
-  assert.equal(enforceRateLimit(input, scope, 'user-1', 2), null);
-  const response = enforceRateLimit(input, scope, 'user-1', 2);
+  assert.equal(await enforceRateLimit(input, scope, 'user-1', 2), null);
+  assert.equal(await enforceRateLimit(input, scope, 'user-1', 2), null);
+  const response = await enforceRateLimit(input, scope, 'user-1', 2);
   assert.equal(response?.status, 429);
   assert.equal(response?.headers.get('cache-control'), 'no-store');
   assert.match(response?.headers.get('retry-after') || '', /^\d+$/);

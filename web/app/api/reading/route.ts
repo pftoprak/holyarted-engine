@@ -4,7 +4,7 @@ import type { PortraitInput } from '@/lib/portrait-types';
 import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
 import { calculateDesign } from '@/lib/profile-engine';
 import { buildReading, readingForPlan } from '@/lib/reading';
-import { enforceRateLimit } from '@/lib/request-limits';
+import { rateLimit } from '@/lib/shared-rate-limit';
 
 const MAX_NAME_LENGTH = 80;
 const INVALID_INPUT = 'Please provide a complete name and valid birth date.';
@@ -22,7 +22,7 @@ function validInput(value: unknown): value is PortraitInput {
 // and is never stored or logged.
 export async function POST(request: Request) {
   // Per client address, before any auth or database call.
-  const limited = enforceRateLimit(request, 'reading', 'client', 30);
+  const limited = await rateLimit(request, 'reading', 'client', 30);
   if (limited) return limited;
   let input: unknown;
   try {

@@ -55,7 +55,7 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 
 ## Bilerek dokunulmayanlar
 
-- "Human Design" ifadesi (ürün sahibinin kararı). Not: Bu ad büyük olasılıkla tescilli bir markadır ve yapılan iş numerolojidir; lansmandan önce gözden geçirilmeli.
+- "Human Design" ifadesi (ürün sahibinin kararı). ABD'de Jovian Archive Media Pte. Ltd. adına "JOVIAN ARCHIVE HUMAN DESIGN" (tescil no. 7892431, 2025) ve "MYBODYGRAPH HUMAN DESIGN" tescilli; başka bir şirketin "HUMAN DESIGN" kaydı da var (4579387). Türkiye ve hedef ülkelerde marka araştırması bir avukata yaptırılmalı. Ayrıca yapılan iş numerolojidir; bu adın kullanımı yanıltıcı bulunabilir.
 - Mobil uygulama (`mobile/`), `api/` klasörü, piramit ve sinerji verileri. Sinerji/piramit için hesaplama kuralı kodda yok; tahminle bağlanmadı.
 - Soru formu (`questions` kopyası) kodda tanımlı ama ekranda yok; sonuç yalnızca isim ve tarihten hesaplanır.
 
@@ -63,9 +63,12 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 
 1. **Ödeme sağlayıcısı kararı.** Stripe Türkiye'de yok. Şirketin kurulu olduğu ülkeye göre Stripe / iyzico / Paddle / Lemon Squeezy seçilmeli. Kalan ödeme işleri buna bağlı.
 2. ~~**Ücretli içeriği sunucuya taşı.**~~ `feature/premium-gating` ile yapıldı (yukarıdaki "Plan erişimi"). Kalan: plan matrisinin kurucu tarafından onaylanması ve canlıda iki ayrı test hesabıyla doğrulama.
-3. **Webhook düzeltmeleri.** Planı checkout metadata'sı yerine `items.data[0].price.id` alanından belirle; olay sırası bozuk geldiğinde iptal edilmiş aboneliğin "active" olmasını engelle; event-id ile tekilleştir; boş subscription ID ile active yazılmasını engelle.
-4. **Stripe API sürümünü sabitle** (`Stripe-Version` başlığı; yeni sürümlerde `current_period_end` abonelik kalemine taşındı) ve checkout isteklerine idempotency key ekle.
-5. **Hesap silmeyi kalıcı bir işe çevir.** Stripe → D1 → Supabase sırası yarıda kalırsa kaldığı yerden devam edebilmeli.
-6. **İstek sınırını paylaşılan bir depoya taşı** (Cloudflare Rate Limiting / Durable Object / KV); bellekteki kayıtlar worker'lar arasında paylaşılmıyor ve temizlenmiyor. Kimlik doğrulamadan önce IP tabanlı sınır uygula.
-7. **Güvenlik başlıkları** (CSP, HSTS, frame koruması) ve **CI** (`.github/workflows`: test, tsc, build, lint). Lint'teki 48 hata çoğunlukla `components/ui` altındaki hazır bileşenlerden.
+3. ~~**Webhook düzeltmeleri.**~~ `feature/release-hardening` ile yapıldı: plan faturalanan fiyattan belirlenir, eski olay yeni durumu ezmez, aynı olay iki kez uygulanmaz, aboneliksiz checkout aktif yazmaz.
+4. ~~**Stripe API sürümü ve idempotency.**~~ Yapıldı: `Stripe-Version: 2024-06-20` sabit; webhook her iki `current_period_end` konumunu okur; checkout isteğine idempotency anahtarı eklendi.
+5. ~~**Hesap silmeyi kalıcı bir işe çevir.**~~ Yapıldı: ilerleme `account_deletions` tablosunda; tekrar denemede Stripe iptali tekrarlanmaz; Stripe'ta zaten silinmiş abonelik engel olmaz. Bekleyen silmeler için: [docs/OPERATIONS.md](docs/OPERATIONS.md) madde 5.
+6. ~~**İstek sınırını paylaşılan bir depoya taşı.**~~ Yapıldı: sayaçlar D1 `rate_limits` tablosunda, anahtar SHA-256 özeti (ham IP saklanmaz). D1 hata verirse bellekteki sınıra düşer. Okuma API'sinde sınır oturum kontrolünden önce uygulanır.
+7. ~~**Güvenlik başlıkları ve CI.**~~ Yapıldı: `web/middleware.ts` (CSP, HSTS, frame koruması vb.) ve `.github/workflows/ci.yml` (test, tsc, build, istemci paketinde ücretli metin kontrolü; lint raporlanır ama henüz engellemez).
 8. **Temizlik ve yasal metin.** Çalışmayan `api/` klasörünü kaldır/arşivle; web ve mobil hesaplama motorunu tek pakette birleştir; gizlilik metnine veri işleyenleri (Supabase, Stripe, Cloudflare) ve KVKK aydınlatmasını ekle.
+9. **Dağıtım öncesi:** `web/drizzle/0002_*.sql` migration'ı kod yayınlanmadan önce uygulanmalı. Kontrol listesi: [docs/OPERATIONS.md](docs/OPERATIONS.md) madde 6.
+10. **Yasal:** `/kvkk` sayfası taslak; köşeli parantezli alanlar (şirket unvanı, adres, MERSİS, KEP, yurt dışı aktarım mekanizması, fatura saklama süresi) şirket kurulunca doldurulmalı ve avukat incelemeli.
+11. **Veri hataları:** ideal iş 33, yetenek 0, yetenek 1 ve hayat yolu 123/213 metinleri Excel'den bekleniyor ([audit/RAPOR-DENETIMI.md](audit/RAPOR-DENETIMI.md)).
