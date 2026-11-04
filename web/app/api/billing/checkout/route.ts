@@ -3,9 +3,11 @@ import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
 import { stripePost, stripePriceFor } from '@/lib/stripe-api';
 import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
-import { enforceRateLimit } from '@/lib/request-limits';
+import { rateLimit } from '@/lib/shared-rate-limit';
 
 type CheckoutSession = { url: string | null };
+
+const CHECKOUT_REUSE_MS = 10 * 60_000;
 
 export async function POST(request: Request) {
   const disabled = accountsDisabledResponse();
@@ -13,7 +15,7 @@ export async function POST(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);
-    const limited = enforceRateLimit(request, 'billing-checkout', user.id, 5);
+    const limited = await rateLimit(request, 'billing-checkout', user.id, 5);
     if (limited) return limited;
 
     const body = (await readSmallJson(request)) as { plan?: string } | null;
@@ -52,7 +54,9 @@ export async function POST(request: Request) {
       values.set('customer_email', user.email);
     }
 
-    const session = await stripePost<CheckoutSession>('checkout/sessions', values);
+    // Repeated clicks within the same ten minutes reuse one checkout session.
+    const idempotencyKey = `checkout-${user.id}-${body.plan}-${Math.floor(Date.now() / CHECKOUT_REUSE_MS)}`;
+    const session = await stripePost<CheckoutSession>('checkout/sessions', values, idempotencyKey);
     if (!session.url) throw new Error('Checkout URL was not returned.');
     return privateJson({ url: session.url });
   } catch (error) {

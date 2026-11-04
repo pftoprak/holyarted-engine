@@ -2,7 +2,7 @@ import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { deleteAccount } from '@/lib/account-deletion';
 import { privateJson } from '@/lib/private-response';
-import { enforceRateLimit } from '@/lib/request-limits';
+import { rateLimit } from '@/lib/shared-rate-limit';
 
 export async function DELETE(request: Request) {
   const disabled = accountsDisabledResponse();
@@ -10,7 +10,7 @@ export async function DELETE(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
-    const limited = enforceRateLimit(request, 'account-delete', user.id, 3);
+    const limited = await rateLimit(request, 'account-delete', user.id, 3);
     if (limited) return limited;
     await deleteAccount(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });

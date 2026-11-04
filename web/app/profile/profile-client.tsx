@@ -23,7 +23,7 @@ export function ProfileClient({ authConfig }: { authConfig: PublicAuthConfig | n
   const [locale, setLocale] = useState<Locale>('en');
   const [savedPortrait, setSavedPortrait] = useState<SavedPortrait | null>(null);
   const [portraitError, setPortraitError] = useState(false);
-  const { user, membership, ready, pending, error, signInWithGoogle, signOut, openBillingPortal, refreshMembership, loadPortrait, deletePortrait, exportAccountData, deleteAccount } = useHolyartedAccount(authConfig);
+  const { user, membership, ready, pending, error, signInWithGoogle, signOut, openBillingPortal, refreshMembership, loadPortrait, deletePortrait, exportAccountData, deleteAccount } = useHolyartedAccount(authConfig, locale);
   const text = accountCopy[locale];
   const checkoutConfirmed = useSearchParams().get('checkout') === 'success';
   const userId = user?.id;

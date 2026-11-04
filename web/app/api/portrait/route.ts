@@ -3,7 +3,7 @@ import { authenticateRequest } from '@/lib/server-auth';
 import { deletePortrait, getPortrait, InvalidPortraitError, savePortrait } from '@/lib/portrait-store';
 import type { PortraitInput } from '@/lib/portrait-types';
 import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
-import { enforceRateLimit } from '@/lib/request-limits';
+import { rateLimit } from '@/lib/shared-rate-limit';
 
 export async function GET(request: Request) {
   const disabled = accountsDisabledResponse();
@@ -11,7 +11,7 @@ export async function GET(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
-    const limited = enforceRateLimit(request, 'portrait-read', user.id, 60);
+    const limited = await rateLimit(request, 'portrait-read', user.id, 60);
     if (limited) return limited;
     return privateJson({ portrait: await getPortrait(user.id) });
   } catch (error) {
@@ -26,7 +26,7 @@ export async function DELETE(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
-    const limited = enforceRateLimit(request, 'portrait-delete', user.id, 10);
+    const limited = await rateLimit(request, 'portrait-delete', user.id, 10);
     if (limited) return limited;
     await deletePortrait(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
@@ -42,7 +42,7 @@ export async function PUT(request: Request) {
   try {
     const user = await authenticateRequest(request);
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
-    const limited = enforceRateLimit(request, 'portrait-write', user.id, 20);
+    const limited = await rateLimit(request, 'portrait-write', user.id, 20);
     if (limited) return limited;
     const input = (await readSmallJson(request)) as PortraitInput;
     return privateJson({ portrait: await savePortrait(user.id, input) });

@@ -1,0 +1,18 @@
+import { LegalPage } from '../legal-page';
+
+export const metadata = { title: 'KVKK Aydınlatma Metni — Holyarted' };
+
+// DRAFT: köşeli parantezli alanlar doldurulmalı ve metnin
+// tamamı yayından önce bir avukat tarafından incelenmeli (docs/OPERATIONS.md).
+export default function KvkkPage() {
+  return <LegalPage lang="tr" eyebrow="KVKK" title="Kişisel verilerin işlenmesine ilişkin aydınlatma metni." updated="TASLAK — hukuki inceleme bekliyor" sections={[
+    { heading: 'Veri sorumlusu', body: '6698 sayılı Kişisel Verilerin Korunması Kanunu ("KVKK") uyarınca veri sorumlusu Furkan Öksüz\'dür (şahıs işletmesi; [ADRES], Vergi No: [VERGİ NO]) ("Holyarted").' },
+    { heading: 'İşlenen veriler', body: 'Kimlik: ad, soyad.\nDoğum tarihi.\nİletişim: e-posta adresi (Google ile giriş yaptığınızda).\nMüşteri işlem: üyelik planı ve durumu; ödeme sağlayıcısındaki müşteri ve abonelik numarası. Kart bilgileriniz bize ulaşmaz, doğrudan ödeme sağlayıcısında işlenir.\nİşlem güvenliği: IP adresinin geri döndürülemez özeti ve istek sayısı (en fazla 1 saat tutulur), hesap kimliği.\n\nGiriş yapmadan portre oluşturduğunuzda girdiğiniz ad ve doğum tarihi yalnızca sonucu hesaplamak için kullanılır, saklanmaz.' },
+    { heading: 'Amaçlar ve hukuki sebepler', body: 'Portrenizin ve okumanızın hazırlanması, hesabınızın ve üyeliğinizin yürütülmesi: sözleşmenin kurulması ve ifası (KVKK m. 5/2-c).\nÖdeme ve faturalandırma kayıtları: hukuki yükümlülük (m. 5/2-ç).\nHizmetin kötüye kullanıma karşı korunması ve bilgi güvenliği: meşru menfaat (m. 5/2-f).\nDestek taleplerinin yanıtlanması: sözleşmenin ifası ve meşru menfaat.' },
+    { heading: 'Toplama yöntemi', body: 'Veriler internet sitesindeki form, Google ile giriş ve ödeme sayfası aracılığıyla elektronik ortamda, kısmen otomatik yöntemlerle toplanır.' },
+    { heading: 'Aktarım', body: 'Veriler, hizmetin sunulması için aşağıdaki hizmet sağlayıcılara, yalnızca gereken ölçüde aktarılır:\n• Cloudflare (barındırma ve veritabanı)\n• Supabase (hesap ve oturum yönetimi)\n• Google (Google ile giriş)\n• Stripe (ödeme ve abonelik)\n\nBu sağlayıcıların sunucuları Türkiye dışındadır. Yurt dışına aktarım KVKK m. 9 kapsamında [AKTARIM MEKANİZMASI — örneğin Kurul\'a bildirilen standart sözleşme; hukuki incelemeyle belirlenecek] ile yapılır. Yasal zorunluluk hâlinde yetkili kamu kurumlarıyla paylaşılabilir. Verileriniz satılmaz.' },
+    { heading: 'Saklama süresi', body: 'Hesap ve kayıtlı portre: hesabınızı silene kadar. Hesap silindiğinde portre, üyelik kaydı ve hesap birlikte silinir; aktif abonelik önce iptal edilir.\nYedekler: en fazla 35 gün; geri yükleme gerekirse silinmiş hesaplar yeniden silinir.\nFatura ve ödeme kayıtları: ilgili mevzuatın öngördüğü süre boyunca [SÜRE — hukuki incelemeyle belirlenecek].\nİstek sayaçları: en fazla 1 saat.' },
+    { heading: 'Haklarınız', body: 'KVKK m. 11 uyarınca; verilerinizin işlenip işlenmediğini öğrenme, bilgi talep etme, işlenme amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme, aktarıldığı üçüncü kişileri bilme, eksik veya yanlış işlenmişse düzeltilmesini, silinmesini veya yok edilmesini isteme, bu işlemlerin aktarılan kişilere bildirilmesini isteme, otomatik sistemlerle analiz sonucu aleyhinize bir sonuca itiraz etme ve kanuna aykırı işleme nedeniyle zararın giderilmesini talep etme haklarına sahipsiniz.\n\nHesabınızı ve verilerinizi profil sayfasından kendiniz indirebilir ve silebilirsiniz.' },
+    { heading: 'Başvuru', body: 'Taleplerinizi support@holyarted.com adresine, sisteme kayıtlı e-posta adresinizden veya [KEP ADRESİ] üzerinden iletebilirsiniz. Başvurular en geç 30 gün içinde ücretsiz olarak sonuçlandırılır.' },
+  ]} />;
+}

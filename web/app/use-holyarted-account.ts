@@ -31,7 +31,46 @@ function accountUser(session: Session | null): AccountUser | null {
   };
 }
 
-export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
+// Shown to the person, so they follow the page language. Server error texts
+// are not passed through: they are English and may change.
+const messages = {
+  en: {
+    signInFirst: 'Please continue with Google first.',
+    signInUnavailable: 'Google sign-in is not available right now. Please try again later.',
+    signInFailed: 'Google sign-in could not start. Please try again.',
+    membershipRefresh: 'Your membership could not be refreshed.',
+    checkout: 'Checkout could not start. Please try again later.',
+    checkoutExisting: 'Manage your existing membership from the billing portal.',
+    billing: 'Billing could not open. Please try again later.',
+    tooMany: 'Too many requests. Please try again in a minute.',
+    portraitOpen: 'Your portrait could not be opened.',
+    portraitDelete: 'Your portrait could not be deleted.',
+    portraitSave: 'Your portrait could not be saved.',
+    export: 'Your data could not be exported.',
+    accountDelete: 'Your account could not be deleted.',
+  },
+  tr: {
+    signInFirst: 'Lütfen önce Google ile devam et.',
+    signInUnavailable: 'Google ile giriş şu anda kullanılamıyor. Lütfen daha sonra tekrar dene.',
+    signInFailed: 'Google ile giriş başlatılamadı. Lütfen tekrar dene.',
+    membershipRefresh: 'Üyelik bilgin güncellenemedi.',
+    checkout: 'Ödeme sayfası açılamadı. Lütfen daha sonra tekrar dene.',
+    checkoutExisting: 'Mevcut üyeliğini ödeme yönetimi sayfasından yönet.',
+    billing: 'Ödeme yönetimi açılamadı. Lütfen daha sonra tekrar dene.',
+    tooMany: 'Çok fazla istek gönderildi. Lütfen bir dakika sonra tekrar dene.',
+    portraitOpen: 'Portren açılamadı.',
+    portraitDelete: 'Portren silinemedi.',
+    portraitSave: 'Portren kaydedilemedi.',
+    export: 'Verilerin dışa aktarılamadı.',
+    accountDelete: 'Hesabın silinemedi.',
+  },
+} as const;
+type MessageKey = keyof (typeof messages)['en'];
+
+export function useHolyartedAccount(authConfig: PublicAuthConfig | null, locale: 'en' | 'tr' = 'en') {
+  const text = messages[locale];
+  // The message for a failed request; rate limits get their own wording.
+  const failure = useCallback((key: MessageKey, response?: Response) => new Error(response?.status === 429 ? text.tooMany : text[key]), [text]);
   const client = useMemo<SupabaseClient | null>(() => {
     if (!authConfig) return null;
     return createClient(authConfig.url, authConfig.publishableKey, {
@@ -56,7 +95,7 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
   const authorizedFetch = useCallback(
     async (path: string, init?: RequestInit) => {
       const token = session?.access_token;
-      if (!token) throw new Error('Please continue with Google first.');
+      if (!token) throw new Error(text.signInFirst);
       const headers = new Headers(init?.headers);
       headers.set('authorization', `Bearer ${token}`);
       headers.set('content-type', 'application/json');
@@ -65,7 +104,7 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
         headers,
       });
     },
-    [session?.access_token],
+    [session?.access_token, text],
   );
 
   const refreshMembership = useCallback(async () => {
@@ -94,16 +133,16 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     if (!session?.access_token) return;
     const timer = window.setTimeout(() => {
       void refreshMembership().catch(() => {
-        setError('Your membership could not be refreshed.');
+        setError(text.membershipRefresh);
       });
     }, 0);
     return () => window.clearTimeout(timer);
-  }, [refreshMembership, session?.access_token]);
+  }, [refreshMembership, session?.access_token, text]);
 
   const signInWithGoogle = useCallback(async () => {
     setError(null);
     if (!client) {
-      setError('Google sign-in needs the project connection before it can open.');
+      setError(text.signInUnavailable);
       return;
     }
     const { error: authError } = await client.auth.signInWithOAuth({
@@ -113,8 +152,8 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
         queryParams: { prompt: 'select_account' },
       },
     });
-    if (authError) setError(authError.message);
-  }, [client]);
+    if (authError) setError(text.signInFailed);
+  }, [client, text]);
 
   const signOut = useCallback(async () => {
     if (!client) return;
@@ -135,15 +174,16 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
           method: 'POST',
           body: JSON.stringify({ plan }),
         });
-        const payload = (await response.json()) as { url?: string; error?: string };
-        if (!response.ok || !payload.url) throw new Error(payload.error || 'Checkout could not start.');
+        const payload = (await response.json()) as { url?: string };
+        if (response.status === 409) throw new Error(text.checkoutExisting);
+        if (!response.ok || !payload.url) throw failure('checkout', response);
         window.location.assign(payload.url);
       } catch (checkoutError) {
-        setError(checkoutError instanceof Error ? checkoutError.message : 'Checkout could not start.');
+        setError(checkoutError instanceof Error ? checkoutError.message : text.checkout);
         setPending(false);
       }
     },
-    [authorizedFetch, session, signInWithGoogle],
+    [authorizedFetch, failure, session, signInWithGoogle, text],
   );
 
   const openBillingPortal = useCallback(async () => {
@@ -151,50 +191,53 @@ export function useHolyartedAccount(authConfig: PublicAuthConfig | null) {
     setPending(true);
     try {
       const response = await authorizedFetch('/api/billing/portal', { method: 'POST' });
-      const payload = (await response.json()) as { url?: string; error?: string };
-      if (!response.ok || !payload.url) throw new Error(payload.error || 'Billing could not open.');
+      const payload = (await response.json()) as { url?: string };
+      if (!response.ok || !payload.url) throw failure('billing', response);
       window.location.assign(payload.url);
     } catch (portalError) {
-      setError(portalError instanceof Error ? portalError.message : 'Billing could not open.');
+      setError(portalError instanceof Error ? portalError.message : text.billing);
       setPending(false);
     }
-  }, [authorizedFetch]);
+  }, [authorizedFetch, failure, text]);
 
   const loadPortrait = useCallback(async (): Promise<SavedPortrait | null> => {
     const response = await authorizedFetch('/api/portrait');
-    const payload = (await response.json()) as { portrait?: SavedPortrait | null; error?: string };
-    if (!response.ok) throw new Error(payload.error || 'Your portrait could not be opened.');
+    if (!response.ok) throw failure('portraitOpen', response);
+    const payload = (await response.json()) as { portrait?: SavedPortrait | null };
     return payload.portrait ?? null;
-  }, [authorizedFetch]);
+  }, [authorizedFetch, failure]);
 
   const deletePortrait = useCallback(async () => {
     const response = await authorizedFetch('/api/portrait', { method: 'DELETE' });
-    if (!response.ok) throw new Error('Your portrait could not be deleted.');
-  }, [authorizedFetch]);
+    if (!response.ok) throw failure('portraitDelete', response);
+  }, [authorizedFetch, failure]);
 
   const exportAccountData = useCallback(async () => {
     const response = await authorizedFetch('/api/account/export');
-    if (!response.ok) throw new Error('Your data could not be exported.');
+    if (!response.ok) throw failure('export', response);
     return response.blob();
-  }, [authorizedFetch]);
+  }, [authorizedFetch, failure]);
 
   const deleteAccount = useCallback(async () => {
     const response = await authorizedFetch('/api/account', { method: 'DELETE' });
-    if (!response.ok) throw new Error('Your account could not be deleted.');
+    if (!response.ok) throw failure('accountDelete', response);
     await client?.auth.signOut();
     setSession(null);
     setMembership({ plan: 'basic', status: 'active', currentPeriodEnd: null });
-  }, [authorizedFetch, client]);
+  }, [authorizedFetch, client, failure]);
 
   const savePortrait = useCallback(async (input: PortraitInput): Promise<SavedPortrait> => {
     const response = await authorizedFetch('/api/portrait', { method: 'PUT', body: JSON.stringify(input) });
-    const payload = (await response.json()) as { portrait?: SavedPortrait; error?: string };
-    if (!response.ok || !payload.portrait) throw new Error(payload.error || 'Your portrait could not be saved.');
+    if (!response.ok) throw failure('portraitSave', response);
+    const payload = (await response.json()) as { portrait?: SavedPortrait };
+    if (!payload.portrait) throw failure('portraitSave');
     return payload.portrait;
-  }, [authorizedFetch]);
+  }, [authorizedFetch, failure]);
 
   return {
     user: accountUser(session),
+    // Sent with requests for paid content, so the server can check the plan.
+    accessToken: session?.access_token ?? null,
     membership,
     ready,
     pending,

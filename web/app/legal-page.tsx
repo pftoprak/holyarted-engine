@@ -1,23 +1,30 @@
 
+const frame = {
+  en: { updated: 'Last updated', home: 'Return home', contact: 'Questions? Contact' },
+  tr: { updated: 'Son güncelleme', home: 'Ana sayfaya dön', contact: 'Sorular için:' },
+};
+
 type LegalPageProps = {
+  lang?: keyof typeof frame;
   eyebrow: string;
   title: string;
   updated: string;
   sections: Array<{ heading: string; body: string }>;
 };
 
-export function LegalPage({ eyebrow, title, updated, sections }: LegalPageProps) {
+export function LegalPage({ lang = 'en', eyebrow, title, updated, sections }: LegalPageProps) {
+  const text = frame[lang];
   return (
-    <main className="min-h-screen bg-[#f7f3ec] px-5 py-10 text-[#514b46] md:px-10 md:py-16">
+    <main lang={lang} className="min-h-screen bg-[#f7f3ec] px-5 py-10 text-[#514b46] md:px-10 md:py-16">
       <div className="mx-auto max-w-4xl">
         <nav className="flex items-center justify-between border-b border-[#625b55]/12 pb-7">
           <a href="/" className="font-heading text-2xl tracking-[-0.03em]">Holyarted</a>
-          <a href="/" className="nav-link">Return home</a>
+          <a href="/" className="nav-link">{text.home}</a>
         </nav>
         <header className="border-b border-[#625b55]/12 py-16 md:py-24">
           <p className="eyebrow text-[#8f705e]">{eyebrow}</p>
           <h1 className="mt-6 max-w-3xl font-heading text-5xl leading-[0.95] tracking-[-0.045em] md:text-7xl">{title}</h1>
-          <p className="mt-7 text-sm text-[#514b46]/55">Last updated: {updated}</p>
+          <p className="mt-7 text-sm text-[#514b46]/55">{text.updated}: {updated}</p>
         </header>
         <div className="grid gap-10 py-14 md:py-20">
           {sections.map((section) => (
@@ -28,7 +35,7 @@ export function LegalPage({ eyebrow, title, updated, sections }: LegalPageProps)
           ))}
         </div>
         <footer className="border-t border-[#625b55]/12 py-8 text-sm text-[#514b46]/55">
-          Questions? Contact <a className="underline underline-offset-4" href="mailto:support@holyarted.com">support@holyarted.com</a>.
+          {text.contact} <a className="underline underline-offset-4" href="mailto:support@holyarted.com">support@holyarted.com</a>.
         </footer>
       </div>
     </main>

@@ -1,15 +1,30 @@
 import { accountsDisabledResponse } from '@/lib/features';
 import {
+  getMembership,
   getMembershipByCustomer,
-  type MembershipPlan,
+  recordStripeEvent,
+  stripeEventApplied,
   upsertMembership,
 } from '@/lib/membership-store';
+import { planForPrice, stripeGet } from '@/lib/stripe-api';
 import { requireRuntimeValue } from '@/lib/runtime-config';
 import { privateJson } from '@/lib/private-response';
 
 type StripeEvent = {
+  id: string;
   type: string;
+  created: number;
   data: { object: Record<string, unknown> };
+};
+
+type SubscriptionItem = { price?: { id?: unknown }; current_period_end?: unknown };
+type Subscription = {
+  id?: unknown;
+  customer?: unknown;
+  status?: unknown;
+  metadata?: Record<string, unknown>;
+  current_period_end?: unknown;
+  items?: { data?: SubscriptionItem[] };
 };
 
 function safeEqual(left: string, right: string): boolean {
@@ -53,8 +68,32 @@ function textValue(value: unknown): string | null {
   return typeof value === 'string' && value ? value : null;
 }
 
-function planValue(value: unknown): MembershipPlan {
-  return value === 'premium' ? 'premium' : value === 'plus' ? 'plus' : 'basic';
+// Writes the subscription's current state. The plan comes from the price
+// actually billed, never from metadata, and an older event never overwrites
+// state written by a newer one.
+async function applySubscription(
+  event: StripeEvent,
+  userId: string,
+  email: string,
+  subscription: Subscription,
+): Promise<void> {
+  const existing = await getMembership(userId);
+  if (existing?.billingEventAt && event.created < existing.billingEventAt) return;
+  const item = subscription.items?.data?.[0];
+  const plan = planForPrice(textValue(item?.price?.id));
+  if (!plan) console.error('billing_unknown_price');
+  const periodEnd = subscription.current_period_end ?? item?.current_period_end;
+  await upsertMembership({
+    userId,
+    email,
+    plan: plan ?? 'basic',
+    status: event.type === 'customer.subscription.deleted' ? 'canceled' : textValue(subscription.status) || 'incomplete',
+    stripeCustomerId: textValue(subscription.customer),
+    stripeSubscriptionId: textValue(subscription.id),
+    currentPeriodEnd: typeof periodEnd === 'number' ? periodEnd : null,
+    billingEventAt: event.created,
+    updatedAt: new Date().toISOString(),
+  });
 }
 
 export async function POST(request: Request) {
@@ -68,59 +107,40 @@ export async function POST(request: Request) {
     }
 
     const event = JSON.parse(body) as StripeEvent;
+    if (await stripeEventApplied(event.id)) return privateJson({ received: true });
     const object = event.data.object;
-    const metadata = (object.metadata ?? {}) as Record<string, unknown>;
 
     if (event.type === 'checkout.session.completed') {
+      const metadata = (object.metadata ?? {}) as Record<string, unknown>;
       const userId = textValue(object.client_reference_id) || textValue(metadata.user_id);
-      const customer = textValue(object.customer);
-      const subscription = textValue(object.subscription);
+      const subscriptionId = textValue(object.subscription);
       const details = (object.customer_details ?? {}) as Record<string, unknown>;
       const email = textValue(details.email) || textValue(object.customer_email);
-      if (userId && customer && email) {
-        await upsertMembership({
-          userId,
-          email,
-          plan: planValue(metadata.plan),
-          status: 'active',
-          stripeCustomerId: customer,
-          stripeSubscriptionId: subscription,
-          currentPeriodEnd: null,
-          updatedAt: new Date().toISOString(),
-        });
+      // Without a subscription there is nothing paid to record.
+      if (userId && subscriptionId && email) {
+        // Read the live subscription: the session alone does not say which
+        // price was billed, and later events may already have changed it.
+        const subscription = await stripeGet<Subscription>(`subscriptions/${encodeURIComponent(subscriptionId)}`);
+        await applySubscription(event, userId, email, subscription);
       }
     }
 
     if (
+      event.type === 'customer.subscription.created' ||
       event.type === 'customer.subscription.updated' ||
       event.type === 'customer.subscription.deleted'
     ) {
-      const customer = textValue(object.customer);
+      const subscription = object as Subscription;
+      const customer = textValue(subscription.customer);
       const existing = customer ? await getMembershipByCustomer(customer) : null;
-      const userId = textValue(metadata.user_id) || existing?.userId;
-      const email = existing?.email;
-      if (userId && email) {
-        await upsertMembership({
-          userId,
-          email,
-          plan: planValue(metadata.plan || existing?.plan),
-          status:
-            event.type === 'customer.subscription.deleted'
-              ? 'canceled'
-              : textValue(object.status) || 'active',
-          stripeCustomerId: customer,
-          stripeSubscriptionId: textValue(object.id),
-          currentPeriodEnd:
-            typeof object.current_period_end === 'number'
-              ? object.current_period_end
-              : null,
-          updatedAt: new Date().toISOString(),
-        });
-      }
+      // Before checkout completes there is no email yet; the checkout event
+      // reads the live subscription, so nothing is lost by waiting for it.
+      if (existing) await applySubscription(event, existing.userId, existing.email, subscription);
     }
 
+    await recordStripeEvent(event.id);
     return privateJson({ received: true });
-  } catch (error) {
+  } catch {
     console.error('billing_webhook_failed');
     return privateJson({ error: 'Webhook processing failed.' }, 500);
   }

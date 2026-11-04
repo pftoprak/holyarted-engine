@@ -10,6 +10,7 @@ export type Membership = {
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
   currentPeriodEnd: number | null;
+  billingEventAt: number | null;
   updatedAt: string;
 };
 
@@ -21,6 +22,7 @@ type MembershipRow = {
   stripe_customer_id: string | null;
   stripe_subscription_id: string | null;
   current_period_end: number | null;
+  billing_event_at: number | null;
   updated_at: string;
 };
 
@@ -38,6 +40,7 @@ function fromRow(row: MembershipRow): Membership {
     stripeCustomerId: row.stripe_customer_id,
     stripeSubscriptionId: row.stripe_subscription_id,
     currentPeriodEnd: row.current_period_end,
+    billingEventAt: row.billing_event_at,
     updatedAt: row.updated_at,
   };
 }
@@ -48,7 +51,7 @@ export async function getMembership(
   const row = await database()
     .prepare(
       `SELECT user_id, email, plan, status, stripe_customer_id,
-        stripe_subscription_id, current_period_end, updated_at
+        stripe_subscription_id, current_period_end, billing_event_at, updated_at
        FROM memberships WHERE user_id = ? LIMIT 1`,
     )
     .bind(userId)
@@ -62,7 +65,7 @@ export async function getMembershipByCustomer(
   const row = await database()
     .prepare(
       `SELECT user_id, email, plan, status, stripe_customer_id,
-        stripe_subscription_id, current_period_end, updated_at
+        stripe_subscription_id, current_period_end, billing_event_at, updated_at
        FROM memberships WHERE stripe_customer_id = ? LIMIT 1`,
     )
     .bind(stripeCustomerId)
@@ -75,8 +78,8 @@ export async function upsertMembership(input: Membership): Promise<void> {
     .prepare(
       `INSERT INTO memberships (
         user_id, email, plan, status, stripe_customer_id,
-        stripe_subscription_id, current_period_end, updated_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        stripe_subscription_id, current_period_end, billing_event_at, updated_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
       ON CONFLICT(user_id) DO UPDATE SET
         email = excluded.email,
         plan = excluded.plan,
@@ -84,6 +87,7 @@ export async function upsertMembership(input: Membership): Promise<void> {
         stripe_customer_id = excluded.stripe_customer_id,
         stripe_subscription_id = excluded.stripe_subscription_id,
         current_period_end = excluded.current_period_end,
+        billing_event_at = excluded.billing_event_at,
         updated_at = excluded.updated_at`,
     )
     .bind(
@@ -94,6 +98,7 @@ export async function upsertMembership(input: Membership): Promise<void> {
       input.stripeCustomerId,
       input.stripeSubscriptionId,
       input.currentPeriodEnd,
+      input.billingEventAt,
       input.updatedAt,
     )
     .run();
@@ -117,4 +122,17 @@ export function publicMembership(
     status: membership.status,
     currentPeriodEnd: membership.currentPeriodEnd,
   };
+}
+
+// Stripe retries webhook deliveries; an event id is recorded once applied.
+export async function stripeEventApplied(eventId: string): Promise<boolean> {
+  const row = await database().prepare('SELECT id FROM stripe_events WHERE id = ? LIMIT 1').bind(eventId).first();
+  return row !== null;
+}
+
+export async function recordStripeEvent(eventId: string): Promise<void> {
+  await database()
+    .prepare('INSERT INTO stripe_events (id, received_at) VALUES (?, ?) ON CONFLICT(id) DO NOTHING')
+    .bind(eventId, new Date().toISOString())
+    .run();
 }
