@@ -124,13 +124,15 @@ export function publicMembership(
   };
 }
 
-// Stripe retries webhook deliveries; an event id is recorded once applied.
-export async function stripeEventApplied(eventId: string): Promise<boolean> {
+// Providers retry webhook deliveries; an event id is recorded once applied.
+// (The table and the stripe_* columns keep their names from before other
+// providers were possible; they hold the active provider's ids.)
+export async function billingEventApplied(eventId: string): Promise<boolean> {
   const row = await database().prepare('SELECT id FROM stripe_events WHERE id = ? LIMIT 1').bind(eventId).first();
   return row !== null;
 }
 
-export async function recordStripeEvent(eventId: string): Promise<void> {
+export async function recordBillingEvent(eventId: string): Promise<void> {
   await database()
     .prepare('INSERT INTO stripe_events (id, received_at) VALUES (?, ?) ON CONFLICT(id) DO NOTHING')
     .bind(eventId, new Date().toISOString())

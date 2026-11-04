@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createHash, createHmac } from 'node:crypto';
@@ -101,12 +101,15 @@ async function fixture(t, { accounts = true } = {}) {
   }
   async function route(relative) {
     const module = moduleFor(path.join(root, relative));
+    // Already loaded as a dependency of a route: reuse that instance.
+    if (module.status === 'evaluated') return module.namespace;
     await module.link((specifier, parent) => {
       if (specifier === 'cloudflare:workers') return runtime;
       const filename = specifier.startsWith('@/')
         ? path.join(root, specifier.slice(2))
         : path.resolve(path.dirname(parent.identifier), specifier);
-      return moduleFor(filename.endsWith('.json') ? filename : `${filename}.ts`);
+      if (filename.endsWith('.json')) return moduleFor(filename);
+      return moduleFor(existsSync(`${filename}.ts`) ? `${filename}.ts` : path.join(filename, 'index.ts'));
     });
     await module.evaluate();
     return module.namespace;
@@ -127,7 +130,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -552,4 +555,22 @@ test('rate limits are counted in the shared database under hashed keys', async (
   // Another server instance has already used up this window: the limit applies here too.
   f.db.prepare('UPDATE rate_limits SET count = 20').run();
   assert.equal((await f.exported.GET(f.request('alice'))).status, 429);
+});
+
+test('membership rules do not depend on the payment provider', async (t) => {
+  const f = await fixture(t);
+  const { applyBillingEvent } = await f.route('lib/billing/apply-event.ts');
+  // Any provider that reports subscriptions in the shared shape gets the same
+  // ordering, deduplication and plan rules as Stripe.
+  const live = { id: 'other_sub_1', customerId: 'other_cus_1', status: 'active', plan: 'plus', periodEnd: 1800000000 };
+  const provider = { name: 'other', getSubscription: async () => live };
+  const row = () => ({ ...f.db.prepare('SELECT plan, status, stripe_customer_id, billing_event_at FROM memberships WHERE user_id = ?').get(people.alice.id) });
+
+  await applyBillingEvent(provider, { kind: 'checkout_completed', id: 'o1', created: 10, userId: people.alice.id, email: people.alice.email, subscriptionId: 'other_sub_1' });
+  assert.deepEqual(row(), { plan: 'plus', status: 'active', stripe_customer_id: 'other_cus_1', billing_event_at: 10 });
+  await applyBillingEvent(provider, { kind: 'subscription_deleted', id: 'o3', created: 30, subscription: { ...live, status: 'canceled' } });
+  await applyBillingEvent(provider, { kind: 'subscription_changed', id: 'o2', created: 20, subscription: { ...live, plan: 'premium' } });
+  assert.deepEqual([row().status, row().plan], ['canceled', 'plus']);
+  await applyBillingEvent(provider, { kind: 'ignored', id: 'o4', created: 40 });
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM stripe_events').get().count, 4);
 });

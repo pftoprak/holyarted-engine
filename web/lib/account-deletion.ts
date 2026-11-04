@@ -1,7 +1,7 @@
+import { billingProvider } from './billing';
 import { deleteMembership, getMembership } from './membership-store';
 import { deletePortrait } from './portrait-store';
 import { requireRuntimeValue, runtimeEnv } from './runtime-config';
-import { stripeDelete, StripeRequestError } from './stripe-api';
 import { deleteSupabaseUser } from './supabase-admin';
 
 function database(): D1Database {
@@ -33,12 +33,7 @@ async function stopBilling(userId: string): Promise<void> {
     // An inconsistent billing record must not erase the reference needed to
     // resolve a potentially live subscription and stop future charges.
     if (!membership.stripeSubscriptionId) throw new Error('Subscription reference is unavailable.');
-    try {
-      await stripeDelete(`subscriptions/${encodeURIComponent(membership.stripeSubscriptionId)}`);
-    } catch (error) {
-      // Already canceled or removed in Stripe: billing is stopped either way.
-      if (!(error instanceof StripeRequestError && error.code === 'resource_missing')) throw error;
-    }
+    await billingProvider().cancelSubscription(membership.stripeSubscriptionId);
   }
   await database().prepare('UPDATE account_deletions SET billing_canceled = 1 WHERE user_id = ?').bind(userId).run();
 }
