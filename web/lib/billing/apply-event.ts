@@ -1,3 +1,4 @@
+import { reportError } from '../report-error';
 import {
   billingEventApplied,
   getMembership,
@@ -17,7 +18,7 @@ async function applySubscription(
 ): Promise<void> {
   const existing = await getMembership(userId);
   if (existing?.billingEventAt && event.created < existing.billingEventAt) return;
-  if (!subscription.plan) console.error('billing_unknown_price');
+  if (!subscription.plan) await reportError('billing_unknown_price');
   await upsertMembership({
     userId,
     email,

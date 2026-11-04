@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { billingProvider } from '@/lib/billing';
 import { accountsDisabledResponse } from '@/lib/features';
 import { getMembership } from '@/lib/membership-store';
@@ -20,7 +21,7 @@ export async function POST(request: Request) {
     const url = await billingProvider().createPortal({ customerId: membership.stripeCustomerId, origin: new URL(request.url).origin });
     return privateJson({ url });
   } catch {
-    console.error('billing_portal_failed');
+    await reportError('billing_portal_failed');
     return privateJson({ error: 'Billing management is currently unavailable. Please try again later.' }, 503);
   }
 }

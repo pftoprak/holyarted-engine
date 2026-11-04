@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { billingProvider } from '@/lib/billing';
 import { applyBillingEvent } from '@/lib/billing/apply-event';
 import { accountsDisabledResponse } from '@/lib/features';
@@ -13,7 +14,7 @@ export async function POST(request: Request) {
     await applyBillingEvent(provider, event);
     return privateJson({ received: true });
   } catch {
-    console.error('billing_webhook_failed');
+    await reportError('billing_webhook_failed');
     return privateJson({ error: 'Webhook processing failed.' }, 500);
   }
 }

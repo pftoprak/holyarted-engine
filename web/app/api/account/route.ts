@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { deleteAccount } from '@/lib/account-deletion';
@@ -15,7 +16,7 @@ export async function DELETE(request: Request) {
     await deleteAccount(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
   } catch {
-    console.error('account_delete_failed');
+    await reportError('account_delete_failed');
     return privateJson({ error: 'Account deletion is currently unavailable.' }, 503);
   }
 }

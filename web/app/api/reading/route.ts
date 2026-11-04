@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { requestPlan } from '@/lib/plan-access';
 import { portraitChapters } from '@/lib/portrait-chapters';
 import type { PortraitInput } from '@/lib/portrait-types';
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
   try {
     ({ plan } = await requestPlan(request));
   } catch {
-    console.error('reading_plan_unavailable');
+    await reportError('reading_plan_unavailable');
     return privateJson({ error: 'Your reading could not be opened.' }, 503);
   }
   try {

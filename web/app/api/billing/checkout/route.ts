@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { billingProvider } from '@/lib/billing';
 import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
     return privateJson({ url });
   } catch (error) {
     if (error instanceof RequestBodyError) return privateJson({ error: error.message }, error.status);
-    console.error('billing_checkout_failed');
+    await reportError('billing_checkout_failed');
     return privateJson({ error: 'Checkout is currently unavailable. Please try again later.' }, 503);
   }
 }

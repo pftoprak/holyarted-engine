@@ -27,6 +27,7 @@ async function fixture(t, { accounts = true } = {}) {
   const calls = [];
   const deletedUsers = new Set();
   const subscriptions = {};
+  const alerts = [];
   const logs = [];
   const network = { requests: 0, queries: 0 };
   const env = {
@@ -53,6 +54,10 @@ async function fixture(t, { accounts = true } = {}) {
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
       network.requests += 1;
+      if (url === 'https://alerts.example.test/hook') {
+        alerts.push(JSON.parse(init.body));
+        return new Response(null, { status: 204 });
+      }
       if (url.startsWith('https://api.stripe.com/v1/subscriptions/') && init.method === 'GET') {
         calls.push('stripe-read');
         const subscription = subscriptions[decodeURIComponent(url.split('/').at(-1))];
@@ -130,7 +135,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -573,4 +578,17 @@ test('membership rules do not depend on the payment provider', async (t) => {
   assert.deepEqual([row().status, row().plan], ['canceled', 'plus']);
   await applyBillingEvent(provider, { kind: 'ignored', id: 'o4', created: 40 });
   assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM stripe_events').get().count, 4);
+});
+
+test('server failures alert a webhook once, without personal data', async (t) => {
+  const f = await fixture(t);
+  f.env.ERROR_REPORT_URL = 'https://alerts.example.test/hook';
+  f.faults.database = true;
+  for (let attempt = 0; attempt < 3; attempt++) assert.equal((await f.portrait.GET(f.request('alice'))).status, 503);
+  // One alert per distinct event despite three failing requests.
+  assert.deepEqual(f.alerts.map((alert) => alert.event).sort(), ['portrait_load_failed', 'rate_limit_store_failed']);
+  for (const alert of f.alerts) {
+    assert.equal(alert.text, `[holyarted] ${alert.event}`);
+    assert.doesNotMatch(JSON.stringify(alert), /alice|1990-01-05|Bearer|test-/);
+  }
 });

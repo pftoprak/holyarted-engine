@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { getPortrait } from '@/lib/portrait-store';
@@ -19,7 +20,7 @@ export async function GET(request: Request) {
       200, { 'content-disposition': 'attachment; filename="holyarted-data.json"' },
     );
   } catch (error) {
-    console.error('account_export_failed');
+    await reportError('account_export_failed');
     return privateJson({ error: 'Your data could not be exported.' }, 503);
   }
 }
