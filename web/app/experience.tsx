@@ -4,7 +4,7 @@ import { useEffect, useRef, useState, type SyntheticEvent } from 'react';
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, LogOut, Menu, ShieldCheck, UserRound, X } from 'lucide-react';
 import Image from 'next/image';
 import { calculateDesign } from '@/lib/profile-engine';
-import type { PortraitInput } from '@/lib/portrait-types';
+import { EARLIEST_BIRTH_DATE, isSupportedBirthDate, type PortraitInput } from '@/lib/portrait-types';
 import { planIncludes } from '@/lib/plans';
 import type { PortraitChapters } from '@/lib/portrait-chapters';
 import type { PublicAuthConfig } from '@/lib/runtime-config';
@@ -94,6 +94,7 @@ export function Experience({ accountsEnabled, purchasesEnabled, authConfig, samp
       birthDate: formText(form, 'birthDate'),
     };
     try {
+      if (!isSupportedBirthDate(input.birthDate)) throw new Error('unsupported_birth_date');
       const nextProfile = calculateDesign(input.firstName, input.lastName, input.birthDate);
       setFirstName(input.firstName);
       setLastName(input.lastName);
@@ -164,7 +165,7 @@ export function Experience({ accountsEnabled, purchasesEnabled, authConfig, samp
                 <div className="mt-8 grid gap-5 sm:grid-cols-2">
                   <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.firstName}<input name="firstName" maxLength={80} value={firstName} onChange={(event) => setFirstName(event.target.value)} placeholder={text.firstPlaceholder} autoComplete="given-name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
                   <label className="grid gap-2 text-xs font-bold text-[#514b46]/70">{text.lastName}<input name="lastName" maxLength={80} value={lastName} onChange={(event) => setLastName(event.target.value)} placeholder={text.lastPlaceholder} autoComplete="family-name" className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition placeholder:text-[#514b46]/28 focus:border-[#a7826c]" required /></label>
-                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70 sm:col-span-2">{text.birthDate}<input name="birthDate" type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} autoComplete="bday" max={new Date().toISOString().slice(0, 10)} className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition focus:border-[#a7826c]" required /></label>
+                  <label className="grid gap-2 text-xs font-bold text-[#514b46]/70 sm:col-span-2">{text.birthDate}<input name="birthDate" type="date" value={birthDate} onChange={(event) => setBirthDate(event.target.value)} autoComplete="bday" min={EARLIEST_BIRTH_DATE} max={new Date().toISOString().slice(0, 10)} className="h-14 border border-[#625b55]/16 bg-white/45 px-4 text-base font-normal text-[#514b46] outline-none transition focus:border-[#a7826c]" required /></label>
                 </div>
                 <div className="mt-7 flex flex-col items-start justify-between gap-5 border-t border-[#625b55]/10 pt-6 sm:flex-row sm:items-center"><p className="max-w-sm text-[11px] leading-5 text-[#514b46]/42">{text.inputNote}</p><button type="submit" disabled={isCalculating} className="premium-button magnetic-button h-12 shrink-0 px-5 disabled:cursor-wait">{text.finish}<ArrowRight className="size-4" /></button></div>
               </div>

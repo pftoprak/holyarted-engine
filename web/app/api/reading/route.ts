@@ -1,7 +1,7 @@
 import { reportError } from '@/lib/report-error';
 import { requestPlan } from '@/lib/plan-access';
 import { portraitChapters } from '@/lib/portrait-chapters';
-import type { PortraitInput } from '@/lib/portrait-types';
+import { isSupportedBirthDate, type PortraitInput } from '@/lib/portrait-types';
 import { privateJson, readSmallJson, RequestBodyError } from '@/lib/private-response';
 import { calculateDesign } from '@/lib/profile-engine';
 import { buildReading, readingForPlan } from '@/lib/reading';
@@ -14,7 +14,7 @@ function validInput(value: unknown): value is PortraitInput {
   if (!value || typeof value !== 'object') return false;
   const { firstName, lastName, birthDate } = value as Record<string, unknown>;
   return typeof firstName === 'string' && typeof lastName === 'string' && typeof birthDate === 'string'
-    && firstName.length <= MAX_NAME_LENGTH && lastName.length <= MAX_NAME_LENGTH;
+    && firstName.length <= MAX_NAME_LENGTH && lastName.length <= MAX_NAME_LENGTH && isSupportedBirthDate(birthDate);
 }
 
 // The portrait chapters and the detailed reading, filtered by the plan the

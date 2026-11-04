@@ -665,3 +665,15 @@ test('account deletion also removes a hand-given plan', async (t) => {
   assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
   assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM membership_grants').get().count, 0);
 });
+
+test('birth dates before 1900 are rejected; there is no age limit', async (t) => {
+  const f = await fixture(t);
+  const reading = async (birthDate) => (await f.reading.POST(f.request(null, 'POST', { ...input, birthDate }))).status;
+  assert.equal(await reading('1899-12-31'), 400);
+  assert.equal(await reading('1850-06-15'), 400);
+  assert.equal(await reading('1900-01-01'), 200);
+  // A person born today is accepted.
+  assert.equal(await reading(new Date().toISOString().slice(0, 10)), 200);
+  assert.equal((await f.portrait.PUT(f.request('alice', 'PUT', { ...input, birthDate: '1899-12-31' }))).status, 400);
+  assert.equal((await f.portrait.PUT(f.request('alice', 'PUT', { ...input, birthDate: '1900-01-01' }))).status, 200);
+});

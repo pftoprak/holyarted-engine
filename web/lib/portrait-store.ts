@@ -1,6 +1,6 @@
 import { runtimeEnv } from './runtime-config';
 import { calculateDesign } from './profile-engine';
-import type { PortraitInput, SavedPortrait } from './portrait-types';
+import { isSupportedBirthDate, type PortraitInput, type SavedPortrait } from './portrait-types';
 
 type PortraitRow = {
   first_name: string;
@@ -27,6 +27,7 @@ function cleanInput(input: PortraitInput): PortraitInput {
   const lastName = typeof input.lastName === 'string' ? input.lastName.trim().replace(/\s+/g, ' ') : '';
   const birthDate = typeof input.birthDate === 'string' ? input.birthDate : '';
   if (firstName.length > 80 || lastName.length > 80) throw new InvalidPortraitError('Name is too long.');
+  if (!isSupportedBirthDate(birthDate)) throw new InvalidPortraitError('Birth dates before 1900 are not supported.');
   try {
     calculateDesign(firstName, lastName, birthDate);
   } catch {
