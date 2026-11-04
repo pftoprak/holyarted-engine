@@ -592,3 +592,17 @@ test('server failures alert a webhook once, without personal data', async (t) =>
     assert.doesNotMatch(JSON.stringify(alert), /alice|1990-01-05|Bearer|test-/);
   }
 });
+
+test('a free-only site without sign-in settings reports healthy without touching the database', async (t) => {
+  const f = await fixture(t);
+  delete f.env.SUPABASE_URL;
+  delete f.env.SUPABASE_PUBLISHABLE_KEY;
+  const response = await f.health.GET();
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+  assert.deepEqual(f.network, { requests: 0, queries: 0 });
+  // With sign-in configured, a missing database is still an outage.
+  Object.assign(f.env, { SUPABASE_URL: 'https://auth.example.test', SUPABASE_PUBLISHABLE_KEY: 'test-public-key' });
+  delete f.env.DB;
+  assert.equal((await f.health.GET()).status, 503);
+});

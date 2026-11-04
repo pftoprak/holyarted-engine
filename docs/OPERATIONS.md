@@ -68,8 +68,9 @@ Bu kontrol haftada bir yapılmalı.
   npx wrangler d1 migrations apply <DB_ADI> --remote
   ```
 - [ ] `HOLYARTED_ACCOUNTS_ENABLED` canlıda tanımsız ya da `true` olmalı. **Asla `false` olmamalı**; `false` tüm ücretli içeriği açar.
-- [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Eksikse `/api/health` 503 döner.
+- [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Supabase tanımlı ama veritabanı erişilemezse `/api/health` 503 döner. Supabase hiç tanımlı değilse site yalnız ücretsiz çalışır ve `/api/health` 200 döner.
 - [ ] Stripe webhook uç noktası şu olayları göndermeli: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- [ ] `SITE_URL` sitenin gerçek adresine ayarlanmalı (örneğin `https://holyarted.com`). Tanımlı değilse paylaşım önizlemeleri, `robots.txt` ve `sitemap.xml` localhost adresini gösterir.
 - [ ] Hata bildirimi için `ERROR_REPORT_URL` olarak bir Slack veya Discord webhook adresi tanımlanmalı. Tanımlı değilse hatalar yalnızca sunucu loguna düşer.
 - [ ] Yalnız ücretsiz yayın: Supabase ve ödeme anahtarları tanımlanmadan yayınlanırsa giriş ve üyelik bölümleri kendiliğinden gizlenir. Anahtarlar eklenince açılır; ayrı bir ayar gerekmez.
 - [ ] Supabase özel alan adı kullanılıyorsa `web/lib/security-headers.ts` içindeki `connect-src` satırına eklenmeli. Şu an yalnızca `*.supabase.co` izinli.

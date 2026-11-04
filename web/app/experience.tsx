@@ -101,6 +101,10 @@ export function Experience({ accountsEnabled, purchasesEnabled, authConfig, samp
       setError(null);
     } catch {
       setError(text.invalidProfile);
+      // Do not leave the previous person's portrait under the error.
+      setComplete(false);
+      setReadingInput(null);
+      setReadingState({ status: 'idle' });
       return;
     }
     setComplete(false);
