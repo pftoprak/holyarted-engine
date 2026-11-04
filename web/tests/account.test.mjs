@@ -1,5 +1,5 @@
 import assert from 'node:assert/strict';
-import { readdirSync, readFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { createHash, createHmac } from 'node:crypto';
@@ -27,6 +27,7 @@ async function fixture(t, { accounts = true } = {}) {
   const calls = [];
   const deletedUsers = new Set();
   const subscriptions = {};
+  const alerts = [];
   const logs = [];
   const network = { requests: 0, queries: 0 };
   const env = {
@@ -42,6 +43,7 @@ async function fixture(t, { accounts = true } = {}) {
             return {
               async first() { return db.prepare(sql).get(...values) ?? null; },
               async run() { db.prepare(sql).run(...values); return { success: true }; },
+              async all() { return { results: db.prepare(sql).all(...values) }; },
             };
           },
         };
@@ -53,6 +55,10 @@ async function fixture(t, { accounts = true } = {}) {
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
       network.requests += 1;
+      if (url === 'https://alerts.example.test/hook') {
+        alerts.push(JSON.parse(init.body));
+        return new Response(null, { status: 204 });
+      }
       if (url.startsWith('https://api.stripe.com/v1/subscriptions/') && init.method === 'GET') {
         calls.push('stripe-read');
         const subscription = subscriptions[decodeURIComponent(url.split('/').at(-1))];
@@ -95,21 +101,24 @@ async function fixture(t, { accounts = true } = {}) {
     const source = ts.transpileModule(readFileSync(filename, 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
     }).outputText;
-    const module = new vm.SourceTextModule(source, { context, identifier: filename });
-    modules.set(filename, module);
-    return module;
+    const created = new vm.SourceTextModule(source, { context, identifier: filename });
+    modules.set(filename, created);
+    return created;
   }
   async function route(relative) {
-    const module = moduleFor(path.join(root, relative));
-    await module.link((specifier, parent) => {
+    const loaded = moduleFor(path.join(root, relative));
+    // Already loaded as a dependency of a route: reuse that instance.
+    if (loaded.status === 'evaluated') return loaded.namespace;
+    await loaded.link((specifier, parent) => {
       if (specifier === 'cloudflare:workers') return runtime;
       const filename = specifier.startsWith('@/')
         ? path.join(root, specifier.slice(2))
         : path.resolve(path.dirname(parent.identifier), specifier);
-      return moduleFor(filename.endsWith('.json') ? filename : `${filename}.ts`);
+      if (filename.endsWith('.json')) return moduleFor(filename);
+      return moduleFor(existsSync(`${filename}.ts`) ? `${filename}.ts` : path.join(filename, 'index.ts'));
     });
-    await module.evaluate();
-    return module.namespace;
+    await loaded.evaluate();
+    return loaded.namespace;
   }
   const portrait = await route('app/api/portrait/route.ts');
   const exported = await route('app/api/account/export/route.ts');
@@ -120,6 +129,7 @@ async function fixture(t, { accounts = true } = {}) {
   const health = await route('app/api/health/route.ts');
   const reading = await route('app/api/reading/route.ts');
   const webhook = await route('app/api/billing/webhook/route.ts');
+  const admin = await route('app/api/admin/grants/route.ts');
   function request(token, method = 'GET', body, suffix = '') {
     const headers = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -127,7 +137,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, admin, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -552,4 +562,106 @@ test('rate limits are counted in the shared database under hashed keys', async (
   // Another server instance has already used up this window: the limit applies here too.
   f.db.prepare('UPDATE rate_limits SET count = 20').run();
   assert.equal((await f.exported.GET(f.request('alice'))).status, 429);
+});
+
+test('membership rules do not depend on the payment provider', async (t) => {
+  const f = await fixture(t);
+  const { applyBillingEvent } = await f.route('lib/billing/apply-event.ts');
+  // Any provider that reports subscriptions in the shared shape gets the same
+  // ordering, deduplication and plan rules as Stripe.
+  const live = { id: 'other_sub_1', customerId: 'other_cus_1', status: 'active', plan: 'plus', periodEnd: 1800000000 };
+  const provider = { name: 'other', getSubscription: async () => live };
+  const row = () => ({ ...f.db.prepare('SELECT plan, status, stripe_customer_id, billing_event_at FROM memberships WHERE user_id = ?').get(people.alice.id) });
+
+  await applyBillingEvent(provider, { kind: 'checkout_completed', id: 'o1', created: 10, userId: people.alice.id, email: people.alice.email, subscriptionId: 'other_sub_1' });
+  assert.deepEqual(row(), { plan: 'plus', status: 'active', stripe_customer_id: 'other_cus_1', billing_event_at: 10 });
+  await applyBillingEvent(provider, { kind: 'subscription_deleted', id: 'o3', created: 30, subscription: { ...live, status: 'canceled' } });
+  await applyBillingEvent(provider, { kind: 'subscription_changed', id: 'o2', created: 20, subscription: { ...live, plan: 'premium' } });
+  assert.deepEqual([row().status, row().plan], ['canceled', 'plus']);
+  await applyBillingEvent(provider, { kind: 'ignored', id: 'o4', created: 40 });
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM stripe_events').get().count, 4);
+});
+
+test('server failures alert a webhook once, without personal data', async (t) => {
+  const f = await fixture(t);
+  f.env.ERROR_REPORT_URL = 'https://alerts.example.test/hook';
+  f.faults.database = true;
+  for (let attempt = 0; attempt < 3; attempt++) assert.equal((await f.portrait.GET(f.request('alice'))).status, 503);
+  // One alert per distinct event despite three failing requests.
+  assert.deepEqual(f.alerts.map((alert) => alert.event).sort((a, b) => a.localeCompare(b)), ['portrait_load_failed', 'rate_limit_store_failed']);
+  for (const alert of f.alerts) {
+    assert.equal(alert.text, `[holyarted] ${alert.event}`);
+    assert.doesNotMatch(JSON.stringify(alert), /alice|1990-01-05|Bearer|test-/);
+  }
+});
+
+test('a free-only site without sign-in settings reports healthy without touching the database', async (t) => {
+  const f = await fixture(t);
+  delete f.env.SUPABASE_URL;
+  delete f.env.SUPABASE_PUBLISHABLE_KEY;
+  const response = await f.health.GET();
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { status: 'ok' });
+  assert.deepEqual(f.network, { requests: 0, queries: 0 });
+  // With sign-in configured, a missing database is still an outage.
+  Object.assign(f.env, { SUPABASE_URL: 'https://auth.example.test', SUPABASE_PUBLISHABLE_KEY: 'test-public-key' });
+  delete f.env.DB;
+  assert.equal((await f.health.GET()).status, 503);
+});
+
+const ADMIN = 'test-admin-token-0123456789abcdef0123';
+function adminRequest(token, method = 'GET', body) {
+  const headers = { 'content-type': 'application/json' };
+  if (token) headers.authorization = `Bearer ${token}`;
+  return new Request('https://holyarted.example.test/api/admin/grants', { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+}
+
+test('hand-given plans open paid content without payment and never lower a paid plan', async (t) => {
+  const f = await fixture(t);
+  const plan = async (token) => (await (await f.reading.POST(f.request(token, 'POST', input))).json()).plan;
+  const status = async (token) => (await f.billing.GET(f.request(token))).json();
+
+  // The admin route does not exist without a long secret.
+  assert.equal((await f.admin.GET(adminRequest(ADMIN))).status, 404);
+  f.env.ADMIN_TOKEN = 'too-short';
+  assert.equal((await f.admin.GET(adminRequest('too-short'))).status, 404);
+  f.env.ADMIN_TOKEN = ADMIN;
+  assert.equal((await f.admin.GET(adminRequest(null))).status, 401);
+  assert.equal((await f.admin.GET(adminRequest(`${ADMIN}x`))).status, 401);
+  for (const body of [{ email: 'not-an-email', plan: 'plus' }, { email: people.alice.email, plan: 'gold' }, { email: people.alice.email, plan: 'plus', days: 0 }]) {
+    assert.equal((await f.admin.PUT(adminRequest(ADMIN, 'PUT', body))).status, 400);
+  }
+
+  // Given before the first sign-in, matched regardless of letter case.
+  assert.equal(await plan('alice'), 'basic');
+  const given = await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: 'ALICE@Example.TEST', plan: 'premium', days: 30, note: 'tester' }));
+  assert.equal(given.status, 200);
+  assert.equal(await plan('alice'), 'premium');
+  assert.equal(await plan('bob'), 'basic');
+  assert.deepEqual(await status('alice'), { plan: 'premium', status: 'active', currentPeriodEnd: null, granted: true, grantExpiresAt: (await given.json()).grant.expiresAt });
+  const listed = await (await f.admin.GET(adminRequest(ADMIN))).json();
+  assert.deepEqual(listed.grants.map((grant) => [grant.email, grant.plan, grant.note]), [[people.alice.email, 'premium', 'tester']]);
+
+  // Expired grants stop counting.
+  f.db.prepare('UPDATE membership_grants SET expires_at = ?').run('2020-01-01T00:00:00.000Z');
+  assert.equal(await plan('alice'), 'basic');
+
+  // A paid Premium plan stays Premium under a Plus grant, and shows as paid.
+  f.db.prepare(`INSERT INTO memberships (user_id,email,plan,status,stripe_customer_id,stripe_subscription_id,updated_at)
+    VALUES (?,?,?,?,?,?,?)`).run(people.bob.id, people.bob.email, 'premium', 'active', 'cus_bob', 'sub_bob', '2026-11-04');
+  await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: people.bob.email, plan: 'plus' }));
+  assert.equal(await plan('bob'), 'premium');
+  assert.equal((await status('bob')).granted, false);
+
+  assert.equal((await f.admin.DELETE(adminRequest(ADMIN, 'DELETE', { email: people.bob.email }))).status, 204);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM membership_grants WHERE email = ?').get(people.bob.email).count, 0);
+  assert.deepEqual(f.logs.filter((line) => line !== 'admin_auth_failed'), []);
+});
+
+test('account deletion also removes a hand-given plan', async (t) => {
+  const f = await deletionFixture(t);
+  f.env.ADMIN_TOKEN = ADMIN;
+  await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: people.alice.email, plan: 'premium' }));
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM membership_grants').get().count, 0);
 });

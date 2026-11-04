@@ -32,6 +32,4 @@ jobs:
       - run: pnpm build
       # Fails if any paid text reaches the browser bundle.
       - run: pnpm check:bundle
-      # 48 lint errors predate this workflow (mostly components/ui); reported, not blocking yet.
       - run: pnpm lint
-        continue-on-error: true

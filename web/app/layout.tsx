@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Newsreader } from 'next/font/google';
+import { siteUrl } from '@/lib/site-url';
 import './globals.css';
 
 const display = Newsreader({
@@ -14,7 +15,8 @@ const body = DM_Sans({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.SITE_URL ?? 'http://localhost:3000'),
+  metadataBase: siteUrl(),
+  icons: { icon: '/favicon.svg' },
   title: 'Holyarted — Meet the person you are becoming',
   description: 'A private Human Design experience for clearer self-understanding.',
   openGraph: {

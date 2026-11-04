@@ -1,4 +1,3 @@
-
 const frame = {
   en: { updated: 'Last updated', home: 'Return home', contact: 'Questions? Contact' },
   tr: { updated: 'Son güncelleme', home: 'Ana sayfaya dön', contact: 'Sorular için:' },

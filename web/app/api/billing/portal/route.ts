@@ -1,11 +1,10 @@
+import { reportError } from '@/lib/report-error';
+import { billingProvider } from '@/lib/billing';
 import { accountsDisabledResponse } from '@/lib/features';
-import { authenticateRequest } from '@/lib/server-auth';
 import { getMembership } from '@/lib/membership-store';
-import { stripePost } from '@/lib/stripe-api';
 import { privateJson } from '@/lib/private-response';
+import { authenticateRequest } from '@/lib/server-auth';
 import { rateLimit } from '@/lib/shared-rate-limit';
-
-type PortalSession = { url: string | null };
 
 export async function POST(request: Request) {
   const disabled = accountsDisabledResponse();
@@ -19,19 +18,10 @@ export async function POST(request: Request) {
     if (!membership?.stripeCustomerId) {
       return privateJson({ error: 'No paid membership found.' }, 404);
     }
-
-    const values = new URLSearchParams({
-      customer: membership.stripeCustomerId,
-      return_url: `${new URL(request.url).origin}/profile`,
-    });
-    const session = await stripePost<PortalSession>(
-      'billing_portal/sessions',
-      values,
-    );
-    if (!session.url) throw new Error('Billing portal URL was not returned.');
-    return privateJson({ url: session.url });
-  } catch (error) {
-    console.error('billing_portal_failed');
+    const url = await billingProvider().createPortal({ customerId: membership.stripeCustomerId, origin: new URL(request.url).origin });
+    return privateJson({ url });
+  } catch {
+    await reportError('billing_portal_failed');
     return privateJson({ error: 'Billing management is currently unavailable. Please try again later.' }, 503);
   }
 }

@@ -1,7 +1,8 @@
+import { billingProvider } from './billing';
+import { deleteGrant } from './membership-grants';
 import { deleteMembership, getMembership } from './membership-store';
 import { deletePortrait } from './portrait-store';
 import { requireRuntimeValue, runtimeEnv } from './runtime-config';
-import { stripeDelete, StripeRequestError } from './stripe-api';
 import { deleteSupabaseUser } from './supabase-admin';
 
 function database(): D1Database {
@@ -33,22 +34,18 @@ async function stopBilling(userId: string): Promise<void> {
     // An inconsistent billing record must not erase the reference needed to
     // resolve a potentially live subscription and stop future charges.
     if (!membership.stripeSubscriptionId) throw new Error('Subscription reference is unavailable.');
-    try {
-      await stripeDelete(`subscriptions/${encodeURIComponent(membership.stripeSubscriptionId)}`);
-    } catch (error) {
-      // Already canceled or removed in Stripe: billing is stopped either way.
-      if (!(error instanceof StripeRequestError && error.code === 'resource_missing')) throw error;
-    }
+    await billingProvider().cancelSubscription(membership.stripeSubscriptionId);
   }
   await database().prepare('UPDATE account_deletions SET billing_canceled = 1 WHERE user_id = ?').bind(userId).run();
 }
 
-export async function deleteAccount(userId: string): Promise<void> {
+export async function deleteAccount(userId: string, email: string): Promise<void> {
   // Fail before touching D1 if the irreversible provider operation is not configured.
   requireRuntimeValue('SUPABASE_SERVICE_ROLE_KEY');
   if (!(await beginDeletion(userId))) await stopBilling(userId);
   await deletePortrait(userId);
   await deleteMembership(userId);
+  await deleteGrant(email);
   await deleteSupabaseUser(userId);
   await database().prepare('DELETE FROM account_deletions WHERE user_id = ?').bind(userId).run();
 }

@@ -52,3 +52,13 @@ export const accountDeletions = sqliteTable('account_deletions', {
   attempts: integer('attempts').notNull().default(0),
   lastAttemptAt: text('last_attempt_at').notNull(),
 });
+
+// Plans given by hand, without payment (testers, team, gifts). Keyed by the
+// sign-in email so a grant can be made before the person's first sign-in.
+export const membershipGrants = sqliteTable('membership_grants', {
+  email: text('email').primaryKey(),
+  plan: text('plan', { enum: ['plus', 'premium'] }).notNull(),
+  expiresAt: text('expires_at'),
+  note: text('note'),
+  createdAt: text('created_at').notNull(),
+});

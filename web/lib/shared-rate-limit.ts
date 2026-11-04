@@ -1,3 +1,4 @@
+import { reportError } from './report-error';
 import { accountsEnabled } from './features';
 import { enforceRateLimit, memoryCounter, type Counter } from './request-limits';
 import { runtimeEnv } from './runtime-config';
@@ -24,7 +25,7 @@ const d1Counter = (db: D1Database): Counter => async (key, windowStart) => {
     }
     return row?.count ?? memoryCounter(key, windowStart);
   } catch {
-    console.error('rate_limit_store_failed');
+    await reportError('rate_limit_store_failed');
     return memoryCounter(key, windowStart);
   }
 };

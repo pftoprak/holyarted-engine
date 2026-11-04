@@ -16,6 +16,8 @@ export type PublicMembership = {
   plan: MembershipPlan;
   status: string;
   currentPeriodEnd: number | null;
+  // Given by hand, without payment: there is no billing to manage.
+  granted?: boolean;
 };
 
 function accountUser(session: Session | null): AccountUser | null {

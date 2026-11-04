@@ -1,3 +1,4 @@
+import { reportError } from '@/lib/report-error';
 import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { deletePortrait, getPortrait, InvalidPortraitError, savePortrait } from '@/lib/portrait-store';
@@ -14,8 +15,8 @@ export async function GET(request: Request) {
     const limited = await rateLimit(request, 'portrait-read', user.id, 60);
     if (limited) return limited;
     return privateJson({ portrait: await getPortrait(user.id) });
-  } catch (error) {
-    console.error('portrait_load_failed');
+  } catch {
+    await reportError('portrait_load_failed');
     return privateJson({ error: 'Your portrait could not be opened.' }, 503);
   }
 }
@@ -30,8 +31,8 @@ export async function DELETE(request: Request) {
     if (limited) return limited;
     await deletePortrait(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
-  } catch (error) {
-    console.error('portrait_delete_failed');
+  } catch {
+    await reportError('portrait_delete_failed');
     return privateJson({ error: 'Your portrait could not be deleted.' }, 503);
   }
 }
@@ -51,7 +52,7 @@ export async function PUT(request: Request) {
     if (error instanceof SyntaxError || error instanceof InvalidPortraitError) {
       return privateJson({ error: 'Please provide a complete name and valid birth date.' }, 400);
     }
-    console.error('portrait_save_failed');
+    await reportError('portrait_save_failed');
     return privateJson({ error: 'Your portrait could not be saved.' }, 503);
   }
 }

@@ -63,13 +63,17 @@ Bu kontrol haftada bir yapılmalı.
 
 ## 6. Dağıtım öncesi kontrol listesi
 
-- [ ] **Migration:** `web/drizzle/0002_*.sql` (paylaşılan istek sınırı, Stripe olay kaydı, hesap silme takibi, `billing_event_at` sütunu) kod yayınlanmadan **önce** uygulanmalı. Uygulanmazsa hesap ve ödeme istekleri hata verir.
+- [ ] **Migration:** `web/drizzle/0002_*.sql` (paylaşılan istek sınırı, ödeme olay kaydı, hesap silme takibi, `billing_event_at` sütunu) ve `0003_*.sql` (elle verilen planlar) kod yayınlanmadan **önce** uygulanmalı. Uygulanmazsa hesap ve ödeme istekleri hata verir.
   ```sh
   npx wrangler d1 migrations apply <DB_ADI> --remote
   ```
 - [ ] `HOLYARTED_ACCOUNTS_ENABLED` canlıda tanımsız ya da `true` olmalı. **Asla `false` olmamalı**; `false` tüm ücretli içeriği açar.
-- [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Eksikse `/api/health` 503 döner.
+- [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Supabase tanımlı ama veritabanı erişilemezse `/api/health` 503 döner. Supabase hiç tanımlı değilse site yalnız ücretsiz çalışır ve `/api/health` 200 döner.
 - [ ] Stripe webhook uç noktası şu olayları göndermeli: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- [ ] `SITE_URL` sitenin gerçek adresine ayarlanmalı (örneğin `https://holyarted.com`). Tanımlı değilse paylaşım önizlemeleri, `robots.txt` ve `sitemap.xml` localhost adresini gösterir.
+- [ ] Elle plan vermek için `ADMIN_TOKEN` en az 32 karakterlik rastgele bir değere ayarlanmalı ve yalnız yönetici bilgisayarında saklanmalı. Tanımlı değilse `/api/admin/grants` yoktur (404).
+- [ ] Hata bildirimi için `ERROR_REPORT_URL` olarak bir Slack veya Discord webhook adresi tanımlanmalı. Tanımlı değilse hatalar yalnızca sunucu loguna düşer.
+- [ ] Yalnız ücretsiz yayın: Supabase ve ödeme anahtarları tanımlanmadan yayınlanırsa giriş ve üyelik bölümleri kendiliğinden gizlenir. Anahtarlar eklenince açılır; ayrı bir ayar gerekmez.
 - [ ] Supabase özel alan adı kullanılıyorsa `web/lib/security-headers.ts` içindeki `connect-src` satırına eklenmeli. Şu an yalnızca `*.supabase.co` izinli.
 - [ ] GitHub'da `clean-skeleton` için branch koruması açılmalı: birleştirmeden önce CI geçmeli.
 
@@ -77,7 +81,7 @@ Bu kontrol haftada bir yapılmalı.
 
 `web/middleware.ts` her yanıta şu başlıkları ekler: CSP, HSTS (2 yıl, alt alan adları dahil), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. Değerler `web/lib/security-headers.ts` içindedir.
 
-CSP'de `'unsafe-inline'` betikleri açıktır, çünkü çatı sayfa verisini satır içi betiklerle gönderir. İleride nonce tabanlı CSP'ye geçilebilir.
+Betikler yalnızca her yanıtta yeniden üretilen bir nonce ile çalışır (`'strict-dynamic'`); `'unsafe-inline'` betikler için kapalıdır. Çatı nonce'u politikadan okuyup kendi satır içi betiklerine ekler. Stiller için `'unsafe-inline'` duruyor. Supabase özel alan adı kullanılırsa `connect-src` satırına eklenmeli.
 
 HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
 

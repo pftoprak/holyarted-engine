@@ -6,6 +6,8 @@ import { ProfileClient } from './profile-client';
 export const dynamic = 'force-dynamic';
 
 export default async function ProfilePage() {
-  if (!accountsEnabled()) notFound();
-  return <ProfileClient authConfig={getPublicAuthConfig()} />;
+  // Without sign-in configured there is no account to show.
+  const authConfig = accountsEnabled() ? getPublicAuthConfig() : null;
+  if (!authConfig) notFound();
+  return <ProfileClient authConfig={authConfig} />;
 }
