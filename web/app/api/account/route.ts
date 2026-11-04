@@ -13,7 +13,7 @@ export async function DELETE(request: Request) {
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
     const limited = await rateLimit(request, 'account-delete', user.id, 3);
     if (limited) return limited;
-    await deleteAccount(user.id);
+    await deleteAccount(user.id, user.email);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
   } catch {
     await reportError('account_delete_failed');

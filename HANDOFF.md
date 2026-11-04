@@ -50,7 +50,15 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 - **Kod düzeni.** `experience.tsx` 309 → 201 satır; arayüz metinleri `experience-copy.ts`, detaylı okuma `detailed-reading.tsx` içinde.
 - **Lint sıfır ve CI'da engelleyici.** Kullanılmayan 58 hazır bileşen ve `hooks/use-mobile.ts` silindi (yalnız `alert-dialog` ve `button` kullanılıyordu). İki kural kapalı, gerekçesiyle: `autocomplete-valid` geçerli `given-name`/`family-name` değerlerini reddediyor; `no-html-link-for-pages` `next/link` öneriyor ama bu vinext sürümünde `Link` tıklanınca hata veriyor (denendi), sayfa geçişleri düz bağlantıyla yapılıyor.
 - **`api/` klasörü bilerek bırakıldı.** Repoda olmayan `@holyarted/api-shared` paketine bağlı, bu haliyle çalışmıyor. Ama eski bir Vercel dağıtımında yayında olabilir (yönetici girişi ve LLM uçları var) ve piramit/sinerji hesaplarının girişleri burada. Önce o dağıtımın var olup olmadığı kontrol edilmeli; sonra silinir veya arşivlenir.
-- Testler: 37.
+- **Elle plan verme (ödemesiz).** `membership_grants` tablosu (migration `0003`) e-postaya Plus veya Premium tanımlar; isteğe bağlı süreyle. Kişi ilk kez giriş yapmadan da verilebilir; e-posta büyük/küçük harf fark etmez. Ödenen plan daha yüksekse o geçerli; hediye planı asla düşürmez. Hesap silinince hediye de silinir. Yönetim: `ADMIN_TOKEN` (en az 32 karakter) tanımlanınca açılan `/api/admin/grants` ve komut satırı aracı:
+  ```sh
+  ADMIN_TOKEN=... node web/scripts/grant.mjs https://holyarted.com give pinar@ornek.com premium 30 "Pınar test"
+  ADMIN_TOKEN=... node web/scripts/grant.mjs https://holyarted.com list
+  ADMIN_TOKEN=... node web/scripts/grant.mjs https://holyarted.com remove pinar@ornek.com
+  ```
+  Kişinin giriş yapabilmesi için Supabase/Google girişi kurulu olmalı.
+- Satın alma kapalıyken kilitli bölümler "Yakında açılacak" der; plan adları ödeme açılınca görünür.
+- Testler: 40.
 
 ## `feature/no-login-local` ile yapılanlar
 

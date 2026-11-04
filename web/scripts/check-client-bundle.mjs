@@ -28,6 +28,7 @@ const bundle = files(path.join(root, 'dist', 'client'))
   .map((file) => [file, readFileSync(file, 'utf8').replace(/\s+/g, ' ')]);
 const leaks = samples.flatMap((sample) => bundle.filter(([, content]) => content.includes(sample)).map(([file]) => `${path.relative(root, file)}: ${sample}`));
 
+if (bundle.length === 0) throw new Error('No client bundle found: run pnpm build first.');
 if (chapterTexts.length < 30 || samples.length < 100) throw new Error(`Too few texts to check (${chapterTexts.length} chapters, ${samples.length} samples).`);
 if (leaks.length) {
   console.error(`Paid text found in the client bundle:\n${leaks.slice(0, 20).join('\n')}`);

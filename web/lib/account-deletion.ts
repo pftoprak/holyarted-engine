@@ -1,4 +1,5 @@
 import { billingProvider } from './billing';
+import { deleteGrant } from './membership-grants';
 import { deleteMembership, getMembership } from './membership-store';
 import { deletePortrait } from './portrait-store';
 import { requireRuntimeValue, runtimeEnv } from './runtime-config';
@@ -38,12 +39,13 @@ async function stopBilling(userId: string): Promise<void> {
   await database().prepare('UPDATE account_deletions SET billing_canceled = 1 WHERE user_id = ?').bind(userId).run();
 }
 
-export async function deleteAccount(userId: string): Promise<void> {
+export async function deleteAccount(userId: string, email: string): Promise<void> {
   // Fail before touching D1 if the irreversible provider operation is not configured.
   requireRuntimeValue('SUPABASE_SERVICE_ROLE_KEY');
   if (!(await beginDeletion(userId))) await stopBilling(userId);
   await deletePortrait(userId);
   await deleteMembership(userId);
+  await deleteGrant(email);
   await deleteSupabaseUser(userId);
   await database().prepare('DELETE FROM account_deletions WHERE user_id = ?').bind(userId).run();
 }

@@ -2,7 +2,7 @@ import { reportError } from '@/lib/report-error';
 import { accountsDisabledResponse } from '@/lib/features';
 import { authenticateRequest } from '@/lib/server-auth';
 import { getPortrait } from '@/lib/portrait-store';
-import { getMembership, publicMembership } from '@/lib/membership-store';
+import { membershipFor } from '@/lib/membership-grants';
 import { privateJson } from '@/lib/private-response';
 import { rateLimit } from '@/lib/shared-rate-limit';
 
@@ -14,9 +14,9 @@ export async function GET(request: Request) {
     if (!user) return privateJson({ error: 'Sign in is required.' }, 401);
     const limited = await rateLimit(request, 'account-export', user.id, 20);
     if (limited) return limited;
-    const [portrait, membership] = await Promise.all([getPortrait(user.id), getMembership(user.id)]);
+    const [portrait, membership] = await Promise.all([getPortrait(user.id), membershipFor(user)]);
     return privateJson(
-      { exportedAt: new Date().toISOString(), account: user, portrait, membership: publicMembership(membership) },
+      { exportedAt: new Date().toISOString(), account: user, portrait, membership },
       200, { 'content-disposition': 'attachment; filename="holyarted-data.json"' },
     );
   } catch {

@@ -6,12 +6,15 @@ import type { Reading } from '@/lib/reading';
 import type { Copy, Locale } from './experience-copy';
 
 export type Served = { plan: MembershipPlan; chapters: Record<Locale, PortraitChapters>; reading: Reading };
+// What a locked section says: the plan that opens it, or "opens soon" while
+// purchases are not available yet.
+export type LockedLabel = (tier: MembershipPlan) => string;
 export type ReadingState = { status: 'idle' | 'loading' | 'error' } | ({ status: 'ready' } & Served);
 
-type DetailedReadingProps = { text: Copy; locale: Locale; state: ReadingState; onRetry: () => void };
+type DetailedReadingProps = { text: Copy; locale: Locale; state: ReadingState; onRetry: () => void; lockedLabel: LockedLabel };
 
 // The full numerology texts are fetched from /api/reading, never bundled here.
-export function DetailedReading({ text, locale, state, onRetry }: DetailedReadingProps) {
+export function DetailedReading({ text, locale, state, onRetry, lockedLabel }: DetailedReadingProps) {
   if (state.status === 'idle') return null;
   return (
     <div id="reading" className="mt-14 scroll-mt-24 border-t border-[#625b55]/22 pt-14">
@@ -27,22 +30,22 @@ export function DetailedReading({ text, locale, state, onRetry }: DetailedReadin
           <div lang={state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">
             <p className="text-xs leading-6 text-[#514b46]/60"><span className="font-bold">{text.readingWhy}: </span>{section.reason}</p>
             {section.note && <p className="border-l-2 border-[#a7826c]/45 pl-3 text-xs leading-6 text-[#514b46]/60">{section.note}</p>}
-            {section.status === 'locked' ? <p className="italic">{text.readingLocked(text.readingTiers[section.tier])}</p> : section.status === 'pending' ? <p className="italic">{text.readingPending}</p> : section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
+            {section.status === 'locked' ? <p className="italic">{lockedLabel(section.tier)}</p> : section.status === 'pending' ? <p className="italic">{text.readingPending}</p> : section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
           </div>
         </details>
-        {section.id === 'lifePath' && <RelationshipLines text={text} reading={state.reading} />}
+        {section.id === 'lifePath' && <RelationshipLines text={text} reading={state.reading} lockedLabel={lockedLabel} />}
       </Fragment>)}</div>}
     </div>
   );
 }
 
 // "İlişkide sen": dataset sentences regrouped by the server, never rewritten.
-function RelationshipLines({ text, reading }: { text: Copy; reading: Reading }) {
+function RelationshipLines({ text, reading, lockedLabel }: { text: Copy; reading: Reading; lockedLabel: LockedLabel }) {
   return (
     <section className="rounded-[2rem] border border-[#625b55]/14 bg-[#fbf8f2]/70 p-7 md:p-9">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]"><span lang="en" className="mr-3 rounded-full border border-[#8f705e]/30 px-2.5 py-1 text-[9px] tracking-[0.14em]">{text.readingTiers.plus}</span>{text.readingRelationships}</p>
       <p className="mt-4 text-xs leading-6 text-[#514b46]/60">{text.readingRelationshipsCopy}</p>
-      {reading.relationshipsLocked ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingLocked(text.readingTiers.plus)}</p> : reading.relationships.length === 0 ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingRelationshipsEmpty}</p> : <ul lang={reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{reading.relationships.map((line) => <li key={line.sentence} className="border-l-2 border-[#a7826c]/45 pl-4">{line.sentence}<span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/45">{line.source}</span></li>)}</ul>}
+      {reading.relationshipsLocked ? <p className="mt-6 text-sm italic text-[#514b46]/70">{lockedLabel('plus')}</p> : reading.relationships.length === 0 ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingRelationshipsEmpty}</p> : <ul lang={reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{reading.relationships.map((line) => <li key={line.sentence} className="border-l-2 border-[#a7826c]/45 pl-4">{line.sentence}<span className="mt-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/45">{line.source}</span></li>)}</ul>}
     </section>
   );
 }

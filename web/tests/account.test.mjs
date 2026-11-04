@@ -43,6 +43,7 @@ async function fixture(t, { accounts = true } = {}) {
             return {
               async first() { return db.prepare(sql).get(...values) ?? null; },
               async run() { db.prepare(sql).run(...values); return { success: true }; },
+              async all() { return { results: db.prepare(sql).all(...values) }; },
             };
           },
         };
@@ -128,6 +129,7 @@ async function fixture(t, { accounts = true } = {}) {
   const health = await route('app/api/health/route.ts');
   const reading = await route('app/api/reading/route.ts');
   const webhook = await route('app/api/billing/webhook/route.ts');
+  const admin = await route('app/api/admin/grants/route.ts');
   function request(token, method = 'GET', body, suffix = '') {
     const headers = { 'content-type': 'application/json' };
     if (token) headers.authorization = `Bearer ${token}`;
@@ -135,7 +137,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, admin, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -605,4 +607,61 @@ test('a free-only site without sign-in settings reports healthy without touching
   Object.assign(f.env, { SUPABASE_URL: 'https://auth.example.test', SUPABASE_PUBLISHABLE_KEY: 'test-public-key' });
   delete f.env.DB;
   assert.equal((await f.health.GET()).status, 503);
+});
+
+const ADMIN = 'test-admin-token-0123456789abcdef0123';
+function adminRequest(token, method = 'GET', body) {
+  const headers = { 'content-type': 'application/json' };
+  if (token) headers.authorization = `Bearer ${token}`;
+  return new Request('https://holyarted.example.test/api/admin/grants', { method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }) });
+}
+
+test('hand-given plans open paid content without payment and never lower a paid plan', async (t) => {
+  const f = await fixture(t);
+  const plan = async (token) => (await (await f.reading.POST(f.request(token, 'POST', input))).json()).plan;
+  const status = async (token) => (await f.billing.GET(f.request(token))).json();
+
+  // The admin route does not exist without a long secret.
+  assert.equal((await f.admin.GET(adminRequest(ADMIN))).status, 404);
+  f.env.ADMIN_TOKEN = 'too-short';
+  assert.equal((await f.admin.GET(adminRequest('too-short'))).status, 404);
+  f.env.ADMIN_TOKEN = ADMIN;
+  assert.equal((await f.admin.GET(adminRequest(null))).status, 401);
+  assert.equal((await f.admin.GET(adminRequest(`${ADMIN}x`))).status, 401);
+  for (const body of [{ email: 'not-an-email', plan: 'plus' }, { email: people.alice.email, plan: 'gold' }, { email: people.alice.email, plan: 'plus', days: 0 }]) {
+    assert.equal((await f.admin.PUT(adminRequest(ADMIN, 'PUT', body))).status, 400);
+  }
+
+  // Given before the first sign-in, matched regardless of letter case.
+  assert.equal(await plan('alice'), 'basic');
+  const given = await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: 'ALICE@Example.TEST', plan: 'premium', days: 30, note: 'tester' }));
+  assert.equal(given.status, 200);
+  assert.equal(await plan('alice'), 'premium');
+  assert.equal(await plan('bob'), 'basic');
+  assert.deepEqual(await status('alice'), { plan: 'premium', status: 'active', currentPeriodEnd: null, granted: true, grantExpiresAt: (await given.json()).grant.expiresAt });
+  const listed = await (await f.admin.GET(adminRequest(ADMIN))).json();
+  assert.deepEqual(listed.grants.map((grant) => [grant.email, grant.plan, grant.note]), [[people.alice.email, 'premium', 'tester']]);
+
+  // Expired grants stop counting.
+  f.db.prepare('UPDATE membership_grants SET expires_at = ?').run('2020-01-01T00:00:00.000Z');
+  assert.equal(await plan('alice'), 'basic');
+
+  // A paid Premium plan stays Premium under a Plus grant, and shows as paid.
+  f.db.prepare(`INSERT INTO memberships (user_id,email,plan,status,stripe_customer_id,stripe_subscription_id,updated_at)
+    VALUES (?,?,?,?,?,?,?)`).run(people.bob.id, people.bob.email, 'premium', 'active', 'cus_bob', 'sub_bob', '2026-11-04');
+  await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: people.bob.email, plan: 'plus' }));
+  assert.equal(await plan('bob'), 'premium');
+  assert.equal((await status('bob')).granted, false);
+
+  assert.equal((await f.admin.DELETE(adminRequest(ADMIN, 'DELETE', { email: people.bob.email }))).status, 204);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM membership_grants WHERE email = ?').get(people.bob.email).count, 0);
+  assert.deepEqual(f.logs.filter((line) => line !== 'admin_auth_failed'), []);
+});
+
+test('account deletion also removes a hand-given plan', async (t) => {
+  const f = await deletionFixture(t);
+  f.env.ADMIN_TOKEN = ADMIN;
+  await f.admin.PUT(adminRequest(ADMIN, 'PUT', { email: people.alice.email, plan: 'premium' }));
+  assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+  assert.equal(f.db.prepare('SELECT COUNT(*) AS count FROM membership_grants').get().count, 0);
 });
