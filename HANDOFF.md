@@ -41,6 +41,17 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 - Testler: 27 test geçiyor. Yeni testler her plan için sunucunun hangi metni gönderdiğini, Basic yanıtında hiçbir ücretli metin olmadığını, bayrak tanımsızken içeriğin kapalı kaldığını ve kontrol hata verirse isteğin reddedildiğini doğrular.
 - Hâlâ açık: `GET /api/portrait`, kayıtlı portrenin profil anahtarlarını döndürür. Bunlar metin değil, kategori adıdır (örneğin `facts`, `quiet`). Kişinin kendi verisi olarak kalabilir.
 
+## Sistem hazırlığı (`feature/system-prep`)
+
+- **Ödeme sağlayıcıdan bağımsız.** Rotalar, hesap silme ve üyelik kuralları (olay sırası, tekilleştirme, planın fiyattan belirlenmesi) artık `web/lib/billing/` altındaki `BillingProvider` arayüzünü kullanıyor. Yeni bir sağlayıcı (iyzico, Paddle…) tek dosya: arayüzü uygular, `web/lib/billing/index.ts` içinde seçilir. Stripe davranışı değişmedi; bir test kuralları Stripe olmayan bir sağlayıcıyla çalıştırıyor.
+- **Yalnız ücretsiz yayın mümkün.** Supabase ayarları yoksa giriş, kaydetme ve `/profile` görünmez (`/profile` 404). Ödeme sağlayıcısının tüm anahtarları yoksa üyelik bölümü gizlenir, kilit panelinde "Üyelikler yakında açılıyor" yazar. Ayrı bir bayrak yok: anahtarlar tanımlanınca kendiliğinden açılır.
+- **Hata bildirimi.** `web/lib/report-error.ts`: `ERROR_REPORT_URL` (Slack/Discord webhook) tanımlıysa sunucu hataları oraya gider. Yalnızca olay adı gönderilir, kişisel veri yok; aynı olay 5 dakikada bir kez.
+- **Mobil motor koruması.** `mobile/lib/` hesaplama motorunun kopyasını tutuyor. `web/lib/engine-sync.test.mjs`, iki kopya 1900'den bugüne her hafta ve çeşitli isimler için farklı sonuç verirse başarısız olur. Ortak pakete taşıma mobil derlemesi denenmeden yapılmadı.
+- **Kod düzeni.** `experience.tsx` 309 → 201 satır; arayüz metinleri `experience-copy.ts`, detaylı okuma `detailed-reading.tsx` içinde.
+- **Lint sıfır ve CI'da engelleyici.** Kullanılmayan 58 hazır bileşen ve `hooks/use-mobile.ts` silindi (yalnız `alert-dialog` ve `button` kullanılıyordu). İki kural kapalı, gerekçesiyle: `autocomplete-valid` geçerli `given-name`/`family-name` değerlerini reddediyor; `no-html-link-for-pages` `next/link` öneriyor ama bu vinext sürümünde `Link` tıklanınca hata veriyor (denendi), sayfa geçişleri düz bağlantıyla yapılıyor.
+- **`api/` klasörü bilerek bırakıldı.** Repoda olmayan `@holyarted/api-shared` paketine bağlı, bu haliyle çalışmıyor. Ama eski bir Vercel dağıtımında yayında olabilir (yönetici girişi ve LLM uçları var) ve piramit/sinerji hesaplarının girişleri burada. Önce o dağıtımın var olup olmadığı kontrol edilmeli; sonra silinir veya arşivlenir.
+- Testler: 37.
+
 ## `feature/no-login-local` ile yapılanlar
 
 - **Bayrak:** `web/lib/features.ts` (`accountsEnabled`, `accountsDisabledResponse`). Hesap/ödeme route'larının her biri ilk satırda bu kontrolü yapar.
@@ -68,7 +79,7 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 5. ~~**Hesap silmeyi kalıcı bir işe çevir.**~~ Yapıldı: ilerleme `account_deletions` tablosunda; tekrar denemede Stripe iptali tekrarlanmaz; Stripe'ta zaten silinmiş abonelik engel olmaz. Bekleyen silmeler için: [docs/OPERATIONS.md](docs/OPERATIONS.md) madde 5.
 6. ~~**İstek sınırını paylaşılan bir depoya taşı.**~~ Yapıldı: sayaçlar D1 `rate_limits` tablosunda, anahtar SHA-256 özeti (ham IP saklanmaz). D1 hata verirse bellekteki sınıra düşer. Okuma API'sinde sınır oturum kontrolünden önce uygulanır.
 7. ~~**Güvenlik başlıkları ve CI.**~~ Yapıldı: `web/middleware.ts` (CSP, HSTS, frame koruması vb.) ve `docs/github-ci.yml` → `.github/workflows/ci.yml` olarak eklenmeli (test, tsc, build, istemci paketinde ücretli metin kontrolü; lint raporlanır ama henüz engellemez).
-8. **Temizlik ve yasal metin.** Çalışmayan `api/` klasörünü kaldır/arşivle; web ve mobil hesaplama motorunu tek pakette birleştir; gizlilik metnine veri işleyenleri (Supabase, Stripe, Cloudflare) ve KVKK aydınlatmasını ekle.
+8. **Temizlik.** Kısmen yapıldı (`feature/system-prep`): lint, kullanılmayan bileşenler, `experience.tsx`, motor kopyası koruması. Kalan: `api/` klasörü (önce eski dağıtım kontrolü), kullanılmayan npm bağımlılıkları (carousel, takvim, OTP vb.).
 9. **Dağıtım öncesi:** `web/drizzle/0002_*.sql` migration'ı kod yayınlanmadan önce uygulanmalı. Kontrol listesi: [docs/OPERATIONS.md](docs/OPERATIONS.md) madde 6.
 10. **Yasal:** `/kvkk` sayfası taslak. Veri sorumlusu: Furkan Öksüz (şahıs işletmesi). Kalan köşeli parantezli alanlar (adres, vergi no, KEP, yurt dışı aktarım mekanizması, fatura saklama süresi) doldurulmalı ve metni avukat incelemeli.
 11. **Veri hataları:** Kurucu kararı (3 Kasım 2026): veri olduğu gibi kalıyor. İdeal iş 33 ve yetenek 0 için ekranda "Bu bölüm hazırlanıyor." görünmeye devam eder; yetenek 1 (vitrin 33 ile aynı metin) ve hayat yolu 123/213 (aynı metin) olduğu gibi gösterilir. Ayrıntı: [audit/RAPOR-DENETIMI.md](audit/RAPOR-DENETIMI.md).

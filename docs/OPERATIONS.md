@@ -70,6 +70,8 @@ Bu kontrol haftada bir yapılmalı.
 - [ ] `HOLYARTED_ACCOUNTS_ENABLED` canlıda tanımsız ya da `true` olmalı. **Asla `false` olmamalı**; `false` tüm ücretli içeriği açar.
 - [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Eksikse `/api/health` 503 döner.
 - [ ] Stripe webhook uç noktası şu olayları göndermeli: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- [ ] Hata bildirimi için `ERROR_REPORT_URL` olarak bir Slack veya Discord webhook adresi tanımlanmalı. Tanımlı değilse hatalar yalnızca sunucu loguna düşer.
+- [ ] Yalnız ücretsiz yayın: Supabase ve ödeme anahtarları tanımlanmadan yayınlanırsa giriş ve üyelik bölümleri kendiliğinden gizlenir. Anahtarlar eklenince açılır; ayrı bir ayar gerekmez.
 - [ ] Supabase özel alan adı kullanılıyorsa `web/lib/security-headers.ts` içindeki `connect-src` satırına eklenmeli. Şu an yalnızca `*.supabase.co` izinli.
 - [ ] GitHub'da `clean-skeleton` için branch koruması açılmalı: birleştirmeden önce CI geçmeli.
 
