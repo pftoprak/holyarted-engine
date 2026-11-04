@@ -58,6 +58,10 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
   ```
   Kişinin giriş yapabilmesi için Supabase/Google girişi kurulu olmalı.
 - Satın alma kapalıyken kilitli bölümler "Yakında açılacak" der; plan adları ödeme açılınca görünür.
+- **Sıkı CSP.** Betikler her yanıtta yeni üretilen nonce ile çalışıyor (`'strict-dynamic'`), `'unsafe-inline'` kalktı. Derlenmiş sürümde ve geliştirme modunda tüm sayfalarda ihlal olmadan denendi.
+- **Kullanılmayan paketler kaldırıldı:** cmdk, date-fns, embla-carousel-react, input-otp, react-day-picker, react-resizable-panels, recharts.
+- **Canlı site (4 Kasım, yalnız okuma).** `holyarted.com` Ekim öncesinden kalma eski sürümü çalıştırıyor; o sürümde Plus ve Premium kart metinleri tarayıcı kodunda açıkta. Bu branch yayınlanınca kapanır. `www.holyarted.com` DNS kaydı ve DMARC kaydı yok.
+- **Mobil.** `mobile/` sunucuya bağlı değil. 4 kartın kısa sürümlerini ücretsiz gösteriyor; veri dosyalarını içe aktarmıyor. Mağazaya çıkmadan önce web API'sine (`/api/reading`) bağlanmalı; mobil derlemesi burada denenemediği için dokunulmadı.
 - Testler: 40.
 
 ## `feature/no-login-local` ile yapılanlar

@@ -1,17 +1,22 @@
 # HOLYARTED
 
-Güncel tamamlananlar, açık riskler ve sıradaki işler: [Yayın hazırlığı kontrol listesi](RELEASE-READINESS.md). 28 Eylül incelemesinde 21 yerel test ve TypeScript kontrolü geçti; canlı ve yerel doğrulamalar listede ayrı tutulur.
+- Yapılanlar ve sıradaki işler: [HANDOFF.md](HANDOFF.md)
+- Yayın öncesi açık riskler: [RELEASE-READINESS.md](RELEASE-READINESS.md)
+- Yedekleme, geri yükleme ve dağıtım kontrol listesi: [docs/OPERATIONS.md](docs/OPERATIONS.md)
+- Kontrol rehberi: [KONTROL.md](KONTROL.md)
 
 ## Proje yapısı
 
 - `web/`: React ve Vinext web uygulaması; Cloudflare Workers/D1 çalışma ortamı.
-- `mobile/`: Expo mobil uygulaması.
-- `api/`: Ayrı JavaScript hesaplama ve içerik API'leri.
-- `data/`: Hesaplama ve yorumlama veri kümeleri.
+- `mobile/`: Expo mobil uygulaması. Henüz sunucuya bağlı değil; portreyi cihazda hesaplar.
+- `api/`: Eski JavaScript API'leri. Repoda olmayan `@holyarted/api-shared` paketine bağlı olduğu için bu haliyle çalışmaz. Bilerek silinmedi (HANDOFF.md).
+- `data/`: Hesaplama ve yorumlama veri kümeleri. Kurucu onayı olmadan değiştirilmez.
+- `audit/`: Rapor denetimi (36 sentetik kişi) ve betiği.
+- `docs/`: İşletme notları ve CI dosyası.
 
 ## Web uygulamasını yerelde çalıştırma
 
-Node.js 22.13 veya üzeri ve pnpm gerekir. `node` komutunun PATH üzerinde erişilebilir olması gerekir; paketlerin kurulum adımları da Node kullanır.
+Node.js 22.13 veya üzeri ve pnpm gerekir.
 
 ```sh
 cd web
@@ -19,54 +24,50 @@ pnpm install --frozen-lockfile
 pnpm dev
 ```
 
-Terminalde gösterilen yerel adresi açın (varsayılan: `http://localhost:3000`).
-İsim, soyisim ve doğum tarihiyle temel portre oluşturmak için dış servis anahtarı gerekmez.
+Varsayılan adres `http://localhost:3000`. Hiçbir anahtar gerekmez. Anahtarsız çalıştırıldığında site yalnız ücretsiz sürümle açılır: giriş ve üyelik bölümleri gizlenir, ücretli bölümler kilitli görünür. Her şeyi yerelde görmek için `web/.env.local` dosyasına `HOLYARTED_ACCOUNTS_ENABLED=false` yaz. Bu ayar **yalnızca yerel içindir**, yayında kullanılmaz.
 
 ## Kontroller
 
 `web/` klasöründe:
 
 ```sh
-pnpm test
+pnpm test                          # 40 test
 pnpm exec tsc --noEmit
-pnpm build
+pnpm lint
+pnpm build && pnpm check:bundle    # ücretli metinler tarayıcı paketine girmiş mi
 ```
 
-`pnpm test` hesaplama, özel API yanıtı ve yerel hesap/veri izolasyonu testlerini birlikte çalıştırır.
-`pnpm test:engine` yalnızca hesaplama testlerini çalıştırır.
+`pnpm test` şunları test eder:
 
-## Bağlantı gerektiren özellikler
+- Hesaplama motoru ve web ile mobil kopyasının aynı sonucu vermesi.
+- Plan bazlı içerik süzme.
+- Ödeme olayları: sıra, tekrar ve fiyattan plan.
+- Hesap silme ve kaldığı yerden devam etmesi.
+- Elle verilen planlar.
+- Paylaşılan istek sınırı.
+- Hata bildirimi.
+- Kullanıcılar arası veri izolasyonu.
 
-Google ile giriş Supabase yapılandırmasına bağlıdır. Üyelik ve ödeme için Stripe yapılandırması, kayıtlı portreler ve üyelik kayıtları için D1 veritabanı ve `web/drizzle/` altındaki şema değişiklikleri gerekir.
+Testler gerçek SQL şemasını bellekteki SQLite üzerinde çalıştırır. Dış ağa, gerçek kullanıcılara veya ödeme sistemine erişmez. CI dosyası: [docs/github-ci.yml](docs/github-ci.yml).
 
-Gerekli değişken adları `web/.env.example` dosyasında bulunur. Gerçek anahtarlar sürüm kontrolüne eklenmemelidir. Yerel ve yayın ortamlarının bağlantıları ayrı yapılandırılmalıdır.
+## Ayarlar
 
-## Son yerel doğrulama — 25 Eylül 2026
+Tüm değişken adları `web/.env.example` dosyasında. Gerçek anahtarlar sürüm kontrolüne eklenmez. Özetle:
 
-- 13 otomatik test, TypeScript kontrolü ve üretim derlemesi geçti.
-- Türkçe arayüzde portre oluşturma tarayıcıda doğrulandı.
-- Gizlilik, kullanım koşulları ve hesap giriş sayfaları açıldı.
-- Form gönderimi alan değerlerini doğrudan okur; otomatik doldurma/tarih alanı ile React durumu arasındaki fark sonucu boş tarih okunmasını önler.
-- Form alanları kayıt katmanının mevcut 80 karakter sınırını uygular. Hesaplama motoru, sonuç metinleri ve tasarım korunmuştur.
-- Google oturumu, kalıcı kayıt, ödeme ve mobil uygulama bu kontrolde uçtan uca test edilmedi.
+| Değişken | Ne işe yarar |
+| --- | --- |
+| `SITE_URL` | Sitenin gerçek adresi. Paylaşım önizlemesi, `robots.txt` ve `sitemap.xml` için gerekli. |
+| `SUPABASE_*` | Google ile giriş. Yoksa giriş ve profil gizlenir. |
+| `STRIPE_*` | Ödeme. Hepsi tanımlı değilse üyelik bölümü gizlenir. Sağlayıcı değişebilir: `web/lib/billing/`. |
+| `ADMIN_TOKEN` | Elle plan verme (`web/scripts/grant.mjs`). Yoksa yönetici adresi kapalıdır. |
+| `ERROR_REPORT_URL` | Sunucu hatalarının gönderileceği Slack veya Discord webhook adresi. İsteğe bağlı. |
+| `HOLYARTED_ACCOUNTS_ENABLED` | Tanımsız ya da `true`: hesaplar açık. `false`: yalnızca yerel açık mod. |
 
-Web portresi şu anda hesaplanan sinyalleri önceden yazılmış metinlere eşler. Önceki konuşmalardaki dört kapsamlı rapor protokolü bu web akışının parçası değildir.
+Veritabanı şeması `web/drizzle/` altında. Yayından önce migration'lar sırayla uygulanmalı (docs/OPERATIONS.md).
 
-## Yerel hesap testlerinin kapsamı
+## Sağlık kontrolü
 
-`web/tests/account.test.mjs`, gerçek API, kimlik doğrulama ve veri erişim kodunu çalıştırır. Gerçek SQL şemaları bellekteki SQLite üzerinde uygulanır; D1 aktarım katmanı ve Supabase HTTP yanıtları yerel test karşılıklarıyla değiştirilir. Dış ağa, gerçek kullanıcılara veya ödeme sistemine erişilmez.
+`/api/health` adresi yalnızca `{ "status": "ok" }` ya da `503` ile `{ "status": "unavailable" }` döndürür:
 
-- Oturumsuz ve geçersiz oturumlu isteklerin reddedilmesi.
-- İki ayrı kullanıcı arasında kayıt, tekrar okuma, dışa aktarma ve silme izolasyonu.
-- Gövde veya URL ile başka bir kullanıcı kimliği verilmesinin etkisiz olması.
-- Geçersiz güncellemenin mevcut portreyi bozmaması.
-- Üyelik durumunun doğru kullanıcıya ait olması ve dışa aktarmada ödeme tanımlayıcılarının bulunmaması.
-- Servis hatalarında özel verilerin yanıta veya loglara aktarılmaması.
-
-Bu testler gerçek Google OAuth akışını, tarayıcıdaki oturum geri yüklemeyi veya Cloudflare D1 ortamını uçtan uca doğrulamaz. Bunlar ayrı bir test hesabıyla sonraki adımdır.
-
-Hesap sayfasındaki tam hesap silme akışı `/api/account` üzerinden portreyi ve üyelik kaydını kaldırır, ücretli aktif aboneliği Stripe üzerinden iptal eder ve ardından Supabase kullanıcısını siler. Bu sunucu işlemi için hosting ortamında yalnızca sunucu tarafında tutulacak `SUPABASE_SERVICE_ROLE_KEY` ve ücretli abonelik iptali için `STRIPE_SECRET_KEY` tanımlanmalıdır. Yönetici anahtarı yoksa işlem güvenli biçimde başarısız olur; yerel testler gerçek kullanıcı, Supabase hesabı veya ödeme sistemi üzerinde silme yapmaz.
-
-Hassas API işlemleri kullanıcı ve istemci başına dakikalık istek sınırları uygular. Sınır aşıldığında yanıt `429` ve `Retry-After` başlığı döndürür. Bu koruma uygulama katmanındadır; üretimde Cloudflare katmanındaki ek WAF veya rate limit kurallarıyla desteklenmelidir.
-
-Operasyonel sağlık kontrolü `/api/health` adresindedir. Başarılı durumda yalnızca `{ "status": "ok" }`, yapılandırma veya veritabanı erişimi yoksa `503` ve `{ "status": "unavailable" }` döndürür.
+- **Giriş ayarlı değilse:** Site yalnız ücretsiz sürümle çalışır ve dış servise bağlı değildir. Sonuç 200 olur.
+- **Giriş ayarlıysa:** Veritabanına erişilemezse 503 döner.

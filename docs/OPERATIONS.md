@@ -81,7 +81,7 @@ Bu kontrol haftada bir yapılmalı.
 
 `web/middleware.ts` her yanıta şu başlıkları ekler: CSP, HSTS (2 yıl, alt alan adları dahil), `X-Frame-Options: DENY`, `nosniff`, `Referrer-Policy`, `Permissions-Policy`. Değerler `web/lib/security-headers.ts` içindedir.
 
-CSP'de `'unsafe-inline'` betikleri açıktır, çünkü çatı sayfa verisini satır içi betiklerle gönderir. İleride nonce tabanlı CSP'ye geçilebilir.
+Betikler yalnızca her yanıtta yeniden üretilen bir nonce ile çalışır (`'strict-dynamic'`); `'unsafe-inline'` betikler için kapalıdır. Çatı nonce'u politikadan okuyup kendi satır içi betiklerine ekler. Stiller için `'unsafe-inline'` duruyor. Supabase özel alan adı kullanılırsa `connect-src` satırına eklenmeli.
 
 HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
 

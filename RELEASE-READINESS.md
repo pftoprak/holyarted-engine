@@ -2,6 +2,42 @@
 
 Bu belge tamamlandı iddiası değil, kanıt ve eksik listesidir. Hesaplama motoru, sonuç metinleri ve nihai tasarım bu çalışmanın dışındadır. Canlı testlerde yalnızca ayrı test hesabı kullanılmalıdır; ana hesap test verisi değildir. Hiçbir madde yalnızca kodu mevcut diye canlıda doğrulanmış sayılmaz.
 
+## Durum güncellemesi — 4 Kasım 2026
+
+Aşağıdaki maddeler **kodda** (`feature/system-prep`, PR #5 ve #6) tamamlandı ve yerel testlerle doğrulandı. Canlıya alınmadıkları için **canlıda değiller**. Bu belgenin ilkesi geçerli: kod var diye canlıda tamam sayılmaz.
+
+**Canlı durum (4 Kasım, yalnız okuma kontrolü):**
+- `holyarted.com` yayında, ama Ekim öncesinden kalma eski sürüm çalışıyor. Bu sürümde Plus ve Premium kart metinleri tarayıcıya giden kodda (`experience-*.js`) açıkta. Aşağıdaki "kritik ürün engeli" canlıda hâlâ geçerli.
+- `/api/health` 200 dönüyor. Eski yönetici ve LLM yolları ile yeni yollar 404.
+- `www.holyarted.com` için DNS kaydı yok.
+- E-posta Cloudflare yönlendirmesiyle çalışıyor (MX ve SPF var), DMARC yok.
+
+| Bu belgedeki madde | Kodda durum |
+| --- | --- |
+| Kritik ürün engeli: ücretli içerik istemcide | Kapandı. Metinler sunucuda, plana göre süzülüyor; `pnpm check:bundle` paketi tarıyor. |
+| Her ücretli özelliğin sunucu yetkilendirmesi ve plan matrisi | Kodda var, testli. Matris kurucu onayı bekliyor (HANDOFF.md). |
+| Bellekteki rate limit | Kapandı. D1'de paylaşılan sayaç, özetlenmiş anahtar, bellek yedeği. |
+| CSP, frame, referrer/permissions, HSTS | Kapandı. Middleware ile her yanıtta; betikler için nonce ve `strict-dynamic`, `'unsafe-inline'` yok. Canlıda ölçülmedi. |
+| Webhook tekrarları ve sırasız olaylar | Kapandı. Olay kaydı, `billing_event_at` sırası, plan fiyattan belirleniyor. Gerçek ödeme testi yok. |
+| Yarım kalan hesap silme | Kapandı. `account_deletions` ile kaldığı yerden devam ediyor; elle tamamlama: OPERATIONS.md madde 5. |
+| Yedek ve geri yükleme planı | Yazıldı (OPERATIONS.md). Tatbikat yapılmadı; D1 erişimi doğrulanmadı. |
+| Hata ve uptime izleme | Hata bildirimi `ERROR_REPORT_URL` ile var. Uptime alarmı yok. |
+| Otomatik CI | Dosya `docs/github-ci.yml` içinde. Test, tsc, lint, build ve paket taraması yapıyor. GitHub'a eklenmedi (izin). |
+| Yükleme, boş, hata ve tekrar deneme durumları; TR/EN tutarlılığı | Ana yolculukta tamam; ilk ziyaretçi turu 4 Kasım'da yapıldı. |
+| Mobil/masaüstü responsive QA | Telefonda menü kayma hatası bulunup düzeltildi. Gerçek cihaz testi yok. |
+| İkonlar, metadata, paylaşım önizlemesi | Sekme simgesi, `SITE_URL`, `robots.txt` ve `sitemap.xml` eklendi. |
+| KVKK aydınlatma metni | Taslak `/kvkk` sayfasında; veri sorumlusu Furkan Öksüz. Adres, vergi no, KEP ve aktarım alanları boş; hukuki inceleme gerekli. |
+
+**Hâlâ açık (değişmedi):**
+- Şirket ve ödeme sağlayıcısı kararı.
+- Mesafeli satış sözleşmesi ve ön bilgilendirme formu.
+- Mobil ortak hesap altyapısı.
+- E-posta teslim testleri.
+- Sızma testi.
+- Gerçek hesap ve ödeme senaryoları için staging.
+
+**Yeni:** Ödemesiz, elle plan verme eklendi (`membership_grants`, `/api/admin/grants`, `web/scripts/grant.mjs`).
+
 ## Öncelik düzeltmesi ve son kanıtlar
 
 ### İşletme ve veri kararları — sağlayıcı kodundan önce
