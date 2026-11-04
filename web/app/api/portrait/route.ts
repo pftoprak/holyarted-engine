@@ -15,7 +15,7 @@ export async function GET(request: Request) {
     const limited = await rateLimit(request, 'portrait-read', user.id, 60);
     if (limited) return limited;
     return privateJson({ portrait: await getPortrait(user.id) });
-  } catch (error) {
+  } catch {
     await reportError('portrait_load_failed');
     return privateJson({ error: 'Your portrait could not be opened.' }, 503);
   }
@@ -31,7 +31,7 @@ export async function DELETE(request: Request) {
     if (limited) return limited;
     await deletePortrait(user.id);
     return new Response(null, { status: 204, headers: { 'cache-control': 'no-store', 'x-content-type-options': 'nosniff' } });
-  } catch (error) {
+  } catch {
     await reportError('portrait_delete_failed');
     return privateJson({ error: 'Your portrait could not be deleted.' }, 503);
   }

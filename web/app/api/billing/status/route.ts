@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     if (!user) return privateJson({ error: 'Unauthorized' }, 401);
     const membership = await getMembership(user.id);
     return privateJson(publicMembership(membership));
-  } catch (error) {
+  } catch {
     await reportError('membership_load_failed');
     return privateJson({ error: 'Your membership could not be opened.' }, 503);
   }

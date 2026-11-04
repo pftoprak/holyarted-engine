@@ -63,8 +63,8 @@ export const stripeProvider: BillingProvider = {
   name: 'stripe',
 
   configured() {
-    return ['STRIPE_SECRET_KEY', 'STRIPE_WEBHOOK_SECRET', 'STRIPE_PLUS_PRICE_ID', 'STRIPE_PREMIUM_PRICE_ID']
-      .every((key) => Boolean(runtimeEnv[key as keyof typeof runtimeEnv]?.toString().trim()));
+    const { STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PLUS_PRICE_ID, STRIPE_PREMIUM_PRICE_ID } = runtimeEnv;
+    return [STRIPE_SECRET_KEY, STRIPE_WEBHOOK_SECRET, STRIPE_PLUS_PRICE_ID, STRIPE_PREMIUM_PRICE_ID].every((value) => Boolean(value?.trim()));
   },
 
   async createCheckout({ userId, email, customerId, plan, origin }) {

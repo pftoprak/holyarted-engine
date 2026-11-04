@@ -19,7 +19,7 @@ export async function GET(request: Request) {
       { exportedAt: new Date().toISOString(), account: user, portrait, membership: publicMembership(membership) },
       200, { 'content-disposition': 'attachment; filename="holyarted-data.json"' },
     );
-  } catch (error) {
+  } catch {
     await reportError('account_export_failed');
     return privateJson({ error: 'Your data could not be exported.' }, 503);
   }

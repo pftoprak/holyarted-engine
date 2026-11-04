@@ -100,15 +100,15 @@ async function fixture(t, { accounts = true } = {}) {
     const source = ts.transpileModule(readFileSync(filename, 'utf8'), {
       compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ESNext },
     }).outputText;
-    const module = new vm.SourceTextModule(source, { context, identifier: filename });
-    modules.set(filename, module);
-    return module;
+    const created = new vm.SourceTextModule(source, { context, identifier: filename });
+    modules.set(filename, created);
+    return created;
   }
   async function route(relative) {
-    const module = moduleFor(path.join(root, relative));
+    const loaded = moduleFor(path.join(root, relative));
     // Already loaded as a dependency of a route: reuse that instance.
-    if (module.status === 'evaluated') return module.namespace;
-    await module.link((specifier, parent) => {
+    if (loaded.status === 'evaluated') return loaded.namespace;
+    await loaded.link((specifier, parent) => {
       if (specifier === 'cloudflare:workers') return runtime;
       const filename = specifier.startsWith('@/')
         ? path.join(root, specifier.slice(2))
@@ -116,8 +116,8 @@ async function fixture(t, { accounts = true } = {}) {
       if (filename.endsWith('.json')) return moduleFor(filename);
       return moduleFor(existsSync(`${filename}.ts`) ? `${filename}.ts` : path.join(filename, 'index.ts'));
     });
-    await module.evaluate();
-    return module.namespace;
+    await loaded.evaluate();
+    return loaded.namespace;
   }
   const portrait = await route('app/api/portrait/route.ts');
   const exported = await route('app/api/account/export/route.ts');
@@ -586,7 +586,7 @@ test('server failures alert a webhook once, without personal data', async (t) =>
   f.faults.database = true;
   for (let attempt = 0; attempt < 3; attempt++) assert.equal((await f.portrait.GET(f.request('alice'))).status, 503);
   // One alert per distinct event despite three failing requests.
-  assert.deepEqual(f.alerts.map((alert) => alert.event).sort(), ['portrait_load_failed', 'rate_limit_store_failed']);
+  assert.deepEqual(f.alerts.map((alert) => alert.event).sort((a, b) => a.localeCompare(b)), ['portrait_load_failed', 'rate_limit_store_failed']);
   for (const alert of f.alerts) {
     assert.equal(alert.text, `[holyarted] ${alert.event}`);
     assert.doesNotMatch(JSON.stringify(alert), /alice|1990-01-05|Bearer|test-/);

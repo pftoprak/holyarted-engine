@@ -76,17 +76,17 @@ export function AccountDataControls({ locale, hasPortrait, onDelete, onExport, o
         <AlertDialogContent className="bg-[#fbf8f2] text-[#514b46]">
           <AlertDialogHeader><AlertDialogTitle>{text.confirm}</AlertDialogTitle><AlertDialogDescription>{text.description}</AlertDialogDescription></AlertDialogHeader>
           <AlertDialogFooter><AlertDialogCancel disabled={pending}>{text.cancel}</AlertDialogCancel><AlertDialogAction disabled={pending} onClick={remove} className="bg-[#9b5e55] text-white">{pending ? text.deleting : text.remove}</AlertDialogAction></AlertDialogFooter>
-          {message && <p role="status" className="text-sm">{message}</p>}
+          {message && <output className="block text-sm">{message}</output>}
         </AlertDialogContent>
       </AlertDialog>}
     </div>
-    {downloadUrl && <p role="status" className="mt-4 text-sm">
+    {downloadUrl && <output className="mt-4 block text-sm">
       {locale === 'tr' ? 'Dosyan hazır. İndirme başlamadıysa: ' : 'Your file is ready. If the download did not start: '}
       <a href={downloadUrl} download="holyarted-data.json" className="font-bold underline underline-offset-4">
         {locale === 'tr' ? 'JSON dosyasını indir' : 'Download the JSON file'}
       </a>
-    </p>}
-    {message && <p role="status" className="mt-4 text-sm">{message}</p>}
+    </output>}
+    {message && <output className="mt-4 block text-sm">{message}</output>}
     <AlertDialog open={accountOpen} onOpenChange={setAccountOpen}>
       <AlertDialogTrigger disabled={pending} className="mt-5 text-sm font-bold text-[#9b5e55] underline underline-offset-4">{text.account}</AlertDialogTrigger>
       <AlertDialogContent className="bg-[#fbf8f2] text-[#514b46]">
