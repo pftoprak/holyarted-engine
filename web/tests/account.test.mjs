@@ -27,11 +27,14 @@ async function fixture(t, { accounts = true } = {}) {
   const calls = [];
   const deletedUsers = new Set();
   const subscriptions = {};
+  const iyzico = {};
   const alerts = [];
   const logs = [];
   const network = { requests: 0, queries: 0 };
   const env = {
     HOLYARTED_ACCOUNTS_ENABLED: accounts ? 'true' : 'false',
+    // The Stripe tests below run with Stripe; iyzico tests switch this.
+    BILLING_PROVIDER: 'stripe',
     SUPABASE_URL: 'https://auth.example.test',
     SUPABASE_PUBLISHABLE_KEY: 'test-public-key',
     DB: {
@@ -51,10 +54,29 @@ async function fixture(t, { accounts = true } = {}) {
     },
   };
   const context = vm.createContext({
-    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa, crypto, Math, Array,
+    Request, Response, Headers, AbortSignal, TextEncoder, TextDecoder, Uint8Array, btoa, crypto, Math, Array, Date, URL,
     console: { error: (...args) => logs.push(args.map(String).join(' ')) },
     fetch: async (url, init) => {
       network.requests += 1;
+      if (url.startsWith('https://sandbox-api.iyzipay.com/')) {
+        const path = new URL(url).pathname;
+        // Every call must carry a valid IYZWSv2 signature over randomKey + path + body.
+        const decoded = Buffer.from(init.headers.authorization.replace(/^IYZWSv2 /, ''), 'base64').toString();
+        const [, apiKey, randomKey, signature] = decoded.match(/^apiKey:(.*)&randomKey:(.*)&signature:(.*)$/);
+        assert.equal(apiKey, 'iyzico-api-key');
+        assert.equal(init.headers['x-iyzi-rnd'], randomKey);
+        assert.equal(signature, createHmac('sha256', 'iyzico-secret-key').update(randomKey + path + (init.body ?? '')).digest('hex'));
+        calls.push(`iyzico ${init.method} ${path}`);
+        const ref = decodeURIComponent(path.split('/')[4]);
+        if (path.endsWith('/cancel')) {
+          if (faults.iyzicoCancel) return Response.json({ status: 'failure', errorCode: 'xx', errorMessage: 'private detail' }, { status: 422 });
+          if (iyzico[ref]) iyzico[ref].subscriptionStatus = 'CANCELED';
+          return Response.json({ status: 'success' });
+        }
+        return iyzico[ref]
+          ? Response.json({ status: 'success', data: { items: [iyzico[ref]] } })
+          : Response.json({ status: 'failure', errorCode: '404' }, { status: 404 });
+      }
       if (url === 'https://alerts.example.test/hook') {
         alerts.push(JSON.parse(init.body));
         return new Response(null, { status: 204 });
@@ -137,7 +159,7 @@ async function fixture(t, { accounts = true } = {}) {
       method, headers, ...(body === undefined ? {} : { body: JSON.stringify(body) }),
     });
   }
-  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, admin, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
+  return { db, env, faults, logs, calls, network, deletedUsers, subscriptions, route, alerts, admin, iyzico, portrait, exported, billing, checkout, portal, account, health, reading, webhook, request };
 }
 
 test('health check reports only availability and never configuration details', async (t) => {
@@ -676,4 +698,75 @@ test('birth dates before 1900 are rejected; there is no age limit', async (t) =>
   assert.equal(await reading(new Date().toISOString().slice(0, 10)), 200);
   assert.equal((await f.portrait.PUT(f.request('alice', 'PUT', { ...input, birthDate: '1899-12-31' }))).status, 400);
   assert.equal((await f.portrait.PUT(f.request('alice', 'PUT', { ...input, birthDate: '1900-01-01' }))).status, 200);
+});
+
+const IYZICO_ENV = {
+  BILLING_PROVIDER: 'iyzico', IYZICO_API_KEY: 'iyzico-api-key', IYZICO_SECRET_KEY: 'iyzico-secret-key', IYZICO_MERCHANT_ID: '987654',
+  IYZICO_PLUS_PLAN_CODE: 'plan-plus', IYZICO_PREMIUM_PLAN_CODE: 'plan-premium',
+};
+function iyzicoWebhook(payload, secret = 'iyzico-secret-key') {
+  const message = '987654' + secret + payload.iyziEventType + payload.subscriptionReferenceCode + payload.orderReferenceCode + payload.customerReferenceCode;
+  const signature = createHmac('sha256', secret).update(message).digest('hex');
+  return new Request('https://holyarted.example.test/api/billing/webhook', {
+    method: 'POST', headers: { 'content-type': 'application/json', 'x-iyz-signature-v3': signature }, body: JSON.stringify(payload),
+  });
+}
+
+test('iyzico notifications are verified, read the live subscription and follow the membership rules', async (t) => {
+  const f = await fixture(t);
+  Object.assign(f.env, IYZICO_ENV);
+  f.db.prepare(`INSERT INTO memberships (user_id,email,plan,status,stripe_customer_id,stripe_subscription_id,updated_at)
+    VALUES (?,?,?,?,?,?,?)`).run(people.alice.id, people.alice.email, 'basic', 'incomplete', 'cus-iy', 'sub-iy', '2026-11-04');
+  f.iyzico['sub-iy'] = {
+    referenceCode: 'sub-iy', customerReferenceCode: 'cus-iy', pricingPlanReferenceCode: 'plan-premium', subscriptionStatus: 'ACTIVE',
+    orders: [{ endPeriod: 1800000000000, orderStatus: 'SUCCESS' }, { endPeriod: 1802000000000, orderStatus: 'WAITING' }],
+  };
+  const event = (type, order, time) => ({ orderReferenceCode: order, customerReferenceCode: 'cus-iy', subscriptionReferenceCode: 'sub-iy', iyziReferenceCode: `ref-${order}`, iyziEventType: type, iyziEventTime: time });
+  const row = () => ({ ...f.db.prepare('SELECT plan, status, current_period_end, billing_event_at FROM memberships WHERE user_id = ?').get(people.alice.id) });
+
+  assert.equal((await f.webhook.POST(iyzicoWebhook(event('subscription.order.success', 'o1', 1_700_000_000_000), 'wrong-secret'))).status, 400);
+  assert.equal((await f.webhook.POST(iyzicoWebhook(event('subscription.order.success', 'o1', 1_700_000_000_000)))).status, 200);
+  assert.deepEqual(row(), { plan: 'premium', status: 'active', current_period_end: 1800000000, billing_event_at: 1700000000 });
+  // Delivered twice: applied once.
+  await f.webhook.POST(iyzicoWebhook(event('subscription.order.success', 'o1', 1_700_000_000_000)));
+  assert.deepEqual(f.calls, ['iyzico GET /v2/subscription/subscriptions/sub-iy']);
+
+  // A failed renewal keeps access during the grace period (UNPAID -> past_due).
+  f.iyzico['sub-iy'].subscriptionStatus = 'UNPAID';
+  await f.webhook.POST(iyzicoWebhook(event('subscription.order.failure', 'o2', 1_700_100_000_000)));
+  assert.equal(row().status, 'past_due');
+  assert.equal((await (await f.reading.POST(f.request('alice', 'POST', input))).json()).plan, 'premium');
+
+  // Other event types are acknowledged and ignored.
+  assert.equal((await f.webhook.POST(iyzicoWebhook(event('subscription.something.else', 'o3', 1_700_200_000_000)))).status, 200);
+  assert.equal(row().status, 'past_due');
+  assert.deepEqual(f.logs, []);
+
+  // Keys alone do not open purchases: the checkout page is not built yet.
+  const { purchasesAvailable } = await f.route('lib/billing/index.ts');
+  assert.equal(purchasesAvailable(true), false);
+});
+
+test('account deletion cancels an iyzico subscription, also when it was already canceled there', async (t) => {
+  for (const alreadyCanceled of [false, true]) {
+    const f = await deletionFixture(t);
+    Object.assign(f.env, IYZICO_ENV);
+    f.iyzico.sub_test = { referenceCode: 'sub_test', customerReferenceCode: 'cus_test', pricingPlanReferenceCode: 'plan-premium', subscriptionStatus: alreadyCanceled ? 'CANCELED' : 'ACTIVE', orders: [] };
+    f.faults.iyzicoCancel = alreadyCanceled;
+    assert.equal((await f.account.DELETE(f.request('alice', 'DELETE'))).status, 204);
+    assert.deepEqual(f.calls, alreadyCanceled
+      ? ['iyzico POST /v2/subscription/subscriptions/sub_test/cancel', 'iyzico GET /v2/subscription/subscriptions/sub_test', 'admin']
+      : ['iyzico POST /v2/subscription/subscriptions/sub_test/cancel', 'admin']);
+  }
+});
+
+test('a failed iyzico cancellation of a live subscription blocks account deletion', async (t) => {
+  const f = await deletionFixture(t);
+  Object.assign(f.env, IYZICO_ENV);
+  f.iyzico.sub_test = { referenceCode: 'sub_test', subscriptionStatus: 'ACTIVE', orders: [] };
+  f.faults.iyzicoCancel = true;
+  const response = await f.account.DELETE(f.request('alice', 'DELETE'));
+  assert.equal(response.status, 503);
+  assert.doesNotMatch(await response.text(), /private detail/);
+  assert.ok(!f.calls.includes('admin'));
 });
