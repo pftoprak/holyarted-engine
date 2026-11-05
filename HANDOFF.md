@@ -64,6 +64,50 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 - **Mobil.** `mobile/` sunucuya bağlı değil. 4 kartın kısa sürümlerini ücretsiz gösteriyor; veri dosyalarını içe aktarmıyor. Mağazaya çıkmadan önce web API'sine (`/api/reading`) bağlanmalı; mobil derlemesi burada denenemediği için dokunulmadı.
 - Testler: 40.
 
+## Kurucu kararları — 4 Kasım 2026
+
+| Konu | Karar | Kodda |
+| --- | --- | --- |
+| Birleştirme | PR #5 ve #6 `clean-skeleton`'a birleştirildi ("APPROVED"). | Ana branch son halde. Canlıya alınmadı. |
+| Varsayılan dil | İngilizce kalıyor. | Değişiklik yok. |
+| Yaş sınırı | Yok. Yalnızca 1900 öncesi ve gelecek tarihler kabul edilmez. | Formda, okuma API'sinde ve portre kaydında kontrol ediliyor. |
+| Ödeme sağlayıcısı | iyzico | `BILLING_PROVIDER` tanımsızsa iyzico seçilir; `stripe` yazılırsa Stripe. |
+| "Human Design" ifadesi | Kalıyor; marka incelemesi avukatta. | Değişiklik yok. |
+
+## iyzico entegrasyonu (`feature/iyzico-and-limits`)
+
+**Yapılan** (`web/lib/billing/iyzico.ts`): Resmi belgeler ve `iyzipay-node` kaynağına göre yazıldı. Sahte iyzico sunucusuyla 3 testi var.
+
+- **IYZWSv2 imzası:** HMAC-SHA256 (hex). İmzalanan metin: rastgele anahtar + `/v2/...` yolu + gövde. Sonuç base64 olarak `Authorization` başlığına konur.
+- **Abonelik okuma:** `GET /v2/subscription/subscriptions/{ref}`. Planı fiyat planı kodundan (`IYZICO_PLUS_PLAN_CODE`, `IYZICO_PREMIUM_PLAN_CODE`), dönem sonunu son başarılı ödemeden alır. Durum eşleşmesi:
+
+  | iyzico durumu | Sitedeki durum |
+  | --- | --- |
+  | ACTIVE | active |
+  | UNPAID | past_due (erişim sürer) |
+  | PENDING | incomplete |
+  | UPGRADED, CANCELED, EXPIRED | canceled |
+
+- **İptal:** `POST .../cancel`. "Zaten iptal" hata kodları belgelenmemiş. Bu yüzden iptal hata verirse abonelik okunur; iptal edilmiş görünüyorsa iş tamamlanmış sayılır.
+- **Bildirimler:** `X-IYZ-SIGNATURE-V3` doğrulanır. İmzalanan metin: merchantId + secretKey + eventType + subscriptionRef + orderRef + customerRef. Bildirim yalnızca aboneliğin adını verir; abonelik, tekrar kontrolünden sonra okunur.
+
+**Yapılmayan** (bu yüzden `configured()` şimdilik `false` döner ve satın alma gizli kalır):
+
+1. **Ödeme sayfası.** iyzico adres değil, sayfaya gömülecek bir form döndürür. Bu form için şunlar gerekir:
+   - Alıcının telefonu, T.C. kimlik numarası ve fatura adresi. Bunları toplayan bir form yok.
+   - Formun gösterileceği, kendi güvenlik politikasına (CSP) sahip bir sayfa.
+   - `callbackUrl` dönüşü: `GET /v2/subscription/checkoutform/{token}` ile sonuç okunur ve üyelik yazılır.
+2. **Abonelik iptal ekranı.** iyzico'nun hazır müşteri portalı yok. Profil sayfasına "Aboneliği iptal et" düğmesi eklenmeli.
+3. **KVKK metni.** T.C. kimlik no, telefon ve adres toplanınca KVKK metnine eklenmeli; ödeme sağlayıcısı olarak iyzico yazılmalı.
+4. **Sandbox doğrulaması.** Yukarıdakilerin hiçbiri iyzico sandbox'ında denenmedi. Özellikle GET isteklerinde gövdesiz imza ve bildirim imzası ilk gerçek denemede doğrulanmalı.
+
+**Senden gerekenler:**
+
+- iyzico üye işyeri hesabı ve sandbox hesabı (sandbox-merchant.iyzipay.com).
+- Sandbox API anahtarı, gizli anahtar ve üye işyeri numarası.
+- Plus ve Premium için iki fiyat planı (pricing plan) kodu.
+- Bildirim imzası (V3) özelliğinin açılması. Bunu iyzico entegrasyon desteğinden istemen gerekiyor: entegrasyon@iyzico.com.
+
 ## `feature/no-login-local` ile yapılanlar
 
 - **Bayrak:** `web/lib/features.ts` (`accountsEnabled`, `accountsDisabledResponse`). Hesap/ödeme route'larının her biri ilk satırda bu kontrolü yapar.
@@ -84,7 +128,7 @@ Ayarın okunduğu yer: [web/lib/features.ts](web/lib/features.ts).
 
 ## Sıradaki işler (arka uç, öncelik sırasıyla)
 
-1. **Ödeme sağlayıcısı kararı.** Stripe Türkiye'de yok. Şirketin kurulu olduğu ülkeye göre Stripe / iyzico / Paddle / Lemon Squeezy seçilmeli. Kalan ödeme işleri buna bağlı.
+1. ~~**Ödeme sağlayıcısı kararı.**~~ iyzico seçildi (4 Kasım). Kalan iş: yukarıdaki "iyzico entegrasyonu". Eski not: Stripe Türkiye'de yok. Şirketin kurulu olduğu ülkeye göre Stripe / iyzico / Paddle / Lemon Squeezy seçilmeli. Kalan ödeme işleri buna bağlı.
 2. ~~**Ücretli içeriği sunucuya taşı.**~~ `feature/premium-gating` ile yapıldı (yukarıdaki "Plan erişimi"). Kalan: plan matrisinin kurucu tarafından onaylanması ve canlıda iki ayrı test hesabıyla doğrulama.
 3. ~~**Webhook düzeltmeleri.**~~ `feature/release-hardening` ile yapıldı: plan faturalanan fiyattan belirlenir, eski olay yeni durumu ezmez, aynı olay iki kez uygulanmaz, aboneliksiz checkout aktif yazmaz.
 4. ~~**Stripe API sürümü ve idempotency.**~~ Yapıldı: `Stripe-Version: 2024-06-20` sabit; webhook her iki `current_period_end` konumunu okur; checkout isteğine idempotency anahtarı eklendi.

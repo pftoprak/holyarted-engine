@@ -17,6 +17,9 @@ export type ProviderSubscription = {
 export type BillingEvent =
   | { kind: 'checkout_completed'; id: string; created: number; userId: string | null; email: string | null; subscriptionId: string | null }
   | { kind: 'subscription_changed' | 'subscription_deleted'; id: string; created: number; subscription: ProviderSubscription }
+  // The notification only names the subscription; its state is read after
+  // deduplication, so a repeated delivery costs no provider call.
+  | { kind: 'subscription_notified'; id: string; created: number; subscriptionId: string }
   | { kind: 'ignored'; id: string; created: number };
 
 // What a payment provider must offer. A new provider (iyzico, Paddle, ...) is

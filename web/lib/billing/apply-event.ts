@@ -43,6 +43,10 @@ export async function applyBillingEvent(provider: BillingProvider, event: Billin
     if (event.userId && event.email && event.subscriptionId) {
       await applySubscription(event, event.userId, event.email, await provider.getSubscription(event.subscriptionId));
     }
+  } else if (event.kind === 'subscription_notified') {
+    const subscription = await provider.getSubscription(event.subscriptionId);
+    const existing = subscription.customerId ? await getMembershipByCustomer(subscription.customerId) : null;
+    if (existing) await applySubscription(event, existing.userId, existing.email, subscription);
   } else if (event.kind !== 'ignored') {
     // Before checkout completes there is no membership (and no email) yet;
     // the checkout event reads the live subscription, so nothing is lost.

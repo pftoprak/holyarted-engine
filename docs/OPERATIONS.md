@@ -85,7 +85,46 @@ Betikler yalnızca her yanıtta yeniden üretilen bir nonce ile çalışır (`'s
 
 HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
 
-## 8. Tatbikat
+## 8. Senin elle yapacakların (bu bilgisayardan erişim yok)
+
+**A. Canlıyı güncellemek (en acil).** `holyarted.com` hâlâ Ekim öncesi sürümü çalıştırıyor; o sürümde ücretli kart metinleri tarayıcı kodunda açık. Site OpenAI Sites üzerinden yayınlanıyor (`web/.openai/hosting.json`).
+
+1. Sites projesinin ortam değişkenlerine şunları ekle:
+   - `SITE_URL=https://holyarted.com`
+   - `ADMIN_TOKEN`: en az 32 karakter rastgele değer
+   - İstersen `ERROR_REPORT_URL`
+   - Mevcut Supabase değişkenleri yerinde kalmalı.
+2. Veritabanına `web/drizzle/0002_*.sql` ve `0003_*.sql` dosyalarını sırayla uygula. Sites bunu otomatik yapmıyorsa Sites panelinden ya da destekten nasıl yapılacağını öğren. **Uygulanmadan yayınlanırsa** giriş yapan kullanıcıların istekleri hata verir.
+3. `clean-skeleton` branch'inden yeniden yayınla.
+4. Kontrol et:
+   - `https://holyarted.com/api/health` 200 dönmeli.
+   - Sayfa kaynağında "Protect continuity" metni **bulunmamalı**.
+   - `https://holyarted.com/robots.txt` açılmalı.
+
+**B. Alan adı (Cloudflare paneli → holyarted.com → DNS):**
+
+1. **`www` kaydı:** Şu kaydı ekle:
+
+   | Tür | Ad | Hedef | Proxy |
+   | --- | --- | --- | --- |
+   | `CNAME` | `www` | `holyarted.com` | Açık (turuncu bulut) |
+
+   Ardından Kurallar → Yönlendirme kuralı ekle: `www.holyarted.com/*` adresini `https://holyarted.com/$1` adresine 301 ile yönlendir.
+2. **DMARC:** Şu kaydı ekle:
+
+   | Tür | Ad | Değer |
+   | --- | --- | --- |
+   | `TXT` | `_dmarc` | `v=DMARC1; p=none; rua=mailto:support@holyarted.com` |
+
+   Birkaç hafta raporları izledikten sonra `p=quarantine` yapılabilir.
+3. **E-posta testi:** `support@holyarted.com` adresine başka bir hesaptan deneme e-postası gönder ve sana ulaştığını doğrula.
+
+**C. GitHub:**
+
+1. `docs/github-ci.yml` dosyasını web arayüzünden `.github/workflows/ci.yml` olarak ekle.
+2. Ayarlar → Branches → `clean-skeleton` için koruma aç: CI geçmeden birleştirme yapılamasın.
+
+## 9. Tatbikat
 
 Üç ayda bir, staging ortamında: D1'i 1 saat önceye geri yükle, madde 4'ü uygula, süreyi ve sorunları buraya yaz.
 
