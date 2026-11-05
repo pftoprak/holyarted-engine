@@ -2,6 +2,7 @@ import abilities from '@/data/abilities.json';
 import idealJob from '@/data/ideal_job.json';
 import lifePath from '@/data/life_path.json';
 import showcase from '@/data/showcase.json';
+import abilitiesEn from '@/data/en/abilities.json';
 import { calculateCoreProfile } from './calculation-core';
 import { planIncludes, type MembershipPlan } from './plans';
 
@@ -24,6 +25,9 @@ export type ReadingSection = {
   note: Localized | null;
   status: 'ready' | 'pending' | 'locked';
   paragraphs: string[];
+  // English translation of the same dataset text, where one exists
+  // (web/data/en/). The Turkish files are never changed.
+  paragraphsEn: string[] | null;
 };
 export type RelationshipLine = { sectionId: ReadingSectionId; sentence: string };
 export type Reading = {
@@ -35,6 +39,7 @@ export type Reading = {
 };
 
 const datasets: Record<ReadingSectionId, Dataset> = { showcase, abilities, idealJob, lifePath };
+const translations: Partial<Record<ReadingSectionId, Dataset>> = { abilities: abilitiesEn };
 const order: { id: ReadingSectionId; tier: ReadingTier }[] = [
   { id: 'showcase', tier: 'basic' },
   { id: 'abilities', tier: 'plus' },
@@ -104,6 +109,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
     const key = contentKeys[id];
     const text = datasets[id][key];
     const ready = typeof text === 'string' && !PLACEHOLDER.test(text.trim());
+    const translated = translations[id]?.[key];
     // The key is a dataset number, not personal data.
     if (!ready) console.error(`reading_section_unavailable ${id}:${key}`);
     return {
@@ -115,6 +121,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
       note: id === 'lifePath' ? LIFE_PATH_NOTE : null,
       status: ready ? 'ready' : 'pending',
       paragraphs: ready ? paragraphs(text) : [],
+      paragraphsEn: ready && typeof translated === 'string' ? paragraphs(translated) : null,
     };
   });
 
@@ -135,7 +142,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
 export function readingForPlan(reading: Reading, plan: MembershipPlan): Reading {
   const sections = reading.sections.map((section): ReadingSection => (planIncludes(plan, section.tier)
     ? section
-    : { ...section, status: 'locked', paragraphs: [] }));
+    : { ...section, status: 'locked', paragraphs: [], paragraphsEn: null }));
   const open = new Set(sections.filter((section) => section.status !== 'locked').map((section) => section.id));
   const relationshipsLocked = !planIncludes(plan, RELATIONSHIP_TIER);
   return {

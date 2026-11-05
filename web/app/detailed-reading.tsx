@@ -20,17 +20,17 @@ export function DetailedReading({ text, locale, state, onRetry, lockedLabel }: D
     <div id="reading" className="mt-14 scroll-mt-24 border-t border-[#625b55]/22 pt-14">
       <div className="grid gap-6 lg:grid-cols-[0.65fr_1.35fr]">
         <div><p className="eyebrow">{text.readingLabel}</p><h2 className="mt-5 font-heading text-5xl leading-[0.95] tracking-[-0.04em] md:text-6xl">{text.readingTitle}</h2></div>
-        <div><p className="max-w-2xl text-base leading-8 text-[#514b46]/70">{text.readingCopy}</p>{locale !== 'tr' && <p role="note" className="mt-4 rounded-2xl border border-[#8f705e]/30 bg-[#fbf8f2] px-4 py-3 text-sm font-bold leading-6 text-[#514b46]/80">{text.readingLocaleNote}</p>}</div>
+        <div><p className="max-w-2xl text-base leading-8 text-[#514b46]/70">{text.readingCopy}</p>{locale !== 'tr' && state.status === 'ready' && state.reading.sections.some((section) => section.status === 'ready' && !section.paragraphsEn) && <p role="note" className="mt-4 rounded-2xl border border-[#8f705e]/30 bg-[#fbf8f2] px-4 py-3 text-sm font-bold leading-6 text-[#514b46]/80">{text.readingLocaleNote}</p>}</div>
       </div>
       {state.status === 'loading' && <p className="mt-10 text-sm text-[#514b46]/60" aria-live="polite">{text.readingLoading}</p>}
       {state.status === 'error' && <div className="mt-10 flex flex-wrap items-center gap-4 text-sm text-[#514b46]/70" role="alert"><span>{text.readingError}</span><button onClick={onRetry} className="text-xs font-bold uppercase tracking-[0.14em] underline underline-offset-4">{text.readingRetry}</button></div>}
       {state.status === 'ready' && <div className="mt-10 grid gap-4">{state.reading.sections.map((section) => <Fragment key={section.id}>
         <details open={section.id === 'showcase'} className="group rounded-[2rem] bg-[#f7f3ec]/55 p-7 md:p-9">
           <summary className="flex cursor-pointer list-none items-center justify-between gap-4"><span className="flex flex-wrap items-center gap-3"><span lang="en" className="rounded-full border border-[#8f705e]/30 px-2.5 py-1 text-[9px] font-bold uppercase tracking-[0.14em] text-[#8f705e]">{text.readingTiers[section.tier]}</span><span lang={locale} className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]">{section.title[locale]} · {section.key}</span></span><ArrowRight className="size-4 shrink-0 transition group-open:rotate-90" /></summary>
-          <div lang={state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">
+          <div lang={locale === 'en' && section.paragraphsEn ? 'en' : state.reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">
             <p className="text-xs leading-6 text-[#514b46]/60"><span className="font-bold">{text.readingWhy}: </span><span lang={locale}>{section.reason[locale]}</span></p>
             {section.note && <p lang={locale} className="border-l-2 border-[#a7826c]/45 pl-3 text-xs leading-6 text-[#514b46]/60">{section.note[locale]}</p>}
-            {section.status === 'locked' ? <p className="italic">{lockedLabel(section.tier)}</p> : section.status === 'pending' ? <p className="italic">{text.readingPending}</p> : section.paragraphs.map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
+            {section.status === 'locked' ? <p className="italic">{lockedLabel(section.tier)}</p> : section.status === 'pending' ? <p className="italic">{text.readingPending}</p> : (locale === 'en' && section.paragraphsEn ? section.paragraphsEn : section.paragraphs).map((paragraph, index) => <p key={index} className="whitespace-pre-line">{paragraph}</p>)}
           </div>
         </details>
         {section.id === 'lifePath' && <RelationshipLines text={text} locale={locale} reading={state.reading} lockedLabel={lockedLabel} />}

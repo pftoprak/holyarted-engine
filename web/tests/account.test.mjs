@@ -379,6 +379,11 @@ test('in local open mode the detailed reading returns every dataset text and sto
   assert.deepEqual(reading.sections[3].title, { en: 'Areas to deepen', tr: 'Derinleşme alanların' });
   assert.match(reading.sections[2].note.tr, /tespit değildir/);
   assert.match(reading.sections[2].note.en, /not a finding/);
+  // English translations sit next to the Turkish text; only Abilities is translated so far.
+  const abilitiesEn = JSON.parse(readFileSync(path.join(root, 'data', 'en', 'abilities.json'), 'utf8'));
+  assert.equal(reading.sections[1].paragraphsEn.join(' ').replace(/\s+/g, ' '), abilitiesEn[reading.sections[1].key].replace(/\s+/g, ' '));
+  assert.equal(reading.sections[1].paragraphsEn.length, reading.sections[1].paragraphs.length);
+  assert.equal(reading.sections[0].paragraphsEn, null);
   assert.equal(reading.locale, 'tr');
   for (const section of reading.sections) assert.equal(section.status, 'ready');
   const showcase = JSON.parse(readFileSync(path.join(root, 'data', 'showcase.json'), 'utf8'));
@@ -437,7 +442,7 @@ test('reading and portrait chapters are filtered on the server by the signed-in 
   };
   const status = (body) => Object.fromEntries(body.reading.sections.map((section) => [section.id, section.status]));
   const texts = (body) => [
-    ...body.reading.sections.flatMap((section) => section.paragraphs),
+    ...body.reading.sections.flatMap((section) => [...section.paragraphs, ...(section.paragraphsEn ?? [])]),
     ...body.reading.relationships.map((line) => line.sentence),
     ...['en', 'tr'].flatMap((locale) => [...body.chapters[locale].cards, ...body.chapters[locale].lenses].flat()),
   ];
@@ -457,7 +462,7 @@ test('reading and portrait chapters are filtered on the server by the signed-in 
     const basic = await served(token);
     assert.equal(basic.plan, 'basic');
     assert.deepEqual(status(basic), { showcase: 'ready', abilities: 'locked', lifePath: 'locked', idealJob: 'locked' });
-    for (const section of basic.reading.sections.filter((candidate) => candidate.status === 'locked')) assert.deepEqual(section.paragraphs, []);
+    for (const section of basic.reading.sections.filter((candidate) => candidate.status === 'locked')) assert.deepEqual([section.paragraphs, section.paragraphsEn], [[], null]);
     assert.deepEqual([basic.reading.relationships, basic.reading.relationshipsLocked], [[], true]);
     for (const locale of ['en', 'tr']) {
       assert.deepEqual(basic.chapters[locale].cards, premium.chapters[locale].cards.slice(0, 2));
