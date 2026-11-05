@@ -34,3 +34,18 @@ test('rejects incomplete names and impossible dates', () => {
   assert.throws(() => calculateCoreProfile('', 'Morgan', '1992-07-16'));
   assert.throws(() => calculateCoreProfile('Alex', 'Morgan', '1992-02-31'));
 });
+
+test('every birth date from 1900 to today has a detailed reading in the web datasets', () => {
+  const webData = (name) => JSON.parse(readFileSync(new URL(`../data/${name}.json`, import.meta.url), 'utf8'));
+  const [showcase, abilities, idealJob, lifePath] = ['showcase', 'abilities', 'ideal_job', 'life_path'].map(webData);
+  const missing = new Set();
+  for (const date = new Date(Date.UTC(1900, 0, 1)); date.getTime() <= Date.now(); date.setUTCDate(date.getUTCDate() + 1)) {
+    const { contentKeys } = calculateCoreProfile('Ada', 'Yılmaz', date.toISOString().slice(0, 10));
+    if (!(contentKeys.showcase in showcase)) missing.add(`showcase:${contentKeys.showcase}`);
+    if (!(contentKeys.lifePath in lifePath)) missing.add(`lifePath:${contentKeys.lifePath}`);
+  }
+  assert.deepEqual([...missing], []);
+  for (const value of [1, 2, 3, 4, 5, 6, 7, 8, 9, 11, 19, 22, 33]) {
+    assert.ok(String(value) in abilities && String(value) in idealJob);
+  }
+});

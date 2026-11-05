@@ -1,0 +1,2058 @@
+{
+  "generatedFor": "2026-10-29",
+  "datasets": {
+    "showcase": {
+      "keys": 13,
+      "perKey": {
+        "1": {
+          "words": 564,
+          "placeholder": false,
+          "hedgePer1000": 8.9,
+          "relationalPer1000": 19.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "2": {
+          "words": 557,
+          "placeholder": false,
+          "hedgePer1000": 3.6,
+          "relationalPer1000": 16.2,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3": {
+          "words": 678,
+          "placeholder": false,
+          "hedgePer1000": 7.4,
+          "relationalPer1000": 10.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4": {
+          "words": 675,
+          "placeholder": false,
+          "hedgePer1000": 11.9,
+          "relationalPer1000": 29.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "5": {
+          "words": 821,
+          "placeholder": false,
+          "hedgePer1000": 8.5,
+          "relationalPer1000": 21.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "6": {
+          "words": 755,
+          "placeholder": false,
+          "hedgePer1000": 11.9,
+          "relationalPer1000": 26.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "7": {
+          "words": 719,
+          "placeholder": false,
+          "hedgePer1000": 19.5,
+          "relationalPer1000": 9.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "8": {
+          "words": 757,
+          "placeholder": false,
+          "hedgePer1000": 2.6,
+          "relationalPer1000": 10.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "9": {
+          "words": 695,
+          "placeholder": false,
+          "hedgePer1000": 4.3,
+          "relationalPer1000": 15.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "11": {
+          "words": 449,
+          "placeholder": false,
+          "hedgePer1000": 6.7,
+          "relationalPer1000": 6.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "19": {
+          "words": 546,
+          "placeholder": false,
+          "hedgePer1000": 5.5,
+          "relationalPer1000": 9.2,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "22": {
+          "words": 302,
+          "placeholder": false,
+          "hedgePer1000": 3.3,
+          "relationalPer1000": 9.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "33": {
+          "words": 263,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 7.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        }
+      },
+      "similarPairs": []
+    },
+    "abilities": {
+      "keys": 13,
+      "perKey": {
+        "1": {
+          "words": 263,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 7.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "2": {
+          "words": 129,
+          "placeholder": false,
+          "hedgePer1000": 7.8,
+          "relationalPer1000": 31,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3": {
+          "words": 133,
+          "placeholder": false,
+          "hedgePer1000": 7.5,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4": {
+          "words": 143,
+          "placeholder": false,
+          "hedgePer1000": 14,
+          "relationalPer1000": 42,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "5": {
+          "words": 144,
+          "placeholder": false,
+          "hedgePer1000": 13.9,
+          "relationalPer1000": 20.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "6": {
+          "words": 139,
+          "placeholder": false,
+          "hedgePer1000": 21.6,
+          "relationalPer1000": 21.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "7": {
+          "words": 134,
+          "placeholder": false,
+          "hedgePer1000": 14.9,
+          "relationalPer1000": 22.4,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "8": {
+          "words": 136,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 14.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "9": {
+          "words": 129,
+          "placeholder": false,
+          "hedgePer1000": 15.5,
+          "relationalPer1000": 23.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "11": {
+          "words": 196,
+          "placeholder": false,
+          "hedgePer1000": 10.2,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "19": {
+          "words": 235,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 12.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "22": {
+          "words": 203,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 9.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "33": {
+          "words": 158,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        }
+      },
+      "similarPairs": [
+        {
+          "a": "1",
+          "b": "33",
+          "jaccard": 0.27
+        }
+      ]
+    },
+    "ideal_job": {
+      "keys": 13,
+      "perKey": {
+        "1": {
+          "words": 295,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "2": {
+          "words": 341,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 8.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3": {
+          "words": 279,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 3.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4": {
+          "words": 355,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 11.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "5": {
+          "words": 412,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 14.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "6": {
+          "words": 372,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 34.9,
+          "gendered": [],
+          "heteronormative": [
+            "evlilik"
+          ],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "7": {
+          "words": 388,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 2.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "8": {
+          "words": 356,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 2.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "9": {
+          "words": 316,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 9.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "11": {
+          "words": 286,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 3.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "19": {
+          "words": 263,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 11.4,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "22": {
+          "words": 350,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 2.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "33": {
+          "words": 2,
+          "placeholder": true,
+          "hedgePer1000": 0,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "noktalama olmadan bitiyor"
+          ]
+        }
+      },
+      "similarPairs": []
+    },
+    "life_path": {
+      "keys": 45,
+      "perKey": {
+        "44": {
+          "words": 124,
+          "placeholder": false,
+          "hedgePer1000": 8.1,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "55": {
+          "words": 150,
+          "placeholder": false,
+          "hedgePer1000": 20,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "66": {
+          "words": 131,
+          "placeholder": false,
+          "hedgePer1000": 22.9,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "77": {
+          "words": 156,
+          "placeholder": false,
+          "hedgePer1000": 12.8,
+          "relationalPer1000": 38.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "88": {
+          "words": 113,
+          "placeholder": false,
+          "hedgePer1000": 26.5,
+          "relationalPer1000": 17.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "99": {
+          "words": 123,
+          "placeholder": false,
+          "hedgePer1000": 32.5,
+          "relationalPer1000": 8.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "101": {
+          "words": 121,
+          "placeholder": false,
+          "hedgePer1000": 16.5,
+          "relationalPer1000": 16.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "112": {
+          "words": 114,
+          "placeholder": false,
+          "hedgePer1000": 26.3,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "123": {
+          "words": 355,
+          "placeholder": false,
+          "hedgePer1000": 8.5,
+          "relationalPer1000": 11.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "134": {
+          "words": 352,
+          "placeholder": false,
+          "hedgePer1000": 8.5,
+          "relationalPer1000": 34.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "145": {
+          "words": 488,
+          "placeholder": false,
+          "hedgePer1000": 4.1,
+          "relationalPer1000": 18.4,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "156": {
+          "words": 384,
+          "placeholder": false,
+          "hedgePer1000": 0,
+          "relationalPer1000": 7.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "167": {
+          "words": 413,
+          "placeholder": false,
+          "hedgePer1000": 9.7,
+          "relationalPer1000": 24.2,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "178": {
+          "words": 399,
+          "placeholder": false,
+          "hedgePer1000": 15,
+          "relationalPer1000": 12.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "189": {
+          "words": 346,
+          "placeholder": false,
+          "hedgePer1000": 5.8,
+          "relationalPer1000": 8.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "202": {
+          "words": 290,
+          "placeholder": false,
+          "hedgePer1000": 13.8,
+          "relationalPer1000": 13.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "213": {
+          "words": 355,
+          "placeholder": false,
+          "hedgePer1000": 8.5,
+          "relationalPer1000": 11.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "224": {
+          "words": 348,
+          "placeholder": false,
+          "hedgePer1000": 17.2,
+          "relationalPer1000": 14.4,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "235": {
+          "words": 418,
+          "placeholder": false,
+          "hedgePer1000": 9.6,
+          "relationalPer1000": 12,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "246": {
+          "words": 377,
+          "placeholder": false,
+          "hedgePer1000": 8,
+          "relationalPer1000": 5.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "257": {
+          "words": 365,
+          "placeholder": false,
+          "hedgePer1000": 8.2,
+          "relationalPer1000": 57.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "268": {
+          "words": 368,
+          "placeholder": false,
+          "hedgePer1000": 13.6,
+          "relationalPer1000": 2.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "279": {
+          "words": 328,
+          "placeholder": false,
+          "hedgePer1000": 6.1,
+          "relationalPer1000": 6.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "303": {
+          "words": 374,
+          "placeholder": false,
+          "hedgePer1000": 8,
+          "relationalPer1000": 8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "314": {
+          "words": 362,
+          "placeholder": false,
+          "hedgePer1000": 8.3,
+          "relationalPer1000": 35.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "325": {
+          "words": 398,
+          "placeholder": false,
+          "hedgePer1000": 10.1,
+          "relationalPer1000": 15.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "336": {
+          "words": 358,
+          "placeholder": false,
+          "hedgePer1000": 11.2,
+          "relationalPer1000": 16.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "347": {
+          "words": 385,
+          "placeholder": false,
+          "hedgePer1000": 13,
+          "relationalPer1000": 10.4,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "358": {
+          "words": 397,
+          "placeholder": false,
+          "hedgePer1000": 10.1,
+          "relationalPer1000": 2.5,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "369": {
+          "words": 360,
+          "placeholder": false,
+          "hedgePer1000": 13.9,
+          "relationalPer1000": 5.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "404": {
+          "words": 366,
+          "placeholder": false,
+          "hedgePer1000": 5.5,
+          "relationalPer1000": 13.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "415": {
+          "words": 448,
+          "placeholder": false,
+          "hedgePer1000": 4.5,
+          "relationalPer1000": 20.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "426": {
+          "words": 309,
+          "placeholder": false,
+          "hedgePer1000": 6.5,
+          "relationalPer1000": 12.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "437": {
+          "words": 376,
+          "placeholder": false,
+          "hedgePer1000": 13.3,
+          "relationalPer1000": 8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "448": {
+          "words": 396,
+          "placeholder": false,
+          "hedgePer1000": 7.6,
+          "relationalPer1000": 5.1,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "459": {
+          "words": 319,
+          "placeholder": false,
+          "hedgePer1000": 12.5,
+          "relationalPer1000": 0,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "1910": {
+          "words": 422,
+          "placeholder": false,
+          "hedgePer1000": 9.5,
+          "relationalPer1000": 11.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "2810": {
+          "words": 404,
+          "placeholder": false,
+          "hedgePer1000": 9.9,
+          "relationalPer1000": 19.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "2911": {
+          "words": 414,
+          "placeholder": false,
+          "hedgePer1000": 14.5,
+          "relationalPer1000": 21.7,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [
+            "birçok insan"
+          ],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3710": {
+          "words": 398,
+          "placeholder": false,
+          "hedgePer1000": 7.5,
+          "relationalPer1000": 17.6,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3811": {
+          "words": 344,
+          "placeholder": false,
+          "hedgePer1000": 14.5,
+          "relationalPer1000": 2.9,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "3912": {
+          "words": 356,
+          "placeholder": false,
+          "hedgePer1000": 11.2,
+          "relationalPer1000": 11.2,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4610": {
+          "words": 363,
+          "placeholder": false,
+          "hedgePer1000": 8.3,
+          "relationalPer1000": 2.8,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4711": {
+          "words": 363,
+          "placeholder": false,
+          "hedgePer1000": 5.5,
+          "relationalPer1000": 19.3,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        },
+        "4812": {
+          "words": 369,
+          "placeholder": false,
+          "hedgePer1000": 2.7,
+          "relationalPer1000": 19,
+          "gendered": [],
+          "heteronormative": [],
+          "lifeStage": [],
+          "universal": [],
+          "formatting": [
+            "boşluklu satır sonu"
+          ]
+        }
+      },
+      "similarPairs": [
+        {
+          "a": "123",
+          "b": "213",
+          "jaccard": 1
+        },
+        {
+          "a": "145",
+          "b": "415",
+          "jaccard": 0.79
+        },
+        {
+          "a": "347",
+          "b": "437",
+          "jaccard": 0.78
+        },
+        {
+          "a": "235",
+          "b": "325",
+          "jaccard": 0.75
+        },
+        {
+          "a": "134",
+          "b": "314",
+          "jaccard": 0.68
+        },
+        {
+          "a": "246",
+          "b": "426",
+          "jaccard": 0.42
+        },
+        {
+          "a": "369",
+          "b": "459",
+          "jaccard": 0.21
+        }
+      ]
+    }
+  },
+  "repeatedSentences": [
+    {
+      "sentence": "Sen, dünyadaki ruhsal tekâmül sürecini kavrayan ve gelişimin yalnızca bireysel bir çaba olmadığını, kolektif bir bilinçle şekillendiğini fark eden bir farkındalığa sahipsin.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "İnsanların yaşam yolculuklarında belirli aşamalardan geçtiğini, her seviyenin kendine özgü sorumlulukları ve hizmet alanları olduğunu biliyor ve bunu içselleştirmiş durumdasın.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Evrensel yasaları anlamakla kalmayıp, bu bilgiyi uygulayarak hem kendinin hem de başkalarının gelişimine katkı sağlama potansiyelin var.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "İnsanlığın temel tekâmül alanı, herkesin kendi içsel yolculuğunu yaşadığı ve kişisel gelişim süreçlerini deneyimlediği geniş bir alan oluşturur.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Burada hiyerarşi yoktur; her birey, kendi seviyesinde olgunlaşarak ilerler.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Ancak farkındalık belirli bir eşiği geçtiğinde, kişi artık yalnızca kendi yolculuğuna değil, daha büyük bir bilinç düzeyine açılmaya ve evrensel bir hizmet anlayışına yönelmeye başlar.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Ruhsal gelişimin belirli aşamalarında, birey sadece kendi içsel keşfiyle sınırlı kalmaz, öğrendiklerini dünyaya yansıtma ve bilinç dönüşümüne katkı sağlama görevini üstlenir.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Kendi gelişiminle birlikte, çevrendekilere ışık olma sorumluluğun da giderek artar.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Ancak bu, bir üstünlük bilinciyle değil, hizmet etme anlayışıyla yönlendirildiğinde anlam kazanır.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Ruhsal yolculukta ilerleyenler, arkalarından gelenlere destek olmayı ve onların da ilerlemelerine yardımcı olmayı içgüdüsel olarak benimser.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Önemli olan, her seviyenin kendine özgü bir değeri olduğunu, hiçbir ruhsal aşamanın bir diğerinden daha üstün olmadığını ve tüm süreçlerin büyük bir bütünün parçası olduğunu kavramaktır.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Sen, farkındalığınla hangi seviyede olursan ol, üstlenmen gereken hizmeti ve sorumluluğu bilerek hareket ettiğinde, hem kendi ruhsal gelişimini hızlandırabilir hem de çevrendeki insanların dönüşümüne katkıda bulunabilirsin.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Gerçek bilgelik, yalnızca yüksek bilinç durumlarına ulaşmak değil, o bilinci dünyada somut hale getirerek insanlığa hizmet etmektir.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Ruhsal tekâmül sürecinde ilerlerken, içsel dengeni koruyarak ve evrensel yasalarla uyum içinde hareket ederek, hem kendin hem de çevrendekiler için en yüksek faydayı sağlayabilirsin.",
+      "owners": [
+        "showcase:33",
+        "abilities:1"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğun, yaratıcılık, işbirliği ve duygusal ifadeyle şekilleniyor.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "İçinde büyük bir potansiyel var, ancak bu potansiyeli tamamen ortaya çıkarabilmek için bazı içsel engelleri aşman gerekiyor.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendinden şüphe duyma ve güvensizlik, zaman zaman seni geri tutabilir, ama unutma ki dünyaya katacak çok şeyin var.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Her şeyin başı, kendi içindeki gücü fark etmek ve bu gücü kullanma cesaretini göstermektir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Sen doğal olarak çok duyarlısın ve insanları anlama konusunda harika bir yeteneğin var.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Bu, seni etrafındaki insanları derinlemesine anlamaya itiyor, ancak bazen bu hassasiyet seni geri çekilmeye, duygularını bastırmaya ya da yüzeysel bir özgüven maskesi takmaya zorlayabilir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Gerçek gücün, duygularını açık ve samimi bir şekilde ifade ettiğinde ortaya çıkacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendini olduğu gibi ifade edebilmen, seni çevrene gerçek bir şekilde sunabilmene olanak tanıyacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Bazen kendini çok fazla veren biri olarak bulabilirsin; insanlara yardım etmek için elinden geleni yapıyor olabilirsin.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Ama bu aşırı özveri, seni yıpratıp içe kapanmaya itebilir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Burada dengeyi bulmak çok önemli.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Ne tamamen tükenmeli, ne de kendini geri çekmelisin.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendi sınırlarını belirlemeli ve nasıl bir denge kurman gerektiğini öğrenmelisin.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "İnsanlara yardım ederken, kendi ihtiyaçlarını ve sınırlarını unutmamalısın.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendi iyiliğini gözetmek, başkalarına da daha iyi yardım edebilmeni sağlar.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Senin en büyük sınavlarından biri, duygularını ve düşüncelerini doğru şekilde ifade edebilmek olacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Sahte bir güç göstermek, duygularını gizlemek ya da içine kapanmak seni sadece daha fazla zorlayacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Gerçek gücün, içindekileri olduğu gibi ifade edebildiğinde ortaya çıkacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "İnsanlarla olan bağlarını güçlendirecek olan şey, senin içtenliğin ve samimiyetin olacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendini açmak, sana sadece huzur getirecek değil, başkalarına da ilham verecek.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Aynı zamanda, negatif ifade biçimlerinden uzak durmalısın.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Eleştiri, yakınma veya şikayet gibi alışkanlıklar seni aşağı çekebilir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Bunun yerine, çözüm odaklı ve motive edici bir yaklaşım geliştirmek sana daha fazla güç kazandıracak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Senin enerjin, başkalarını harekete geçirme potansiyeline sahip.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Bunu kullanmaktan çekinme.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "İnsanlar senin pozitif yaklaşımından etkilenerek, kendi potansiyellerini de keşfetmeye başlayacak.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Eğer özgüvenini geliştirir ve içindeki gücü fark edersen, sahte bir kabadayılık yerine gerçek bir güç ortaya koyabilirsin.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Bu da seni daha açık, daha paylaşımcı biri haline getirecek.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Unutma, senin en büyük gücün, içindeki yaratıcı enerjiyi serbest bırakabilme cesaretindir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendini ne kadar açarsan, dünyaya o kadar ilham olacaksın.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Kendini ifade etme yolunda attığın her adım, sadece seni değil, çevrendekileri de dönüştürecektir.",
+      "owners": [
+        "life_path:123",
+        "life_path:213"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğun, yaratıcılık, duygusal ifade ve istikrar üzerine kurulu.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Zaman zaman sabırsız olabilir ve her şeyin hızla gerçekleşmesini isteyebilirsin.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Ancak senin için en büyük başarı, istikrarı koruyarak süreci doğru bir şekilde tamamlamaktan geçiyor.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "İçinde güçlü bir yaratıcılık enerjisi var ve bu enerji seni doğal olarak ilham verici bir şekilde ifade etmeye yönlendiriyor.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Ancak bu yeteneklerini tam anlamıyla ortaya koyabilmek için, güvensizliklerini ve kendinden kuşkularını aşman gerekiyor.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Eğer geçmişte istikrarsız bir ortamda büyüdüysen, bu durum sana sağlam temeller kurma konusunda ekstra bir meydan okuma getirmiş olabilir.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Sevdiklerinle olan ilişkilerini güçlendirdikçe ve geçmişte yaşadıklarını bilinçli bir şekilde işledikçe, seni sınırlayan duyguları bir kenara bırakabilir ve daha net bir şekilde ilerleyebilirsin.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Bazen her şeyi fazla analiz etme eğiliminde olabilirsin ve bu da seni karmaşık bir hale sokabilir.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "İçinden bir ses sana doğru yolu gösterecek.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Senin için büyük bir vizyon var ve bu vizyonu gerçekleştirmek için ihtiyacın olan her şey zaten sende mevcut.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Tek yapman gereken, sabırla ve istikrarla ilerlemek.",
+      "owners": [
+        "life_path:134",
+        "life_path:314"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğun, özgürlüğü gerçek anlamda deneyimlemek üzerine kurulu, ancak bunu disiplin, odaklanma ve bilinçli adımlarla yapmak gerekiyor.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Hayata doğuştan bağımsız, yaratıcılıkla dolu ve keşif ruhuyla gelmişsin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Hayat sana iki zorluk sunabilir: Bir yanda güvenlik ve istikrar ihtiyacı, diğer yanda özgür olmak, sınırlarını zorlamak ve yeni deneyimlere dalmak isteği.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Ancak asıl mesele, bu ikisini dengelemek.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Bazen çok hızlı hareket edebilirsin, bir konuda derinleşmeden başka bir şeye atlamak isteyebilirsin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Odaklanmayı ve sabırla bir süreci takip etmeyi öğrendiğinde, başarıya daha kolay ulaşacaksın.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Senin için en önemli şey, içindeki yaratıcı gücü doğru şekilde yönlendirebilmek.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Eğer bu enerjiyi doğru kullanmazsan, kendini tükenici alışkanlıklar içinde bulabilirsin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Gereğinden fazla yemek yemek, uyuşturucu maddelere ya da alkol gibi kaçışlara yönelmek, zihnini fazla uyararak odaklanmanı kaybetmek gibi tuzaklara düşme riskin var.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Sağlam bir temel kurarsan, gerçekten istediğin gibi yaşama fırsatını elde edersin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Bu temel, fiziksel olarak bir ev, aile ya da uzun vadeli bir kariyer olabilir.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Ancak esas önemli olan, içindeki güven ve istikrardır.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Halbuki senin ruhun, gerçekten dolu dolu yaşamak istiyor.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Derinleşmek, her şeyin içine dalıp gerçek anlamda deneyimlemek sana en büyük tatmini getirecektir.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Ne kadar çok deneyim yaşarsan yaşa, asıl özgürlük içinde hissettiğin huzur ve güvenle gelir.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Dış dünyada sürekli hareket etmek yerine, kendi içindeki özgürlüğü de keşfetmelisin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Çünkü gerçek özgürlük, sadece yeni yerler görmek ya da farklı şeyler yapmak değil, kim olduğunu bilmektir.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Son olarak, senin doğuştan gelen bir liderlik ve vizyon gücün var.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Bu gücü kullanırken, hedeflerini doğru belirleyip onlara adım adım ilerlemelisin.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Senin kaderin, özgürlüğü sadece dış dünyada değil, içinde de bulmak ve onu en doğru şekilde yaşamaktır.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Disiplin ve odaklanmayı öğrendiğinde, gerçekten sınırsız bir özgürlük hissine ulaşacaksın.",
+      "owners": [
+        "life_path:145",
+        "life_path:415"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğun, özgürlüğü ve keşfi deneyimleyerek, duygusal ifade ve işbirliği ile ilgili sorunlarını çözmek üzerine kurulu.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Doğuştan meraklı, hareketli ve değişime açık bir ruhsun.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Hayat senin için sadece rutinleri tekrar etmekten ibaret değil; senin doğanda yeni deneyimlere dalmak, sınırlarını genişletmek ve her an öğrenmek var.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Gerçek özgürlük, içindeki güvensizliklerden, kendinden kuşkudan ve korkulardan kurtulup, kendini tam anlamıyla ortaya koyabilmekte yatıyor.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Ancak dikkat etmen gereken bir şey var: Bazen çok fazla şey denemek, her şeye aynı anda dalmak seni dağıtabilir.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Kendini fazla yormak ya da birden fazla şeyi aynı anda yapmaya çalışmak, sonunda enerjini tüketebilir.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Bazen hayatta bağımsızlık ile bağlılık arasında gidip gelebilirsin.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Bir yandan özgür olmak istiyorsun, diğer yandan sevdiklerine fazla bağlanıp, kendini onlara adayabilirsin.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Ancak sağlıklı bir dengeyi bulman gerekiyor.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Hem kendi yolunda ilerleyip bireyselliğini koruyabilir, hem de başkalarına işbirliği içinde destek verebilirsin.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Senin için büyük bir potansiyel var: İletişim gücün, enerjin ve merakın seni farklı alanlarda başarılı yapabilir.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Bir konuda ustalaşmak, sadece her şeyi öğrenmeye çalışmaktan daha değerli olabilir.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Son olarak, sosyal rollerin arkasına saklanmak yerine, gerçek benliğini açığa çıkarmaya cesaret etmelisin.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Bazen insanların beklentilerine göre hareket edebilir, farklı kimlikler benimseyebilirsin.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Ancak gerçek özgürlük, olduğun gibi ve hissettiğin gibi yaşadığında gelir.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Doğal serüven ruhunu kucakla, ama aynı zamanda içindeki dengeyi de koru.",
+      "owners": [
+        "life_path:235",
+        "life_path:325"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğun, dengeyi sağlamak, sevgiyle hizmet etmek ve hayatında istikrar oluşturmak üzerine kurulu.",
+      "owners": [
+        "life_path:246",
+        "life_path:426"
+      ]
+    },
+    {
+      "sentence": "Bu, sabır, kabullenme ve adım adım ilerleyen bir süreci takip etmeyi gerektiriyor.",
+      "owners": [
+        "life_path:246",
+        "life_path:426"
+      ]
+    },
+    {
+      "sentence": "Gerçek özgürleşme, hem kendini hem de çevrenin doğasını olduğu gibi kabul etmekle gelir.",
+      "owners": [
+        "life_path:246",
+        "life_path:426"
+      ]
+    },
+    {
+      "sentence": "Hayatında sabır ve süreç, senin için anahtar olacak.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Senin yolculuğunda da sağlam adımlar atman gerekiyor.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Bir basamağı atladığında, ileride tekrar dönüp o eksik noktayı tamamlamak zorunda kalabilirsin.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "İstikrar ve süreç, seni gerçekte güçlü yapacak.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Yanlış anlaşılma korkusu ya da fazla düşünmek seni içine kapanmaya itebilir.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Bunu yaptığında, hem kendinle hem de çevrendekilerle daha güçlü bağlar kurabilirsin.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Hayat sana hep doğru zamanda, doğru şeyleri getirecektir.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Sen sadece mantıkla ya da sadece sezgiyle hareket eden biri değilsin.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Senin yolun, ikisini birleştirerek dengeyi sağlamak.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Bunu başarabilmek için, hem sezgilerini hem de mantığını birlikte kullanmalısın.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Gerçek gücün, sezgilerini ve mantığını dengelediğinde ortaya çıkacak.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Kendini ifade ettiğinde, sürece güvenerek ilerlediğinde ve hayata biraz daha akışına izin verdiğinde, her şey çok daha kolay olacak.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Unutma, senin yolculuğun sadece bir yere ulaşmak değil.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    },
+    {
+      "sentence": "Sen zaten o yolculuğun içindesin.",
+      "owners": [
+        "life_path:347",
+        "life_path:437"
+      ]
+    }
+  ],
+  "coverage": {
+    "showcase": {
+      "hit": [
+        "1",
+        "11",
+        "19",
+        "2",
+        "22",
+        "3",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "notHit": [
+        "33"
+      ]
+    },
+    "abilities": {
+      "hit": [
+        "0",
+        "1",
+        "11",
+        "19",
+        "2",
+        "22",
+        "3",
+        "33",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "notHit": []
+    },
+    "ideal_job": {
+      "hit": [
+        "1",
+        "11",
+        "19",
+        "2",
+        "22",
+        "3",
+        "33",
+        "4",
+        "5",
+        "6",
+        "7",
+        "8",
+        "9"
+      ],
+      "notHit": []
+    },
+    "life_path": {
+      "hit": [
+        "112",
+        "134",
+        "156",
+        "189",
+        "1910",
+        "202",
+        "235",
+        "246",
+        "257",
+        "2810",
+        "2911",
+        "303",
+        "347",
+        "358",
+        "369",
+        "3710",
+        "3912",
+        "404",
+        "44",
+        "448",
+        "77"
+      ],
+      "notHit": [
+        "55",
+        "66",
+        "88",
+        "99",
+        "101",
+        "123",
+        "145",
+        "167",
+        "178",
+        "213",
+        "224",
+        "268",
+        "279",
+        "314",
+        "325",
+        "336",
+        "415",
+        "426",
+        "437",
+        "459",
+        "3811",
+        "4610",
+        "4711",
+        "4812"
+      ]
+    }
+  },
+  "unusedDatasets": [
+    "piramit_c1-9",
+    "synergy_c1-9"
+  ],
+  "genderTwins": [
+    [
+      "P25",
+      "P26"
+    ]
+  ]
+}

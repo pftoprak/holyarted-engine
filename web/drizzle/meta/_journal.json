@@ -15,6 +15,20 @@
       "when": 1789396274860,
       "tag": "0001_youthful_prism",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1793725285639,
+      "tag": "0002_shiny_captain_cross",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1793808187765,
+      "tag": "0003_modern_jack_murdock",
+      "breakpoints": true
     }
   ]
 }
