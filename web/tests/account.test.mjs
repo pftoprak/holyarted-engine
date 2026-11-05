@@ -175,6 +175,21 @@ test('health check reports only availability and never configuration details', a
   assert.equal(f.logs.join('\n'), 'health_check_failed');
 });
 
+test('health check reports an outage when a database migration was not applied', async (t) => {
+  const missingTable = await fixture(t);
+  missingTable.db.exec('DROP TABLE membership_grants');
+  const noTable = await missingTable.health.GET();
+  assert.equal(noTable.status, 503);
+  assert.deepEqual(await noTable.json(), { status: 'unavailable' });
+  assert.equal(missingTable.logs.join('\n'), 'health_schema_incomplete');
+
+  const missingColumn = await fixture(t);
+  missingColumn.db.exec('ALTER TABLE memberships DROP COLUMN billing_event_at');
+  const noColumn = await missingColumn.health.GET();
+  assert.equal(noColumn.status, 503);
+  assert.equal(missingColumn.logs.join('\n'), 'health_check_failed');
+});
+
 test('anonymous and invalid sessions cannot read, save, delete, or export data', async (t) => {
   const f = await fixture(t);
   for (const token of [null, 'invalid']) {
