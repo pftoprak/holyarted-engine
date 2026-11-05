@@ -7,24 +7,27 @@ import { planIncludes, type MembershipPlan } from './plans';
 
 // Server-only: the full numerology texts are read here and returned per
 // request, so they never ship in the client bundle. Dataset texts are shown
-// unchanged; only titles, order, explanations and framing belong to the app
+// unchanged and exist in Turkish only; titles, explanations and notes belong
+// to the app and come in both interface languages
 // (audit/RAPOR-DENETIMI.md, sections 3 and 4-A).
 type Dataset = Record<string, string>;
+export type Localized = { en: string; tr: string };
 
 export type ReadingSectionId = 'showcase' | 'abilities' | 'idealJob' | 'lifePath';
 export type ReadingTier = MembershipPlan;
 export type ReadingSection = {
   id: ReadingSectionId;
   tier: ReadingTier;
-  title: string;
+  title: Localized;
   key: string;
-  reason: string;
-  note: string | null;
+  reason: Localized;
+  note: Localized | null;
   status: 'ready' | 'pending' | 'locked';
   paragraphs: string[];
 };
-export type RelationshipLine = { sectionId: ReadingSectionId; source: string; sentence: string };
+export type RelationshipLine = { sectionId: ReadingSectionId; sentence: string };
 export type Reading = {
+  // The language of the dataset texts (paragraphs and relationship lines).
   locale: 'tr';
   sections: ReadingSection[];
   relationships: RelationshipLine[];
@@ -38,8 +41,19 @@ const order: { id: ReadingSectionId; tier: ReadingTier }[] = [
   { id: 'lifePath', tier: 'plus' },
   { id: 'idealJob', tier: 'premium' },
 ];
-const titles: Record<ReadingSectionId, string> = { showcase: 'Vitrin', abilities: 'Yetenekler', lifePath: 'Hayat yolu', idealJob: 'İdeal iş' };
-const LIFE_PATH_NOTE = 'Bu metin bir olasılığı anlatır, yaşadıklarına dair bir tespit değildir.';
+const titles: Record<ReadingSectionId, Localized> = {
+  showcase: { en: 'Showcase', tr: 'Vitrin' },
+  abilities: { en: 'Abilities', tr: 'Yetenekler' },
+  lifePath: { en: 'Life path', tr: 'Hayat yolu' },
+  idealJob: { en: 'Ideal work', tr: 'İdeal iş' },
+};
+// Age framing for the ideal work section; the dataset text is the same.
+const IDEAL_JOB_YOUNG: Localized = { en: 'Directions you lean toward', tr: 'Yöneldiğin alanlar' };
+const IDEAL_JOB_ADULT: Localized = { en: 'Areas to deepen', tr: 'Derinleşme alanların' };
+const LIFE_PATH_NOTE: Localized = {
+  en: 'This text describes a possibility, not a finding about your life.',
+  tr: 'Bu metin bir olasılığı anlatır, yaşadıklarına dair bir tespit değildir.',
+};
 const YOUNG_ADULT_AGE = 25;
 const RELATIONSHIP_LINES_PER_SECTION = 2;
 const RELATIONSHIP_TIER: ReadingTier = 'plus';
@@ -63,18 +77,27 @@ function ageOn(birthDate: string, today: Date): number {
   return today.getUTCFullYear() - year - (beforeBirthday ? 1 : 0);
 }
 
-function reduced(total: number, key: string): string {
-  return String(total) === key ? `${total}.` : `${total}; bu ${key} sayısına indirgeniyor.`;
+function reduced(total: number, key: string): Localized {
+  return String(total) === key
+    ? { en: `${total}.`, tr: `${total}.` }
+    : { en: `${total}, which reduces to ${key}.`, tr: `${total}; bu ${key} sayısına indirgeniyor.` };
 }
 
 export function buildReading(firstName: string, lastName: string, birthDate: string, today = new Date()): Reading {
   const { contentKeys, signals } = calculateCoreProfile(firstName, lastName, birthDate);
   const young = ageOn(birthDate, today) < YOUNG_ADULT_AGE;
-  const reasons: Record<ReadingSectionId, string> = {
-    showcase: `Doğum günün ${reduced(signals.birthDay, contentKeys.showcase)}`,
-    abilities: `Adındaki sesli harflerin (A, E, I, O, U) toplamı ${reduced(signals.vowelTotal, contentKeys.abilities)}`,
-    idealJob: `Adındaki tüm harflerin toplamı ${reduced(signals.nameTotal, contentKeys.idealJob)}`,
-    lifePath: `Doğum tarihindeki rakamların toplamı ${signals.dateTotal}; tek basamağa indirgenince ${contentKeys.lifePath.slice(String(signals.dateTotal).length)}.`,
+  const day = reduced(signals.birthDay, contentKeys.showcase);
+  const vowels = reduced(signals.vowelTotal, contentKeys.abilities);
+  const letters = reduced(signals.nameTotal, contentKeys.idealJob);
+  const lifeDigit = contentKeys.lifePath.slice(String(signals.dateTotal).length);
+  const reasons: Record<ReadingSectionId, Localized> = {
+    showcase: { en: `Your day of birth is ${day.en}`, tr: `Doğum günün ${day.tr}` },
+    abilities: { en: `The vowels in your name (A, E, I, O, U) add up to ${vowels.en}`, tr: `Adındaki sesli harflerin (A, E, I, O, U) toplamı ${vowels.tr}` },
+    idealJob: { en: `All letters in your name add up to ${letters.en}`, tr: `Adındaki tüm harflerin toplamı ${letters.tr}` },
+    lifePath: {
+      en: `The digits of your birth date add up to ${signals.dateTotal}; reduced to one digit, ${lifeDigit}.`,
+      tr: `Doğum tarihindeki rakamların toplamı ${signals.dateTotal}; tek basamağa indirgenince ${lifeDigit}.`,
+    },
   };
 
   const sections = order.map(({ id, tier }): ReadingSection => {
@@ -86,7 +109,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
     return {
       id,
       tier,
-      title: id === 'idealJob' ? (young ? 'Yöneldiğin alanlar' : 'Derinleşme alanların') : titles[id],
+      title: id === 'idealJob' ? (young ? IDEAL_JOB_YOUNG : IDEAL_JOB_ADULT) : titles[id],
       key,
       reason: reasons[id],
       note: id === 'lifePath' ? LIFE_PATH_NOTE : null,
@@ -102,7 +125,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
     .flatMap((section) => section.paragraphs.flatMap(sentences)
       .filter((sentence) => RELATIONAL.test(sentence) && !seen.has(sentence) && seen.add(sentence))
       .slice(0, RELATIONSHIP_LINES_PER_SECTION)
-      .map((sentence) => ({ sectionId: section.id, source: `${section.title} ${section.key}`, sentence })));
+      .map((sentence) => ({ sectionId: section.id, sentence })));
 
   return { locale: 'tr', sections, relationships, relationshipsLocked: false };
 }

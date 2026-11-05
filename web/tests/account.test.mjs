@@ -373,9 +373,13 @@ test('in local open mode the detailed reading returns every dataset text and sto
   const { reading } = await response.json();
   assert.equal(reading.locale, 'tr');
   assert.deepEqual(reading.sections.map((section) => [section.id, section.tier]), [['showcase', 'basic'], ['abilities', 'plus'], ['lifePath', 'plus'], ['idealJob', 'premium']]);
-  assert.equal(reading.sections[0].reason, 'Doğum günün 5.');
-  assert.equal(reading.sections[3].title, 'Derinleşme alanların');
-  assert.match(reading.sections[2].note, /tespit değildir/);
+  // App-written labels come in both interface languages; dataset texts stay Turkish.
+  assert.deepEqual(reading.sections[0].reason, { en: 'Your day of birth is 5.', tr: 'Doğum günün 5.' });
+  assert.deepEqual(reading.sections[1].reason, { en: 'The vowels in your name (A, E, I, O, U) add up to 12, which reduces to 3.', tr: 'Adındaki sesli harflerin (A, E, I, O, U) toplamı 12; bu 3 sayısına indirgeniyor.' });
+  assert.deepEqual(reading.sections[3].title, { en: 'Areas to deepen', tr: 'Derinleşme alanların' });
+  assert.match(reading.sections[2].note.tr, /tespit değildir/);
+  assert.match(reading.sections[2].note.en, /not a finding/);
+  assert.equal(reading.locale, 'tr');
   for (const section of reading.sections) assert.equal(section.status, 'ready');
   const showcase = JSON.parse(readFileSync(path.join(root, 'data', 'showcase.json'), 'utf8'));
   assert.equal(reading.sections[0].key, '5');
@@ -408,7 +412,7 @@ test('detailed reading never shows placeholder or missing texts and quotes relat
   // Age framing changes only the heading, never the text.
   const young = await read({ firstName: 'Ece Su', lastName: 'Kaya', birthDate: '2008-03-11' });
   const youngJob = young.sections.find((section) => section.id === 'idealJob');
-  assert.equal(youngJob.title, 'Yöneldiğin alanlar');
+  assert.deepEqual(youngJob.title, { en: 'Directions you lean toward', tr: 'Yöneldiğin alanlar' });
   assert.equal(youngJob.paragraphs.join(' ').replace(/\s+/g, ' '), data('ideal_job')[youngJob.key].trim().replace(/\s+/g, ' '));
 
   // "İlişkide sen" lines are sentences that exist unchanged in the person's own sections.
