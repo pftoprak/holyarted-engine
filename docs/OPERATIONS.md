@@ -94,7 +94,7 @@ HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
    - `ADMIN_TOKEN`: en az 32 karakter rastgele değer
    - İstersen `ERROR_REPORT_URL`
    - Mevcut Supabase değişkenleri yerinde kalmalı.
-2. Veritabanına `web/drizzle/0002_*.sql` ve `0003_*.sql` dosyalarını sırayla uygula. Sites bunu otomatik yapmıyorsa Sites panelinden ya da destekten nasıl yapılacağını öğren. **Uygulanmadan yayınlanırsa** giriş yapan kullanıcıların istekleri hata verir.
+2. Veritabanına `web/drizzle/0002_*.sql` ve `0003_*.sql` dosyalarını sırayla uygula. İkisi, yapıştırmaya hazır tek dosya olarak `docs/canli-veritabani-guncellemesi.sql` içinde (yerel kopyada denendi; iki kez çalıştırmak zararsız). Sites bunu otomatik yapmıyorsa Sites panelinden ya da destekten nasıl yapılacağını öğren. **Uygulanmadan yayınlanırsa** giriş yapan kullanıcıların istekleri hata verir.
 3. `clean-skeleton` branch'inden yeniden yayınla.
 4. Kontrol et:
    - `https://holyarted.com/api/health` 200 dönmeli.
