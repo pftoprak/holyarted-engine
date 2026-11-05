@@ -1,6 +1,6 @@
 // Fails when any paid text reaches the browser bundle (dist/client).
 // Run after `pnpm build`. Checks every dataset text and every portrait chapter.
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -14,8 +14,9 @@ function files(directory) {
   });
 }
 
-const datasetTexts = ['showcase', 'abilities', 'ideal_job', 'life_path'].flatMap((name) =>
-  Object.values(JSON.parse(readFileSync(path.join(root, 'data', `${name}.json`), 'utf8'))));
+const datasetFiles = ['showcase', 'abilities', 'ideal_job', 'life_path'].flatMap((name) => [path.join('data', `${name}.json`), path.join('data', 'en', `${name}.json`)]);
+const datasetTexts = datasetFiles.filter((file) => existsSync(path.join(root, file)))
+  .flatMap((file) => Object.values(JSON.parse(readFileSync(path.join(root, file), 'utf8'))));
 // Chapter bodies are the long single-quoted strings in portrait-chapters.ts.
 const chapterTexts = [...readFileSync(path.join(root, 'lib', 'portrait-chapters.ts'), 'utf8').matchAll(/'([^'\n]{60,})'/g)].map((match) => match[1]);
 const samples = [...datasetTexts, ...chapterTexts]

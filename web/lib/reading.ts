@@ -2,12 +2,17 @@ import abilities from '@/data/abilities.json';
 import idealJob from '@/data/ideal_job.json';
 import lifePath from '@/data/life_path.json';
 import showcase from '@/data/showcase.json';
+import abilitiesEn from '@/data/en/abilities.json';
+import idealJobEn from '@/data/en/ideal_job.json';
+import lifePathEn from '@/data/en/life_path.json';
+import showcaseEn from '@/data/en/showcase.json';
 import { calculateCoreProfile } from './calculation-core';
 import { planIncludes, type MembershipPlan } from './plans';
 
 // Server-only: the full numerology texts are read here and returned per
 // request, so they never ship in the client bundle. Dataset texts are shown
-// unchanged and exist in Turkish only; titles, explanations and notes belong
+// unchanged; their English translations live apart in data/en/ and never
+// replace the Turkish files. Titles, explanations and notes belong
 // to the app and come in both interface languages
 // (audit/RAPOR-DENETIMI.md, sections 3 and 4-A).
 type Dataset = Record<string, string>;
@@ -24,6 +29,9 @@ export type ReadingSection = {
   note: Localized | null;
   status: 'ready' | 'pending' | 'locked';
   paragraphs: string[];
+  // English translation of the same dataset text, where one exists
+  // (web/data/en/). The Turkish files are never changed.
+  paragraphsEn: string[] | null;
 };
 export type RelationshipLine = { sectionId: ReadingSectionId; sentence: string };
 export type Reading = {
@@ -31,10 +39,13 @@ export type Reading = {
   locale: 'tr';
   sections: ReadingSection[];
   relationships: RelationshipLine[];
+  // The same kind of lines, picked from the English translations.
+  relationshipsEn: RelationshipLine[];
   relationshipsLocked: boolean;
 };
 
 const datasets: Record<ReadingSectionId, Dataset> = { showcase, abilities, idealJob, lifePath };
+const translations: Partial<Record<ReadingSectionId, Dataset>> = { showcase: showcaseEn, abilities: abilitiesEn, idealJob: idealJobEn, lifePath: lifePathEn };
 const order: { id: ReadingSectionId; tier: ReadingTier }[] = [
   { id: 'showcase', tier: 'basic' },
   { id: 'abilities', tier: 'plus' },
@@ -62,6 +73,8 @@ const PLACEHOLDER = /^(n\/?a|-|tbd|todo)?$/i;
 // Word stems that mark a sentence as being about relationships.
 // "sınır" excludes "sınırlandırma" (rules, not personal boundaries).
 const RELATIONAL = /(?<!\p{L})(ilişki|partner|sevgili|sevdik|aşk|yakınlık|bağ kur|bağlan|çatışma|sınır(?!land)|iletişim|aile)/iu;
+// The same stems in the English translations.
+const RELATIONAL_EN = /(?<!\p{L})(relationship|partner|lover|loved one|love(?!ly)|closeness|intimac|bond|connect|conflict|boundar|communicat|famil)/iu;
 
 function paragraphs(text: string): string[] {
   return text.split(/\n\s*\n/).map((part) => part.trim()).filter(Boolean);
@@ -104,6 +117,7 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
     const key = contentKeys[id];
     const text = datasets[id][key];
     const ready = typeof text === 'string' && !PLACEHOLDER.test(text.trim());
+    const translated = translations[id]?.[key];
     // The key is a dataset number, not personal data.
     if (!ready) console.error(`reading_section_unavailable ${id}:${key}`);
     return {
@@ -115,19 +129,24 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
       note: id === 'lifePath' ? LIFE_PATH_NOTE : null,
       status: ready ? 'ready' : 'pending',
       paragraphs: ready ? paragraphs(text) : [],
+      paragraphsEn: ready && typeof translated === 'string' ? paragraphs(translated) : null,
     };
   });
 
   // "İlişkide sen": relationship sentences quoted from the sections, unchanged.
-  const seen = new Set<string>();
-  const relationships = sections
-    .filter((section) => section.id !== 'idealJob')
-    .flatMap((section) => section.paragraphs.flatMap(sentences)
-      .filter((sentence) => RELATIONAL.test(sentence) && !seen.has(sentence) && seen.add(sentence))
-      .slice(0, RELATIONSHIP_LINES_PER_SECTION)
-      .map((sentence) => ({ sectionId: section.id, sentence })));
+  const relationshipLines = (pick: (section: ReadingSection) => string[], stems: RegExp): RelationshipLine[] => {
+    const seen = new Set<string>();
+    return sections
+      .filter((section) => section.id !== 'idealJob')
+      .flatMap((section) => pick(section).flatMap(sentences)
+        .filter((sentence) => stems.test(sentence) && !seen.has(sentence) && seen.add(sentence))
+        .slice(0, RELATIONSHIP_LINES_PER_SECTION)
+        .map((sentence) => ({ sectionId: section.id, sentence })));
+  };
+  const relationships = relationshipLines((section) => section.paragraphs, RELATIONAL);
+  const relationshipsEn = relationshipLines((section) => section.paragraphsEn ?? [], RELATIONAL_EN);
 
-  return { locale: 'tr', sections, relationships, relationshipsLocked: false };
+  return { locale: 'tr', sections, relationships, relationshipsEn, relationshipsLocked: false };
 }
 
 // Removes every text the plan does not include. Locked sections keep only
@@ -135,13 +154,14 @@ export function buildReading(firstName: string, lastName: string, birthDate: str
 export function readingForPlan(reading: Reading, plan: MembershipPlan): Reading {
   const sections = reading.sections.map((section): ReadingSection => (planIncludes(plan, section.tier)
     ? section
-    : { ...section, status: 'locked', paragraphs: [] }));
+    : { ...section, status: 'locked', paragraphs: [], paragraphsEn: null }));
   const open = new Set(sections.filter((section) => section.status !== 'locked').map((section) => section.id));
   const relationshipsLocked = !planIncludes(plan, RELATIONSHIP_TIER);
   return {
     ...reading,
     sections,
     relationships: relationshipsLocked ? [] : reading.relationships.filter((line) => open.has(line.sectionId)),
+    relationshipsEn: relationshipsLocked ? [] : reading.relationshipsEn.filter((line) => open.has(line.sectionId)),
     relationshipsLocked,
   };
 }
