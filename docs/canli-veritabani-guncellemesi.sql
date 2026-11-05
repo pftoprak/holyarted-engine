@@ -1,6 +1,11 @@
 -- HOLYARTED: live database update (0002 + 0003, in order).
--- Run this once in the D1 database "DB" of the OpenAI Sites project
--- (appgprj_6a95c72ab5108191b7fd3f23577445c0), BEFORE redeploying.
+-- Do NOT run this before redeploying. Sites most likely applies web/drizzle
+-- itself during deploy (commit 82b2c85), and tables made by hand first can
+-- stop that with "table already exists".
+-- Redeploy first. Then, in the D1 database "DB" of the Sites project
+-- (appgprj_6a95c72ab5108191b7fd3f23577445c0), run only the SELECT at the end.
+-- Run the whole file only if account_deletions, membership_grants,
+-- rate_limits or stripe_events is missing.
 -- It only adds new tables and one new column; existing data is not touched.
 -- The tables use IF NOT EXISTS, so running it twice is harmless.
 -- The last line (ALTER TABLE) gives a "duplicate column" error if it has

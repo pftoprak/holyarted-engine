@@ -63,13 +63,13 @@ Bu kontrol haftada bir yapılmalı.
 
 ## 6. Dağıtım öncesi kontrol listesi
 
-- [ ] **Migration:** `web/drizzle/0002_*.sql` (paylaşılan istek sınırı, ödeme olay kaydı, hesap silme takibi, `billing_event_at` sütunu) ve `0003_*.sql` (elle verilen planlar) kod yayınlanmadan **önce** uygulanmalı. Uygulanmazsa hesap ve ödeme istekleri hata verir.
-  ```sh
-  npx wrangler d1 migrations apply <DB_ADI> --remote
-  ```
+- [ ] **Migration:** `web/drizzle/0002_*.sql` (paylaşılan istek sınırı, ödeme olay kaydı, hesap silme takibi, `billing_event_at` sütunu) ve `0003_*.sql` (elle verilen planlar) canlı veritabanında olmalı. Eksik kalırsa hesap ve ödeme istekleri hata verir.
+  - Sites, `web/drizzle` klasörünü yayın sırasında büyük olasılıkla kendisi uygular (commit 82b2c85, "Include database migrations in hosted builds"). Bu yüzden önce yayınla, sonra kontrol et (bölüm 8).
+  - Tabloları elle **önceden** açma; otomatik güncelleme "table already exists" hatasıyla durabilir.
+  - Kendi Cloudflare hesabında: `npx wrangler d1 migrations apply <DB_ADI> --remote`.
 - [ ] `HOLYARTED_ACCOUNTS_ENABLED` canlıda tanımsız ya da `true` olmalı. **Asla `false` olmamalı**; `false` tüm ücretli içeriği açar.
 - [ ] `.env.example` içindeki tüm değişkenler tanımlı olmalı. Supabase tanımlı ama veritabanı erişilemezse `/api/health` 503 döner. Supabase hiç tanımlı değilse site yalnız ücretsiz çalışır ve `/api/health` 200 döner.
-- [ ] Stripe webhook uç noktası şu olayları göndermeli: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
+- [ ] Varsayılan ödeme sağlayıcısı iyzico (`BILLING_PROVIDER`); iyzico ödeme sayfası yapılana kadar satın alma kapalı kalır. Sağlayıcı Stripe yapılırsa: Stripe webhook uç noktası şu olayları göndermeli: `checkout.session.completed`, `customer.subscription.created`, `customer.subscription.updated`, `customer.subscription.deleted`.
 - [ ] `SITE_URL` sitenin gerçek adresine ayarlanmalı (örneğin `https://holyarted.com`). Tanımlı değilse paylaşım önizlemeleri, `robots.txt` ve `sitemap.xml` localhost adresini gösterir.
 - [ ] Elle plan vermek için `ADMIN_TOKEN` en az 32 karakterlik rastgele bir değere ayarlanmalı ve yalnız yönetici bilgisayarında saklanmalı. Tanımlı değilse `/api/admin/grants` yoktur (404).
 - [ ] Hata bildirimi için `ERROR_REPORT_URL` olarak bir Slack veya Discord webhook adresi tanımlanmalı. Tanımlı değilse hatalar yalnızca sunucu loguna düşer.
@@ -94,8 +94,14 @@ HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
    - `ADMIN_TOKEN`: en az 32 karakter rastgele değer
    - İstersen `ERROR_REPORT_URL`
    - Mevcut Supabase değişkenleri yerinde kalmalı.
-2. Veritabanına `web/drizzle/0002_*.sql` ve `0003_*.sql` dosyalarını sırayla uygula. İkisi, yapıştırmaya hazır tek dosya olarak `docs/canli-veritabani-guncellemesi.sql` içinde (yerel kopyada denendi; iki kez çalıştırmak zararsız). Sites bunu otomatik yapmıyorsa Sites panelinden ya da destekten nasıl yapılacağını öğren. **Uygulanmadan yayınlanırsa** giriş yapan kullanıcıların istekleri hata verir.
-3. `clean-skeleton` branch'inden yeniden yayınla.
+2. `clean-skeleton` branch'inden yeniden yayınla.
+   - Veritabanı güncellemelerini (`web/drizzle/0002_*.sql`, `0003_*.sql`) **önceden elle çalıştırma**. Sites `web/drizzle` klasörünü yayında büyük olasılıkla kendisi uygular (commit 82b2c85).
+   - Tablolar önceden elle açılırsa otomatik güncelleme "table already exists" hatasıyla durabilir.
+3. Yayından hemen sonra veritabanını kontrol et.
+   - Sites panelinin veritabanı ekranında şunu çalıştır: `SELECT name FROM sqlite_master WHERE type = 'table';`
+   - Listede `account_deletions`, `membership_grants`, `rate_limits` ve `stripe_events` olmalı.
+   - Biri bile eksikse `docs/canli-veritabani-guncellemesi.sql` dosyasının tamamını çalıştır. Yerel kopyada denendi; iki kez çalıştırmak zararsız. Sadece son satır "duplicate column" hatası verebilir; o hata önemsiz.
+   - Panelde SQL ekranı yoksa Sites desteğine sor. Bu adım bitene kadar giriş yapan kullanıcıların istekleri hata verebilir.
 4. Kontrol et:
    - `https://holyarted.com/api/health` 200 dönmeli.
    - Sayfa kaynağında "Protect continuity" metni **bulunmamalı**.
