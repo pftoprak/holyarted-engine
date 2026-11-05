@@ -383,8 +383,16 @@ test('in local open mode the detailed reading returns every dataset text and sto
   const abilitiesEn = JSON.parse(readFileSync(path.join(root, 'data', 'en', 'abilities.json'), 'utf8'));
   assert.equal(reading.sections[1].paragraphsEn.join(' ').replace(/\s+/g, ' '), abilitiesEn[reading.sections[1].key].replace(/\s+/g, ' '));
   assert.equal(reading.sections[1].paragraphsEn.length, reading.sections[1].paragraphs.length);
-  // Life path is not translated yet.
-  assert.equal(reading.sections[2].paragraphsEn, null);
+  // Every ready section has an English version with the same paragraph count.
+  for (const section of reading.sections) assert.equal(section.paragraphsEn.length, section.paragraphs.length);
+  const lifePathEn = JSON.parse(readFileSync(path.join(root, 'data', 'en', 'life_path.json'), 'utf8'));
+  assert.equal(reading.sections[2].paragraphsEn.join(' ').replace(/\s+/g, ' '), lifePathEn[reading.sections[2].key].replace(/\s+/g, ' '));
+  // English "You in relationships" lines are sentences from the English sections.
+  for (const line of reading.relationshipsEn) {
+    const section = reading.sections.find((candidate) => candidate.id === line.sectionId);
+    assert.ok(section.paragraphsEn.join(' ').replace(/\s+/g, ' ').includes(line.sentence));
+    assert.notEqual(line.sectionId, 'idealJob');
+  }
   assert.equal(reading.locale, 'tr');
   for (const section of reading.sections) assert.equal(section.status, 'ready');
   const showcase = JSON.parse(readFileSync(path.join(root, 'data', 'showcase.json'), 'utf8'));
@@ -444,7 +452,7 @@ test('reading and portrait chapters are filtered on the server by the signed-in 
   const status = (body) => Object.fromEntries(body.reading.sections.map((section) => [section.id, section.status]));
   const texts = (body) => [
     ...body.reading.sections.flatMap((section) => [...section.paragraphs, ...(section.paragraphsEn ?? [])]),
-    ...body.reading.relationships.map((line) => line.sentence),
+    ...[...body.reading.relationships, ...body.reading.relationshipsEn].map((line) => line.sentence),
     ...['en', 'tr'].flatMap((locale) => [...body.chapters[locale].cards, ...body.chapters[locale].lenses].flat()),
   ];
 
@@ -464,7 +472,7 @@ test('reading and portrait chapters are filtered on the server by the signed-in 
     assert.equal(basic.plan, 'basic');
     assert.deepEqual(status(basic), { showcase: 'ready', abilities: 'locked', lifePath: 'locked', idealJob: 'locked' });
     for (const section of basic.reading.sections.filter((candidate) => candidate.status === 'locked')) assert.deepEqual([section.paragraphs, section.paragraphsEn], [[], null]);
-    assert.deepEqual([basic.reading.relationships, basic.reading.relationshipsLocked], [[], true]);
+    assert.deepEqual([basic.reading.relationships, basic.reading.relationshipsEn, basic.reading.relationshipsLocked], [[], [], true]);
     for (const locale of ['en', 'tr']) {
       assert.deepEqual(basic.chapters[locale].cards, premium.chapters[locale].cards.slice(0, 2));
       assert.deepEqual(basic.chapters[locale].lenses, []);
@@ -484,7 +492,7 @@ test('reading and portrait chapters are filtered on the server by the signed-in 
   assert.equal(plus.chapters.tr.cards.length, 4);
   assert.deepEqual(plus.chapters.tr.lenses, []);
   assert.equal(plus.reading.relationshipsLocked, false);
-  for (const line of plus.reading.relationships) assert.notEqual(line.sectionId, 'idealJob');
+  for (const line of [...plus.reading.relationships, ...plus.reading.relationshipsEn]) assert.notEqual(line.sectionId, 'idealJob');
   assert.ok(!JSON.stringify(plus).includes(premium.reading.sections[3].paragraphs[0]));
 
   // A canceled paid membership falls back to Basic.

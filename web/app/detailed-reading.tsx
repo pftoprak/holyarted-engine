@@ -46,11 +46,14 @@ function RelationshipLines({ text, locale, reading, lockedLabel }: { text: Copy;
     const section = reading.sections.find((candidate) => candidate.id === id);
     return section ? `${section.title[locale]} ${section.key}` : '';
   };
+  // English pages quote the English translations; Turkish pages the original text.
+  const lines = locale === 'en' ? reading.relationshipsEn : reading.relationships;
+  const linesLang = locale === 'en' ? 'en' : reading.locale;
   return (
     <section className="rounded-[2rem] border border-[#625b55]/14 bg-[#fbf8f2]/70 p-7 md:p-9">
       <p className="text-[10px] font-bold uppercase tracking-[0.18em] text-[#8f705e]"><span lang="en" className="mr-3 rounded-full border border-[#8f705e]/30 px-2.5 py-1 text-[9px] tracking-[0.14em]">{text.readingTiers.plus}</span>{text.readingRelationships}</p>
       <p className="mt-4 text-xs leading-6 text-[#514b46]/60">{text.readingRelationshipsCopy}</p>
-      {reading.relationshipsLocked ? <p className="mt-6 text-sm italic text-[#514b46]/70">{lockedLabel('plus')}</p> : reading.relationships.length === 0 ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingRelationshipsEmpty}</p> : <ul lang={reading.locale} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{reading.relationships.map((line) => <li key={line.sentence} className="border-l-2 border-[#a7826c]/45 pl-4">{line.sentence}<span lang={locale} className="mt-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/45">{sourceOf(line.sectionId)}</span></li>)}</ul>}
+      {reading.relationshipsLocked ? <p className="mt-6 text-sm italic text-[#514b46]/70">{lockedLabel('plus')}</p> : lines.length === 0 ? <p className="mt-6 text-sm italic text-[#514b46]/70">{text.readingRelationshipsEmpty}</p> : <ul lang={linesLang} className="mt-6 grid max-w-3xl gap-4 text-sm leading-7 text-[#514b46]/75">{lines.map((line) => <li key={line.sentence} className="border-l-2 border-[#a7826c]/45 pl-4">{line.sentence}<span lang={locale} className="mt-1 block text-[10px] font-bold uppercase tracking-[0.14em] text-[#514b46]/45">{sourceOf(line.sectionId)}</span></li>)}</ul>}
     </section>
   );
 }
