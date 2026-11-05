@@ -97,7 +97,7 @@ HSTS `preload` listesine eklenmedi. Alan adı sahibi karar verirse eklenebilir.
 2. Veritabanına `web/drizzle/0002_*.sql` ve `0003_*.sql` dosyalarını sırayla uygula. Sites bunu otomatik yapmıyorsa Sites panelinden ya da destekten nasıl yapılacağını öğren. **Uygulanmadan yayınlanırsa** giriş yapan kullanıcıların istekleri hata verir.
 3. `clean-skeleton` branch'inden yeniden yayınla.
 4. Kontrol et:
-   - `https://holyarted.com/api/health` 200 dönmeli.
+   - `https://holyarted.com/api/health` 200 dönmeli. 503 dönerse veritabanında bir tablo ya da sütun eksik olabilir (sunucu logunda `health_schema_incomplete`); veritabanı kontrol adımına dön.
    - Sayfa kaynağında "Protect continuity" metni **bulunmamalı**.
    - `https://holyarted.com/robots.txt` açılmalı.
 
