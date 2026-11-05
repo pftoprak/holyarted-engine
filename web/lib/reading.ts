@@ -4,6 +4,7 @@ import lifePath from '@/data/life_path.json';
 import showcase from '@/data/showcase.json';
 import abilitiesEn from '@/data/en/abilities.json';
 import idealJobEn from '@/data/en/ideal_job.json';
+import showcaseEn from '@/data/en/showcase.json';
 import { calculateCoreProfile } from './calculation-core';
 import { planIncludes, type MembershipPlan } from './plans';
 
@@ -40,7 +41,7 @@ export type Reading = {
 };
 
 const datasets: Record<ReadingSectionId, Dataset> = { showcase, abilities, idealJob, lifePath };
-const translations: Partial<Record<ReadingSectionId, Dataset>> = { abilities: abilitiesEn, idealJob: idealJobEn };
+const translations: Partial<Record<ReadingSectionId, Dataset>> = { showcase: showcaseEn, abilities: abilitiesEn, idealJob: idealJobEn };
 const order: { id: ReadingSectionId; tier: ReadingTier }[] = [
   { id: 'showcase', tier: 'basic' },
   { id: 'abilities', tier: 'plus' },
